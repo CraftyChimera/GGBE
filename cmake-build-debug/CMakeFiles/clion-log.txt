@@ -1,0 +1,4 @@
+/home/drake/clion-2022.1.1/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/drake/clion-2022.1.1/bin/ninja/linux/ninja -G Ninja -S /home/drake/personal/DMGB -B /home/drake/personal/DMGB/cmake-build-debug
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/drake/personal/DMGB/cmake-build-debug
