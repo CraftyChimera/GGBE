@@ -5,25 +5,25 @@
 #ifndef DMGB_CONSOLE_HPP
 #define DMGB_CONSOLE_HPP
 
-#endif //DMGB_CONSOLE_HPP
-
-#include "../Base/Common.hpp"
 #include "../CPU/Cpu.hpp"
 #include "../Cartridge/Cartridge.hpp"
 
-constexpr auto memory_map_size = 0x10000;
-
 class Console {
     array<byte, memory_map_size> memory;
+    bool ram_enabled;
     CPU cpu;
     Cartridge cartridge;
-    byte ROM_BANK_NUMBER, RAM_BANK_NUMBER;
+    byte rom_bank_number, ram_bank_number, mode_flag;
+    size_t number_of_rom_banks, number_of_ram_banks;
 
 public:
-    Console() : memory(array<byte, memory_map_size>{0}), ROM_BANK_NUMBER(0), RAM_BANK_NUMBER(0) {};
+    Console();
+    
+    void boot(vector<byte> &data);
 
-//TODO Complete the Memory_Map method which maps address of memory_map to the right ROM/RAM bank
-    void boot(vector<byte> &data) {
-        cartridge.init(data);
-    }
+    void write(half_word &address, byte value);
+
+    byte read(half_word &address);
 };
+
+#endif //DMGB_CONSOLE_HPP

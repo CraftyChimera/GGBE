@@ -4,18 +4,32 @@
 
 #include "Cartridge.hpp"
 
-Cartridge::Cartridge() = default;
+Cartridge::Cartridge() : number_of_ram_banks(0), number_of_rom_banks(0) {
+}
 
 void Cartridge::init(vector<byte> &data) {
 
-    auto no_of_rom_banks = (1 << data[0x148]) * 2;
-    rom_banks.resize(no_of_rom_banks, array<byte, rom_block_size>{0});
+    number_of_rom_banks = (1 << data[0x148]) * 2;
+    rom_banks.resize(number_of_rom_banks, array<byte, rom_block_size>{0});
 
-    auto no_of_ram_banks = (1 << (2 * data[0x149])) / 16;
-    ram_banks.resize(no_of_ram_banks, array<byte, ram_block_size>{0});
+    number_of_ram_banks = (data[0x149] == 0x5) ? 8 : (1 << (2 * data[0x149])) / 16;
 
-    size_t rom_size = rom_block_size * no_of_rom_banks;
+    ram_banks.resize(number_of_ram_banks, array<byte, ram_block_size>{0});
+
+    size_t rom_size = rom_block_size * number_of_rom_banks;
     for (size_t address = 0; address < rom_size; address++) {
         rom_banks[address / rom_block_size][address % rom_block_size] = data[address];
     }
+}
+
+byte Cartridge::get_rom_bank(byte Bank_Number, half_word &address) {
+    return rom_banks[Bank_Number][address];
+}
+
+void Cartridge::set_ram_bank(byte Bank_Number, half_word &address, byte value) {
+    ram_banks[Bank_Number][address] = value;
+}
+
+byte Cartridge::get_ram_bank(byte Bank_Number, half_word &address) {
+    return ram_banks[Bank_Number][address];
 }

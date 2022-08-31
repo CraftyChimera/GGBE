@@ -1,10 +1,13 @@
 //
 // Created by drake on 24/8/22.
 //
+
+#include "Console/Console.hpp"
 #include "Base/Parser.hpp"
-#include "Cartridge/Cartridge.hpp"
+
 
 int main(int argv, char **argc) {
+    Console x;
     if (argv != 2)
         return -100;
     string path(argc[1]);

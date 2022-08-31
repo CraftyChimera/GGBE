@@ -5,13 +5,24 @@
 #ifndef DMGB_CPU_HPP
 #define DMGB_CPU_HPP
 
-#endif //DMGB_CPU_HPP
-
 #include "../Base/Common.hpp"
 
 class CPU {
-    byte A, B, C, D, E, H, L;
-    half_word AF, BC, DE, HL, SP, PC;
+    vector<byte> reg_mapper;
+    half_word SP, PC;
 public:
     CPU();
+
+    byte get8(Reg reg);
+
+    void set8(Reg reg, byte value);
+
+    half_word get16(Reg reg);
+
+    void set16(Reg reg, half_word value);
+
+    void setF(bool set, Flag bit);
+
 };
+
+#endif //DMGB_CPU_HPP

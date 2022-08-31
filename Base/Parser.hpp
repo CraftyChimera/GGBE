@@ -4,9 +4,10 @@
 
 #ifndef DMGB_PARSER_HPP
 #define DMGB_PARSER_HPP
-#endif //DMGB_PARSER_HPP
 
 #include "Common.hpp"
 
 
 vector<byte> read_file(const std::string &path);
+
+#endif //DMGB_PARSER_HPP
