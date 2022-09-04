@@ -7,7 +7,6 @@
 
 #include "Common.hpp"
 
-
 vector<byte> read_file(const std::string &path);
 
 #endif //DMGB_PARSER_HPP

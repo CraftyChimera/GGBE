@@ -84,6 +84,20 @@ build CMakeFiles/DMGB.dir/Console/Console.cpp.o: CXX_COMPILER__DMGB_Debug /home/
   OBJECT_DIR = CMakeFiles/DMGB.dir
   OBJECT_FILE_DIR = CMakeFiles/DMGB.dir/Console
 
+build CMakeFiles/DMGB.dir/CPU/ALU.cpp.o: CXX_COMPILER__DMGB_Debug /home/drake/personal/DMGB/CPU/ALU.cpp || cmake_object_order_depends_target_DMGB
+  DEP_FILE = CMakeFiles/DMGB.dir/CPU/ALU.cpp.o.d
+  FLAGS = -g -std=gnu++20
+  INCLUDES = -I/home/drake/personal/DMGB/Base
+  OBJECT_DIR = CMakeFiles/DMGB.dir
+  OBJECT_FILE_DIR = CMakeFiles/DMGB.dir/CPU
+
+build CMakeFiles/DMGB.dir/Base/Utility.cpp.o: CXX_COMPILER__DMGB_Debug /home/drake/personal/DMGB/Base/Utility.cpp || cmake_object_order_depends_target_DMGB
+  DEP_FILE = CMakeFiles/DMGB.dir/Base/Utility.cpp.o.d
+  FLAGS = -g -std=gnu++20
+  INCLUDES = -I/home/drake/personal/DMGB/Base
+  OBJECT_DIR = CMakeFiles/DMGB.dir
+  OBJECT_FILE_DIR = CMakeFiles/DMGB.dir/Base
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target DMGB
@@ -92,7 +106,7 @@ build CMakeFiles/DMGB.dir/Console/Console.cpp.o: CXX_COMPILER__DMGB_Debug /home/
 #############################################
 # Link the executable DMGB
 
-build DMGB: CXX_EXECUTABLE_LINKER__DMGB_Debug CMakeFiles/DMGB.dir/Base/Parser.cpp.o CMakeFiles/DMGB.dir/main.cpp.o CMakeFiles/DMGB.dir/Cartridge/Cartridge.cpp.o CMakeFiles/DMGB.dir/CPU/Cpu.cpp.o CMakeFiles/DMGB.dir/Console/Console.cpp.o
+build DMGB: CXX_EXECUTABLE_LINKER__DMGB_Debug CMakeFiles/DMGB.dir/Base/Parser.cpp.o CMakeFiles/DMGB.dir/main.cpp.o CMakeFiles/DMGB.dir/Cartridge/Cartridge.cpp.o CMakeFiles/DMGB.dir/CPU/Cpu.cpp.o CMakeFiles/DMGB.dir/Console/Console.cpp.o CMakeFiles/DMGB.dir/CPU/ALU.cpp.o CMakeFiles/DMGB.dir/Base/Utility.cpp.o
   FLAGS = -g
   OBJECT_DIR = CMakeFiles/DMGB.dir
   POST_BUILD = :

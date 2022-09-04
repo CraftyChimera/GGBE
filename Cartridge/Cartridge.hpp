@@ -19,11 +19,11 @@ public:
 
     void init(vector<byte> &data);
 
-    byte get_rom_bank(byte Bank_Number, half_word &address);
+    byte get_rom_bank(byte Bank_Number, word &address);
 
-    void set_ram_bank(byte Bank_Number, half_word &address, byte value);
+    void set_ram_bank(byte Bank_Number, word &address, byte value);
 
-    byte get_ram_bank(byte Bank_Number, half_word &address);
+    byte get_ram_bank(byte Bank_Number, word &address);
 };
 
 #endif //DMGB_CARTRIDGE_HPP

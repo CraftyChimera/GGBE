@@ -3,41 +3,82 @@
 //
 
 #include "Cpu.hpp"
+#include "../Console/Console.hpp"
 
-CPU::CPU() {
-    auto zero = static_cast<half_word>(0);
-    reg_mapper.resize(8, static_cast<byte>(0));
+CPU::CPU(Console *game) {
+    reg_mapper.fill(0);
+    auto zero = static_cast<word>(0);
     SP = zero;
     PC = zero;
+    this->game = game;
+    Instruction_List = array<Instructions, 2>{
+            Instructions(0, 0, 0, 2, 1),
+            Instructions(0, 1, 1, 1, 1)
+    };
 }
 
-byte CPU::get8(Reg reg) {
-    auto reg_index = static_cast<size_t>(reg);
+
+byte CPU::read(word address) {
+    return game->read(address);
+}
+
+void CPU::write(word address, byte value) {
+    game->write(address, value);
+}
+
+byte CPU::get8(Reg reg_index) {
     return reg_mapper[reg_index];
 }
 
-void CPU::set8(Reg reg, byte value) {
-    auto reg_index = static_cast<size_t>(reg);
+void CPU::set8(Reg reg_index, byte value) {
     reg_mapper[reg_index] = value;
 }
 
-half_word CPU::get16(Reg reg) {
-    auto reg_index = static_cast<size_t>(reg);
+word CPU::get16(DReg reg_index) {
     return (reg_mapper[reg_index] << 8) + reg_mapper[reg_index + 1];
 }
 
-void CPU::set16(Reg reg, half_word value) {
-    auto reg_index = static_cast<size_t>(reg);
+void CPU::set16(DReg reg_index, word value) {
     reg_mapper[reg_index + 1] = value & (0xFF);
     value = value >> 8;
     reg_mapper[reg_index] = value & (0xFF);
 }
 
-void CPU::setF(bool set, Flag bit) {
-    auto bit_pos = static_cast<int>(bit);
-    byte bitmask = 0xFF - (1 >> bit_pos);
-    if (set)
-        reg_mapper[1] |= (1 >> bit_pos);
-    else
-        reg_mapper[1] &= bitmask;
+byte CPU::getC() {
+    return (reg_mapper[Reg::f] & (1 << 4)) >> 4;
 }
+
+void CPU::setF(vector<Flag_Status> &flag_array) {
+    byte F = reg_mapper[8];
+    for (auto flag_c: flag_array) {
+        Flag bit = flag_c.bit;
+        bool set = flag_c.status;
+        auto bit_pos = static_cast<int>(bit);
+        byte bitmask = 0xFF - (1 >> bit_pos);
+        if (set)
+            F |= (1 >> bit_pos);
+        else
+            F &= bitmask;
+    }
+    reg_mapper[8] = F;
+}
+
+vector<byte> CPU::dispatch(int Type, int addr_mode, int bytes_to_fetch) {
+    vector<byte> fetched;
+    for (int i = 0; i < bytes_to_fetch; i++) {
+        fetched.push_back(read(PC++));
+    }
+    switch (Type) {
+        case 0:
+            return ALU::dispatch(this, fetched, addr_mode);
+        default:
+            return vector<byte>{};
+    }
+};
+
+void CPU::execute_op(vector<Flag_Status> &flags, int Type, int op_id, vector<byte> &args) {
+    switch (Type) {
+        case 0:
+            return ALU::OPcodes[op_id](flags, args[0], reg_mapper[Reg::a]);
+    }
+};

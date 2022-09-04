@@ -4,7 +4,7 @@
 
 #include "Console.hpp"
 
-Console::Console() : memory(array<byte, memory_map_size>{0}), rom_bank_number(0), ram_bank_number(0),
+Console::Console() : cpu(this), memory(array<byte, memory_map_size>{0}), rom_bank_number(0), ram_bank_number(0),
                      ram_enabled(false), number_of_rom_banks(0), number_of_ram_banks(0), mode_flag(0) {};
 
 void Console::boot(vector<byte> &data) {
@@ -13,7 +13,7 @@ void Console::boot(vector<byte> &data) {
     number_of_ram_banks = cartridge.number_of_ram_banks;
 }
 
-void Console::write(half_word &address, byte value) {
+void Console::write(word &address, byte value) {
 
     if (((0xE000 <= address) && (address <= 0xFDFF)) || ((0xFEA0 <= address) && (address <= 0xFEFF)))
         return;
@@ -47,7 +47,7 @@ void Console::write(half_word &address, byte value) {
 
     if (address < 0xC000) {
         if (ram_enabled) {
-            half_word offset = address - 0xA000;
+            word offset = address - 0xA000;
             if (mode_flag == 0)
                 cartridge.set_ram_bank(0, offset, value);
             if (mode_flag == 1)
@@ -57,7 +57,7 @@ void Console::write(half_word &address, byte value) {
     }
 }
 
-byte Console::read(half_word &address) {
+byte Console::read(word &address) {
     if ((0xC000 <= address) || ((0x8000 <= address) && (address < 0xA000)))
         return memory[address];
 
@@ -72,7 +72,7 @@ byte Console::read(half_word &address) {
     }
 
     if (address < 0x8000) {
-        half_word offset = address - 0x4000;
+        word offset = address - 0x4000;
         byte bitmask = (number_of_rom_banks - 1) & 0x11111;
         byte high_bank_number = (ram_bank_number >> 5) & (number_of_rom_banks - 1) + (rom_bank_number & bitmask);
         return cartridge.get_rom_bank(high_bank_number, offset);
@@ -82,7 +82,7 @@ byte Console::read(half_word &address) {
         if (!ram_enabled)
             return 0xFF;
 
-        half_word offset = address - 0xA000;
+        word offset = address - 0xA000;
 
         if (mode_flag == 0)
             return cartridge.get_ram_bank(0, offset);

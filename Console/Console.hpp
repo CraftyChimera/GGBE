@@ -18,12 +18,12 @@ class Console {
 
 public:
     Console();
-    
+
     void boot(vector<byte> &data);
 
-    void write(half_word &address, byte value);
+    void write(word &address, byte value);
 
-    byte read(half_word &address);
+    byte read(word &address);
 };
 
 #endif //DMGB_CONSOLE_HPP

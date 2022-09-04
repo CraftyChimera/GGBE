@@ -22,14 +22,16 @@ void Cartridge::init(vector<byte> &data) {
     }
 }
 
-byte Cartridge::get_rom_bank(byte Bank_Number, half_word &address) {
+byte Cartridge::get_rom_bank(byte Bank_Number, word &address) {
     return rom_banks[Bank_Number][address];
 }
 
-void Cartridge::set_ram_bank(byte Bank_Number, half_word &address, byte value) {
+using std::string;
+
+void Cartridge::set_ram_bank(byte Bank_Number, word &address, byte value) {
     ram_banks[Bank_Number][address] = value;
 }
 
-byte Cartridge::get_ram_bank(byte Bank_Number, half_word &address) {
+byte Cartridge::get_ram_bank(byte Bank_Number, word &address) {
     return ram_banks[Bank_Number][address];
 }
