@@ -11,13 +11,13 @@
 #include <fstream>
 #include <iostream>
 #include <functional>
+#include <variant>
 
 using std::vector;
 using std::array;
 using byte = uint8_t;
 using s_byte = int8_t;
 using word = uint16_t;
-using s_word = int16_t;
 using std::string;
 
 constexpr auto rom_block_size = 0x4000;

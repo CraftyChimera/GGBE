@@ -1,3 +1,0 @@
-/home/drake/personal/DMGB/cmake-build-debug/CMakeFiles/DMGB.dir
-/home/drake/personal/DMGB/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/drake/personal/DMGB/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -11,7 +11,7 @@
 class Console {
     array<byte, memory_map_size> memory;
     bool ram_enabled;
-    CPU cpu;
+    Cpu cpu;
     Cartridge cartridge;
     byte rom_bank_number, ram_bank_number, mode_flag;
     size_t number_of_rom_banks, number_of_ram_banks;

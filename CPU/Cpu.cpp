@@ -5,8 +5,8 @@
 #include "Cpu.hpp"
 #include "../Console/Console.hpp"
 
-CPU::CPU(Console *game) {
-    reg_mapper.fill(0);
+Cpu::Cpu(Console *game) {
+    reg_mapper = array<byte, 9>{0};
     auto zero = static_cast<word>(0);
     SP = zero;
     PC = zero;
@@ -17,38 +17,62 @@ CPU::CPU(Console *game) {
     };
 }
 
+void Cpu::loop() {
+    vector<Flag_Status> flags;
+    Instructions curr = Instruction_List[PC];
+    vector<byte> fetched = fetch(flags, curr);
+    decode_and_execute(flags, std::move(fetched), curr);
+    set_flags(flags);
+}
 
-byte CPU::read(word address) {
+byte Cpu::read(word address) {
     return game->read(address);
 }
 
-void CPU::write(word address, byte value) {
+void Cpu::write(word address, byte value) {
     game->write(address, value);
 }
 
-byte CPU::get8(Reg reg_index) {
-    return reg_mapper[reg_index];
+byte Cpu::get(Reg reg_index) {
+    auto index = static_cast<int>(reg_index);
+    return reg_mapper[index];
 }
 
-void CPU::set8(Reg reg_index, byte value) {
-    reg_mapper[reg_index] = value;
+word Cpu::get(DReg reg_index) {
+    switch (reg_index) {
+        case DReg::pc:
+            return PC;
+        case DReg::sp:
+            return SP;
+        default:
+            auto index = static_cast<int>(reg_index);
+            word value = (reg_mapper[index] << 8) + reg_mapper[index + 1];
+            return value;
+    }
 }
 
-word CPU::get16(DReg reg_index) {
-    return (reg_mapper[reg_index] << 8) + reg_mapper[reg_index + 1];
+void Cpu::set(Reg reg_index, byte value) {
+    auto index = static_cast<int>(reg_index);
+    reg_mapper[index] = value;
 }
 
-void CPU::set16(DReg reg_index, word value) {
-    reg_mapper[reg_index + 1] = value & (0xFF);
-    value = value >> 8;
-    reg_mapper[reg_index] = value & (0xFF);
+void Cpu::set(DReg reg_index, word val) {
+    auto index = static_cast<int>(reg_index);
+    switch (reg_index) {
+        case DReg::pc:
+            PC = val;
+            break;
+        case DReg::sp:
+            SP = val;
+            break;
+        default:
+            reg_mapper[index + 1] = val & 0xFF;
+            val >>= 8;
+            reg_mapper[index] = val & 0xFF;
+    }
 }
 
-byte CPU::getC() {
-    return (reg_mapper[Reg::f] & (1 << 4)) >> 4;
-}
-
-void CPU::setF(vector<Flag_Status> &flag_array) {
+void Cpu::set_flags(vector<Flag_Status> &flag_array) {
     byte F = reg_mapper[8];
     for (auto flag_c: flag_array) {
         Flag bit = flag_c.bit;
@@ -63,22 +87,54 @@ void CPU::setF(vector<Flag_Status> &flag_array) {
     reg_mapper[8] = F;
 }
 
-vector<byte> CPU::dispatch(int Type, int addr_mode, int bytes_to_fetch) {
+vector<byte> Cpu::fetch(vector<Flag_Status> &flags, Instructions &instruction_data) {
     vector<byte> fetched;
+
+    auto bytes_to_fetch = instruction_data.bytes_to_fetch;
+    auto cycles = instruction_data.cycles;
+
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
     }
-    switch (Type) {
-        case 0:
-            return ALU::dispatch(this, fetched, addr_mode);
-        default:
-            return vector<byte>{};
-    }
-};
 
-void CPU::execute_op(vector<Flag_Status> &flags, int Type, int op_id, vector<byte> &args) {
-    switch (Type) {
-        case 0:
-            return ALU::OPcodes[op_id](flags, args[0], reg_mapper[Reg::a]);
+    byte flag_data = get(Reg::f);
+    if ((flag_data & (1 << Flag::c)) > 0) {
+        flags.emplace_back(Flag_Status(Flag::c, true));
     }
-};
+    std::cout << cycles;
+    return fetched;
+}
+
+void Cpu::decode_and_execute(vector<Flag_Status> &flags, vector<byte> fetched, Instructions &instruction_data) {
+    auto Type = instruction_data.Type;
+    auto op_id = instruction_data.op_id;
+    auto addr_mode = instruction_data.addr_mode;
+
+    switch (Type) {
+        case 0: {
+            auto args = Arithmetic::dispatch(this, fetched, addr_mode);
+            auto value = args.value, src_value = get(Reg::a);
+            byte result = Arithmetic::op_codes[op_id](flags, value, src_value);
+            set(Reg::a, result);
+            return;
+        }
+        case 1: {
+            auto args = Unary::dispatch(this, fetched, addr_mode);
+            auto location = args.source;
+            auto value = args.value;
+            byte result = Unary::op_codes[op_id](flags, value);
+
+            if (location.index() == 0) {
+                Reg reg_index = std::get<0>(location);
+                set(reg_index, result);
+            }
+            if (location.index() == 1) {
+                word address = std::get<1>(location);
+                write(address, result);
+            }
+            return;
+        }
+        default:
+            return;
+    }
+}
