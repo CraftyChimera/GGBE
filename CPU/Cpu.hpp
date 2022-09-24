@@ -5,18 +5,33 @@
 #ifndef DMGB_CPU_HPP
 #define DMGB_CPU_HPP
 
-#include "../Base/Common.hpp"
-#include "../Base/Utility.hpp"
+#include <stack>
 #include "Arithmetic.hpp"
 #include "Unary.hpp"
-#include "Bit_Test.hpp"
+#include "Bit_Operations.hpp"
+#include "Load.hpp"
+#include "Store.hpp"
 
 class Console;
+
+struct Instructions {
+    int Type;
+    int op_id;
+    int addr_mode;
+    int bytes_to_fetch;
+    int cycles;
+
+    Instructions();
+
+    Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles);
+};
+
 
 class Cpu {
     word SP, PC;
     array<byte, 9> reg_mapper;
     array<Instructions, 2> Instruction_List;
+    std::stack<byte> stack;
     Console *game;
 public:
 

@@ -5,6 +5,23 @@
 #include "Cpu.hpp"
 #include "../Console/Console.hpp"
 
+Instructions::Instructions() {
+    Type = 0;
+    op_id = 0;
+    addr_mode = 0;
+    bytes_to_fetch = 0;
+    cycles = 0;
+}
+
+Instructions::Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) {
+    this->Type = Type;
+    this->op_id = op_id;
+    this->addr_mode = addr_mode;
+    this->bytes_to_fetch = bytes_to_fetch;
+    this->cycles = cycles;
+};
+
+
 Cpu::Cpu(Console *game) {
     reg_mapper = array<byte, 9>{0};
     auto zero = static_cast<word>(0);
@@ -78,9 +95,9 @@ void Cpu::set_flags(vector<Flag_Status> &flag_array) {
         Flag bit = flag_c.bit;
         bool set = flag_c.status;
         auto bit_pos = static_cast<int>(bit);
-        byte bitmask = 0xFF - (1 >> bit_pos);
+        byte bitmask = 0xFF - (1 << bit_pos);
         if (set)
-            F |= (1 >> bit_pos);
+            F |= (1 << bit_pos);
         else
             F &= bitmask;
     }
@@ -112,26 +129,23 @@ void Cpu::decode_and_execute(vector<Flag_Status> &flags, vector<byte> fetched, I
 
     switch (Type) {
         case 0: {
-            auto args = Arithmetic::dispatch(this, fetched, addr_mode);
-            auto value = args.value, src_value = get(Reg::a);
-            byte result = Arithmetic::op_codes[op_id](flags, value, src_value);
-            set(Reg::a, result);
+            Arithmetic::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
         case 1: {
-            auto args = Unary::dispatch(this, fetched, addr_mode);
-            auto location = args.source;
-            auto value = args.value;
-            byte result = Unary::op_codes[op_id](flags, value);
-
-            if (location.index() == 0) {
-                Reg reg_index = std::get<0>(location);
-                set(reg_index, result);
-            }
-            if (location.index() == 1) {
-                word address = std::get<1>(location);
-                write(address, result);
-            }
+            Unary::dispatch(flags, this, op_id, fetched, addr_mode);
+            return;
+        }
+        case 2: {
+            Bit_Operations::dispatch(flags, this, op_id, fetched, addr_mode);
+            return;
+        }
+        case 3: {
+            Load::dispatch(flags, this, op_id, fetched, addr_mode);
+            return;
+        }
+        case 4: {
+            Store::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
         default:

@@ -18,10 +18,11 @@ using std::array;
 using byte = uint8_t;
 using s_byte = int8_t;
 using word = uint16_t;
+using d_word = uint32_t;
 using std::string;
 
-constexpr auto rom_block_size = 0x4000;
-constexpr auto ram_block_size = 0x2000;
-constexpr auto memory_map_size = 0x10000;
+inline constexpr auto rom_block_size = 0x4000;
+inline constexpr auto ram_block_size = 0x2000;
+inline constexpr auto memory_map_size = 0x10000;
 
 #endif //DMGB_COMMON_HPP

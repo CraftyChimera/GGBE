@@ -5,36 +5,41 @@
 #ifndef DMGB_ARITHMETIC_HPP
 #define DMGB_ARITHMETIC_HPP
 
-#include "../Base/Common.hpp"
-#include "../Base/Utility.hpp"
+#include "Utility.hpp"
 
 class Cpu;
 namespace Arithmetic {
-    struct args {
+    struct op_args {
         byte value;
+        byte src_value;
 
-        args();
+        op_args();
     };
 
-    args dispatch(Cpu *cpu, vector<byte> bytes_fetched, int addressing_mode);
+    op_args get_args(Cpu *cpu, vector<byte> bytes_fetched, int addressing_mode);
 
-    byte ADC(vector<Flag_Status> &, byte value, byte A);
+    void dispatch(vector<Flag_Status> &, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
 
-    byte ADD(vector<Flag_Status> &, byte value, byte A);
+    byte ADD(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    byte AND(vector<Flag_Status> &, byte value, byte A);
+    byte ADC(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    byte CP(vector<Flag_Status> &, byte value, byte A);
+    byte AND(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    byte OR(vector<Flag_Status> &, byte value, byte A);
+    byte CP(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    byte SBC(vector<Flag_Status> &, byte value, byte A);
+    byte OR(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    byte SUB(vector<Flag_Status> &, byte value, byte A);
+    byte SBC(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    byte XOR(vector<Flag_Status> &, byte value, byte A);
+    byte SUB(vector<Flag_Status> &, Arithmetic::op_args arg);
 
-    const std::function<byte(vector<Flag_Status> &, byte, byte)> op_codes[8] = {ADC, ADD, AND, CP, OR, SBC, SUB, XOR};
+    byte XOR(vector<Flag_Status> &, Arithmetic::op_args arg);
+
+    word ADD_16(vector<Flag_Status> &, word src, word dest);
+
+    const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> op_codes[8] = {ADD, ADC, AND, CP, OR, SBC,
+                                                                                         SUB, XOR};
 }
 #endif //DMGB_ARITHMETIC_HPP
 

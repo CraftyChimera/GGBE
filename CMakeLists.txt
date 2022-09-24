@@ -12,4 +12,4 @@ add_executable(DMGB
         Base/Common.hpp
         Cartridge/Cartridge.cpp Cartridge/Cartridge.hpp
         CPU/Cpu.cpp CPU/Cpu.hpp
-        Console/Console.cpp Console/Console.hpp CPU/Arithmetic.cpp CPU/Arithmetic.hpp Base/Utility.cpp Base/Utility.hpp CPU/Unary.cpp CPU/Unary.hpp CPU/Bit_Test.cpp CPU/Bit_Test.hpp)
+        Console/Console.cpp Console/Console.hpp CPU/Arithmetic.cpp CPU/Arithmetic.hpp CPU/Unary.cpp CPU/Unary.hpp CPU/Bit_Operations.cpp CPU/Bit_Operations.hpp CPU/Utility.cpp CPU/Utility.hpp CPU/Load.cpp CPU/Load.hpp CPU/Store.cpp CPU/Store.hpp)

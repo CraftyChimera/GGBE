@@ -1,9 +1,11 @@
 //
-// Created by drake on 4/9/22.
+// Created by drake on 14/9/22.
 //
 
 #ifndef DMGB_UTILITY_HPP
 #define DMGB_UTILITY_HPP
+
+#include "../Base/Common.hpp"
 
 enum struct Reg {
     b = 0,
@@ -21,7 +23,7 @@ enum struct DReg {
     de = 2,
     hl = 4,
     af = 7,
-    sp,
+    sp = 6,
     pc
 };
 
@@ -32,6 +34,7 @@ enum Flag {
     c = 4
 };
 
+
 struct Flag_Status {
     Flag bit;
     bool status;
@@ -40,19 +43,5 @@ struct Flag_Status {
 };
 
 Flag_Status set(Flag bit, bool status);
-
-struct Instructions {
-    int Type;
-    int op_id;
-    int addr_mode;
-    int bytes_to_fetch;
-    int cycles;
-
-public:
-    Instructions();
-
-    Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles);
-};
-
 
 #endif //DMGB_UTILITY_HPP
