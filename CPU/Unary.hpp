@@ -54,7 +54,9 @@ namespace Unary {
 
     byte SRL(vector<Flag_Status> &flags, Unary::op_args arg);
 
-    const std::function<byte(vector<Flag_Status> &, Unary::op_args)> op_codes[13] = {INC, DEC, SWAP, RL, RLA, RLC, RLCA,
-                                                                                     RR, RRA, RRC, RRCA, SLA, SRL};
+    extern const std::function<byte(vector<Flag_Status> &, Unary::op_args)> op_codes[13] = {INC, DEC, SWAP, RL, RLA,
+                                                                                            RLC, RLCA,
+                                                                                            RR, RRA, RRC, RRCA, SLA,
+                                                                                            SRL};
 }
 #endif //DMGB_UNARY_HPP

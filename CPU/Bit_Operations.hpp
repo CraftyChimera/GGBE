@@ -27,7 +27,7 @@ namespace Bit_Operations {
 
     word SET(vector<Flag_Status> &, Bit_Operations::op_args);
 
-    const std::function<byte(vector<Flag_Status> &, Bit_Operations::op_args)> op_codes[3] = {BIT, RES, SET};
+    extern const std::function<byte(vector<Flag_Status> &, Bit_Operations::op_args)> op_codes[3] = {BIT, RES, SET};
 }
 
 #endif //DMGB_BIT_OPERATIONS_HPP

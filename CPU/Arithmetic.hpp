@@ -38,8 +38,9 @@ namespace Arithmetic {
 
     word ADD_16(vector<Flag_Status> &, word src, word dest);
 
-    const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> op_codes[8] = {ADD, ADC, AND, CP, OR, SBC,
-                                                                                         SUB, XOR};
+    extern const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> op_codes[8] = {ADD, ADC, AND, CP, OR,
+                                                                                                SBC,
+                                                                                                SUB, XOR};
 }
 #endif //DMGB_ARITHMETIC_HPP
 

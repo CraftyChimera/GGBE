@@ -58,6 +58,12 @@ void Console::write(word &address, byte value) {
 }
 
 byte Console::read(word &address) {
+    if (0xE000 <= address && address < 0xFE00) //E000 - FDFF (Echo RAM)
+        return 0xFF;
+
+    if (0xFEA0 <= address && address < 0xFF00) //FEA0 - FEFF (Not Usable)
+        return 0xFF;
+
     if ((0xC000 <= address) || ((0x8000 <= address) && (address < 0xA000)))
         return memory[address];
 

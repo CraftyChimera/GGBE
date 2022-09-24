@@ -19,7 +19,7 @@ Instructions::Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetc
     this->addr_mode = addr_mode;
     this->bytes_to_fetch = bytes_to_fetch;
     this->cycles = cycles;
-};
+}
 
 
 Cpu::Cpu(Console *game) {
@@ -40,6 +40,16 @@ void Cpu::loop() {
     vector<byte> fetched = fetch(flags, curr);
     decode_and_execute(flags, std::move(fetched), curr);
     set_flags(flags);
+}
+
+void Cpu::push(byte to_push) {
+    stack.push(to_push);
+}
+
+byte Cpu::pop() {
+    byte value = stack.top();
+    stack.pop();
+    return value;
 }
 
 byte Cpu::read(word address) {

@@ -38,7 +38,7 @@ void Load::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte
     cpu->set(args.destination, args.src_value);
 }
 
-Load::op_args get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Load::op_args Load::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Load::op_args result;
     switch (addressing_mode) {
         case 0: // Load r8,u8
@@ -77,8 +77,8 @@ Load::op_args get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mod
         }
         case 5://Load A,[u16]
         {
-            word address = bytes_fetched[1];
-            address += bytes_fetched[2] << 4;
+            word address = bytes_fetched[1], hi = bytes_fetched[2];
+            address += (hi << 8);
             result.src_value = cpu->read(address);
             result.destination = Reg::a;
             break;

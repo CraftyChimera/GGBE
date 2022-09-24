@@ -10,7 +10,7 @@ Store::op_args::op_args() {
     destination = 0;
 }
 
-void dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Store::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
     if (addr_mode == 4 && op_id != 0) {//STORE_H [C],A and STORE_H [u8],A
         if (op_id == 1) //STORE_H [C],A
             bytes_fetched.emplace_back(cpu->get(Reg::c));
@@ -60,8 +60,8 @@ Store::op_args Store::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addres
         }
         case 4: //STORE [u16],A
         {
-            word address = bytes_fetched[1];
-            address += bytes_fetched[2] << 4;
+            word address = bytes_fetched[1], hi = bytes_fetched[2];
+            address += (hi << 8);
             result.src_value = cpu->get(Reg::a);
             result.destination = address;
             break;

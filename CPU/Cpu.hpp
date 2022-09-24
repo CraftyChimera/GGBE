@@ -11,6 +11,7 @@
 #include "Bit_Operations.hpp"
 #include "Load.hpp"
 #include "Store.hpp"
+#include "Jump.hpp"
 
 class Console;
 
@@ -36,6 +37,10 @@ class Cpu {
 public:
 
     explicit Cpu(Console *game);
+
+    void push(byte to_push);
+
+    byte pop();
 
     byte read(word address);
 

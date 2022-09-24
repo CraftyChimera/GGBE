@@ -7,6 +7,7 @@
 
 #include "../Base/Common.hpp"
 
+
 enum struct Reg {
     b = 0,
     c = 1,
@@ -34,6 +35,7 @@ enum Flag {
     c = 4
 };
 
+inline constexpr word IME = 0xFFFF;
 
 struct Flag_Status {
     Flag bit;
