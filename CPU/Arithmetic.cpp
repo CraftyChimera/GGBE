@@ -5,24 +5,43 @@
 #include "Arithmetic.hpp"
 #include "Cpu.hpp"
 
+const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> Arithmetic::op_codes[8] = {Arithmetic::ADD,
+                                                                                                 Arithmetic::ADC,
+                                                                                                 Arithmetic::AND,
+                                                                                                 Arithmetic::CP,
+                                                                                                 Arithmetic::OR,
+                                                                                                 Arithmetic::SBC,
+                                                                                                 Arithmetic::SUB,
+                                                                                                 Arithmetic::XOR};
+
 Arithmetic::op_args::op_args() {
     value = 0;
     src_value = 0;
 }
 
-word Arithmetic::ADD_16(vector<Flag_Status> &flags, word src, word addend) {
+word ADD_16(vector<Flag_Status> &flags, word src, word addend) {
     d_word temp = src + addend;
 
     flags.emplace_back(set(Flag::n, false));
     flags.emplace_back(set(Flag::h, ((src & 0xFFF) + (addend & 0xFFF) > 0xFFF)));
-    flags.emplace_back(set(Flag::c, (temp > 0xFFFF)));
+    flags.emplace_back(set(Flag::c, ((src & 0xFFFF) + (addend & 0xFFFF) > 0xFFFF)));
 
+    return static_cast<word>(temp & 0xFFFF);
+}
+
+word ADD_SP(vector<Flag_Status> &flags, word src, s_byte offset) { //TODO Weird Instruction
+    d_word temp = src;
+    temp += offset;
+    flags.emplace_back(set(Flag::z, false));
+    flags.emplace_back(set(Flag::n, false));
+    flags.emplace_back(set(Flag::h, (offset > 0) && ((offset & 0xF) + (src & 0xF) > 0xF)));
+    flags.emplace_back(set(Flag::c, (offset > 0) && ((offset & 0xFF) + (src & 0xFF) > 0xFF)));
     return static_cast<word>(temp & 0xFFFF);
 }
 
 void Arithmetic::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
 
-    if (addr_mode == -1) {
+    if (addr_mode == arithmetic::addr_modes::ADD_16) {
 
         word src = cpu->get(DReg::hl), addend, result;
 
@@ -35,6 +54,14 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vecto
         return;
     }
 
+    if (addr_mode == arithmetic::addr_modes::SP) { //ADD SP,e8
+        auto offset = static_cast<s_byte>(bytes_fetched[1]);
+        word src = cpu->get(DReg::sp);
+        word result = ADD_SP(flags, src, offset);
+        cpu->set(DReg::sp, result);
+        return;
+    }
+
     auto args = Arithmetic::get_args(cpu, bytes_fetched, addr_mode);
     byte result = Arithmetic::op_codes[op_id](flags, args);
     cpu->set(Reg::a, result);
@@ -44,15 +71,21 @@ Arithmetic::op_args Arithmetic::get_args(Cpu *cpu, vector<byte> bytes_fetched, i
     Arithmetic::op_args result;
     result.src_value = cpu->get(Reg::a);
     switch (addressing_mode) {
-        case 0: //ADC A,n8
+        case arithmetic::addr_modes::IMM : //ADC A,u8
+        {
             result.value = bytes_fetched[1];
             break;
-        case 1: //ADC A,r8
+        }
+        case arithmetic::addr_modes::REG : //ADC A,r8
+        {
             result.value = cpu->get(static_cast<Reg>(bytes_fetched[0] & 0x7));
             break;
-        case 2:// ADC A,[HL]
+        }
+        case arithmetic::addr_modes::MEM :// ADC A,[HL]
+        {
             result.value = cpu->read(cpu->get(DReg::hl));
             break;
+        }
         default:
             break;
     }
@@ -61,7 +94,8 @@ Arithmetic::op_args Arithmetic::get_args(Cpu *cpu, vector<byte> bytes_fetched, i
 
 byte Arithmetic::ADD(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
     byte value = arg.value, src = arg.src_value;
-    word temp = arg.src_value + arg.value;
+    word temp = arg.src_value;
+    temp += arg.value;
 
     flags.emplace_back(set(Flag::z, ((temp & 0xFF) == 0)));
     flags.emplace_back(set(Flag::n, false));

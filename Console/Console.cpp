@@ -5,7 +5,7 @@
 #include "Console.hpp"
 
 Console::Console() : cpu(this), memory(array<byte, memory_map_size>{0}), rom_bank_number(0), ram_bank_number(0),
-                     ram_enabled(false), number_of_rom_banks(0), number_of_ram_banks(0), mode_flag(0) {};
+                     ram_enabled(false), number_of_rom_banks(0), number_of_ram_banks(0), mode_flag(0) {}
 
 void Console::boot(vector<byte> &data) {
     cartridge.init(data);

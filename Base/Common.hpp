@@ -15,6 +15,7 @@
 
 using std::vector;
 using std::array;
+using std::function;
 using byte = uint8_t;
 using s_byte = int8_t;
 using word = uint16_t;

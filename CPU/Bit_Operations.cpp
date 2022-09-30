@@ -5,12 +5,15 @@
 #include "Bit_Operations.hpp"
 #include "Cpu.hpp"
 
+const std::function<byte(vector<Flag_Status> &, Bit_Operations::op_args)> Bit_Operations::op_codes[3] = {
+        Bit_Operations::BIT,
+        Bit_Operations::RES,
+        Bit_Operations::SET};
+
 Bit_Operations::op_args::op_args() : test_bit(0), value(0), location(Reg::a) {}
 
-void
-Bit_Operations::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
-
-    auto args = Bit_Operations::get_args(cpu, bytes_fetched, addr_mode);
+void Bit_Operations::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &fetched, int addr_mode) {
+    auto args = Bit_Operations::get_args(cpu, fetched, addr_mode);
     word value = Bit_Operations::op_codes[op_id](flags, args);
 
     if (args.location.index() == 0) {
@@ -28,22 +31,23 @@ Bit_Operations::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector
 Bit_Operations::op_args Bit_Operations::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Bit_Operations::op_args result;
     switch (addressing_mode) {
-        case 0: {
-            byte data_value = bytes_fetched[0];
+        case bit_op::addr_modes::REG : //BIT u3,r8
+        {
+            byte data_value = bytes_fetched[1];
             Reg reg_index = static_cast<Reg>(data_value & 0x7);
-            data_value >>= 3;
 
             result.value = cpu->get(reg_index);
-            result.test_bit = data_value & 0x7;
+            result.test_bit = (data_value >> 3) & 0x7;
             result.location = reg_index;
 
             break;
         }
-        case 1: {
+        case bit_op::addr_modes::MEM :  // BIT u3,[HL]
+        {
             word address = cpu->get(DReg::hl);
 
             result.value = cpu->read(address);
-            result.test_bit = (bytes_fetched[0] >> 3) & 0x7;
+            result.test_bit = (bytes_fetched[1] >> 3) & 0x7;
             result.location = address;
 
             break;

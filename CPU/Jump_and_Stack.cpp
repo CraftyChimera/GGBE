@@ -2,10 +2,14 @@
 // Created by drake on 24/9/22.
 //
 
-#include "Jump.hpp"
+#include "Jump_and_Stack.hpp"
 #include "Cpu.hpp"
 
-//TODO: RST
+const std::function<void(Cpu *, Jump::op_args &)> Jump::op_codes[9] = {Jump::JP, Jump::JPC, Jump::CALL, Jump::CALLC,
+                                                                       Jump::RET, Jump::RETC, Jump::RETI, Jump::PUSH,
+                                                                       Jump::POP};
+
+
 Jump::op_args::op_args() {
     jump_address = 0;
     condition = -1;
@@ -32,6 +36,30 @@ bool checkCondition(byte F, int cond_id) {
         default:
             return false;
     }
+}
+
+void Jump::PUSH(Cpu *cpu, Jump::op_args &args) {
+    DReg reg = static_cast<DReg>(args.condition);
+    if (reg == DReg::sp)
+        reg = DReg::af;
+    word next = cpu->get(reg);
+    byte hi = next >> 8, lo = next & 0xFF;
+    cpu->push(hi);
+    cpu->push(lo);
+}
+
+void Jump::POP(Cpu *cpu, Jump::op_args &args) {
+    DReg reg = static_cast<DReg>(args.condition);
+    if (reg == DReg::sp)
+        reg = DReg::af;
+
+    word lo, hi, value;
+    lo = cpu->pop();
+    hi = cpu->pop();
+    value = lo + (hi << 8);
+    if (reg == DReg::af)
+        (value >>= 4) <<= 4;
+    cpu->set(reg, value);
 }
 
 void Jump::JP(Cpu *cpu, Jump::op_args &args) { //RST
@@ -76,12 +104,20 @@ void Jump::RETI(Cpu *cpu, Jump::op_args &args) {
 Jump::op_args Jump::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Jump::op_args result;
     switch (addressing_mode) {
-        case 0: //JP HL
+        case jump_stack::addr_modes::PUSH_POP :// PUSH/POP r16
         {
+            byte opc = bytes_fetched[0];
+            result.condition = 2 * ((opc >> 4) & 0x3);
+            break;
+        }
+        case jump_stack::addr_modes::MEM : //JP HL
+        {
+            byte opc = bytes_fetched[0];
+            result.condition = 2 * ((opc & 0x10) > 0) + ((opc & 0x08) > 0);
             result.jump_address = cpu->get(DReg::hl);
             break;
         }
-        case 1://JP u16
+        case jump_stack::addr_modes::IMM ://JP u16
         {
             word address = bytes_fetched[1], hi = bytes_fetched[2];
             address += (hi << 8);
@@ -90,7 +126,7 @@ Jump::op_args Jump::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressi
             result.jump_address = address;
             break;
         }
-        case 2://JR e8
+        case jump_stack::addr_modes::REL ://JR e8
         {
             auto offset = static_cast<s_byte>(bytes_fetched[1]);
             byte opc = bytes_fetched[0];
@@ -98,14 +134,14 @@ Jump::op_args Jump::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressi
             result.jump_address = cpu->get(DReg::pc) + offset;
             break;
         }
-        case 3://RSTs
+        case jump_stack::addr_modes::RST ://RSTs
         {
             byte opc = bytes_fetched[0];
             result.jump_address = opc - 0xC7;
-            result.condition = 2 * ((opc & 0x10) > 0) + ((opc & 0x08) > 0);
             break;
         }
         default:
             break;
     }
+    return result;
 }

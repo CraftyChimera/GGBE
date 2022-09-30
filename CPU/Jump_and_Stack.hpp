@@ -2,8 +2,8 @@
 // Created by drake on 24/9/22.
 //
 
-#ifndef DMGB_JUMP_HPP
-#define DMGB_JUMP_HPP
+#ifndef DMGB_JUMP_AND_STACK_HPP
+#define DMGB_JUMP_AND_STACK_HPP
 
 #include "Utility.hpp"
 
@@ -35,9 +35,11 @@ namespace Jump {
 
     void RETI(Cpu *cpu, Jump::op_args &args);
 
-    void RST(Cpu *cpu, Jump::op_args &args);
+    void POP(Cpu *cpu, Jump::op_args &args);
 
-    extern const std::function<void(Cpu *, Jump::op_args &)> op_codes[8] = {JP, JPC, CALL, CALLC, RET, RETC, RETI, RST};
+    void PUSH(Cpu *cpu, Jump::op_args &args);
+
+    extern const std::function<void(Cpu *, Jump::op_args &)> op_codes[9];
 
 }
-#endif //DMGB_JUMP_HPP
+#endif //DMGB_JUMP_AND_STACK_HPP

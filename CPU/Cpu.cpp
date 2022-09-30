@@ -3,24 +3,8 @@
 //
 
 #include "Cpu.hpp"
+#include "Instructions.hpp"
 #include "../Console/Console.hpp"
-
-Instructions::Instructions() {
-    Type = 0;
-    op_id = 0;
-    addr_mode = 0;
-    bytes_to_fetch = 0;
-    cycles = 0;
-}
-
-Instructions::Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) {
-    this->Type = Type;
-    this->op_id = op_id;
-    this->addr_mode = addr_mode;
-    this->bytes_to_fetch = bytes_to_fetch;
-    this->cycles = cycles;
-}
-
 
 Cpu::Cpu(Console *game) {
     reg_mapper = array<byte, 9>{0};
@@ -28,17 +12,23 @@ Cpu::Cpu(Console *game) {
     SP = zero;
     PC = zero;
     this->game = game;
-    Instruction_List = array<Instructions, 2>{
-            Instructions(0, 0, 0, 2, 1),
-            Instructions(0, 1, 1, 1, 1)
-    };
+    flags.reserve(10);
 }
 
+//void Cpu::halt(bool status) { //TODO implement correct halt logic
+//    Halt = status;
+//}
+
 void Cpu::loop() {
-    vector<Flag_Status> flags;
-    Instructions curr = Instruction_List[PC];
-    vector<byte> fetched = fetch(flags, curr);
-    decode_and_execute(flags, std::move(fetched), curr);
+    flags.clear();
+    byte index = read(PC);
+    Instructions curr = Instruction_List[index];
+
+    if (index == 0xCB)
+        curr = Prefix_List[read(PC + 1)];
+
+    vector<byte> fetched = fetch(curr);
+    decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
 }
 
@@ -114,7 +104,7 @@ void Cpu::set_flags(vector<Flag_Status> &flag_array) {
     reg_mapper[8] = F;
 }
 
-vector<byte> Cpu::fetch(vector<Flag_Status> &flags, Instructions &instruction_data) {
+vector<byte> Cpu::fetch(Instructions &instruction_data) {
     vector<byte> fetched;
 
     auto bytes_to_fetch = instruction_data.bytes_to_fetch;
@@ -132,7 +122,7 @@ vector<byte> Cpu::fetch(vector<Flag_Status> &flags, Instructions &instruction_da
     return fetched;
 }
 
-void Cpu::decode_and_execute(vector<Flag_Status> &flags, vector<byte> fetched, Instructions &instruction_data) {
+void Cpu::decode_and_execute(vector<byte> fetched, Instructions &instruction_data) {
     auto Type = instruction_data.Type;
     auto op_id = instruction_data.op_id;
     auto addr_mode = instruction_data.addr_mode;
@@ -156,6 +146,14 @@ void Cpu::decode_and_execute(vector<Flag_Status> &flags, vector<byte> fetched, I
         }
         case 4: {
             Store::dispatch(flags, this, op_id, fetched, addr_mode);
+            return;
+        }
+        case 5: {
+            Jump::dispatch(flags, this, op_id, fetched, addr_mode);
+            return;
+        }
+        case 6: {
+            Misc::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
         default:

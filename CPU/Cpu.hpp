@@ -11,32 +11,25 @@
 #include "Bit_Operations.hpp"
 #include "Load.hpp"
 #include "Store.hpp"
-#include "Jump.hpp"
+#include "Jump_and_Stack.hpp"
+#include "Misc.hpp"
+#include "Instructions.hpp"
 
 class Console;
 
-struct Instructions {
-    int Type;
-    int op_id;
-    int addr_mode;
-    int bytes_to_fetch;
-    int cycles;
-
-    Instructions();
-
-    Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles);
-};
-
+class Instructions;
 
 class Cpu {
     word SP, PC;
-    array<byte, 9> reg_mapper;
-    array<Instructions, 2> Instruction_List;
+    array<byte, 9> reg_mapper{};
     std::stack<byte> stack;
+    vector<Flag_Status> flags;
     Console *game;
 public:
 
     explicit Cpu(Console *game);
+
+    //void halt(bool status);
 
     void push(byte to_push);
 
@@ -56,11 +49,12 @@ public:
 
     void set_flags(vector<Flag_Status> &flag_array);
 
-    vector<byte> fetch(vector<Flag_Status> &flags, Instructions &instruction_data);
+    vector<byte> fetch(Instructions &instruction_data);
 
-    void decode_and_execute(vector<Flag_Status> &flags, vector<byte> fetched, Instructions &instruction_data);
+    void decode_and_execute(vector<byte> fetched, Instructions &instruction_data);
 
     void loop();
 };
+
 
 #endif //DMGB_CPU_HPP

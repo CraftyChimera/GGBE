@@ -7,3 +7,4 @@
 Flag_Status set(Flag bit, bool status) {
     return {bit, status};
 }
+
