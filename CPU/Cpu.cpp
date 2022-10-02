@@ -4,10 +4,18 @@
 
 #include "Cpu.hpp"
 #include "Instructions.hpp"
+#include "Arithmetic.hpp"
+#include "Unary.hpp"
+#include "Bit_Operations.hpp"
+#include "Load.hpp"
+#include "Store.hpp"
+#include "Jump_and_Stack.hpp"
+#include "Misc.hpp"
 #include "../Console/Console.hpp"
 
 Cpu::Cpu(Console *game) {
     reg_mapper = array<byte, 9>{0};
+    cycles_to_increment = 0;
     auto zero = static_cast<word>(0);
     SP = zero;
     PC = zero;
@@ -19,7 +27,7 @@ Cpu::Cpu(Console *game) {
 //    Halt = status;
 //}
 
-void Cpu::loop() {
+int Cpu::loop() {
     flags.clear();
     byte index = read(PC);
     Instructions curr = Instruction_List[index];
@@ -30,6 +38,7 @@ void Cpu::loop() {
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
+    return cycles_to_increment;
 }
 
 void Cpu::push(byte to_push) {
@@ -108,17 +117,15 @@ vector<byte> Cpu::fetch(Instructions &instruction_data) {
     vector<byte> fetched;
 
     auto bytes_to_fetch = instruction_data.bytes_to_fetch;
-    auto cycles = instruction_data.cycles;
+    cycles_to_increment = instruction_data.cycles;
 
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
     }
-
     byte flag_data = get(Reg::f);
     if ((flag_data & (1 << Flag::c)) > 0) {
         flags.emplace_back(Flag_Status(Flag::c, true));
     }
-    std::cout << cycles;
     return fetched;
 }
 

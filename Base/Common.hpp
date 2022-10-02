@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <array>
+#include <stack>
 #include <string>
 #include <fstream>
 #include <iostream>

@@ -10,7 +10,8 @@ Store::op_args::op_args() {
     destination = 0;
 }
 
-void Store::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Store::dispatch([[maybe_unused]]vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched,
+                     int addr_mode) {
 
     if (addr_mode == store::addr_modes::SP) { //LD [u16],SP
         word lo = bytes_fetched[1], hi = bytes_fetched[2], address, value_to_write = cpu->get(DReg::sp);

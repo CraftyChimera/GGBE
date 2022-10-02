@@ -1,23 +1,20 @@
 cmake_minimum_required(VERSION 3.22)
-project(DMGB)
+project(DMGB CXX)
+
+add_executable(${PROJECT_NAME}
+        main.cpp
+        Base/Parser.cpp
+        Cartridge/Cartridge.cpp
+        Console/Console.cpp
+        )
+
+find_package(SDL2 REQUIRED)
+include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
+
+add_subdirectory(CPU)
+
+target_link_libraries(${PROJECT_NAME} CPU)
+target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 
 set(CMAKE_CXX_STANDARD 20)
-
-include_directories(Base)
-
-add_executable(DMGB
-        Base/Parser.cpp
-        Base/Parser.hpp
-        main.cpp
-        Base/Common.hpp
-        Cartridge/Cartridge.cpp Cartridge/Cartridge.hpp
-        CPU/Cpu.cpp CPU/Cpu.hpp
-        Console/Console.cpp Console/Console.hpp CPU/Arithmetic.cpp
-        CPU/Arithmetic.hpp CPU/Unary.cpp
-        CPU/Unary.hpp CPU/Bit_Operations.cpp
-        CPU/Bit_Operations.hpp CPU/Utility.cpp
-        CPU/Utility.hpp CPU/Load.cpp CPU/Load.hpp
-        CPU/Store.cpp CPU/Store.hpp
-        CPU/Jump_and_Stack.cpp CPU/Jump_and_Stack.hpp
-        CPU/Misc.cpp CPU/Misc.hpp
-        CPU/Instructions.cpp CPU/Instructions.hpp)
+add_compile_options(-Wall -Wextra -pedantic -Werror)

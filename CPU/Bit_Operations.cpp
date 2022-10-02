@@ -66,13 +66,13 @@ word Bit_Operations::BIT(vector<Flag_Status> &flags, Bit_Operations::op_args arg
     return arg.value;
 }
 
-word Bit_Operations::RES(vector<Flag_Status> &flags, Bit_Operations::op_args arg) {
+word Bit_Operations::RES([[maybe_unused]] vector<Flag_Status> &flags, Bit_Operations::op_args arg) {
     byte bit = arg.test_bit, value = arg.value;
     byte bitmask = 0xFF - (1 << bit);
     return value & bitmask;
 }
 
-word Bit_Operations::SET(vector<Flag_Status> &flags, Bit_Operations::op_args arg) {
+word Bit_Operations::SET([[maybe_unused]]vector<Flag_Status> &flags, Bit_Operations::op_args arg) {
     byte bit = arg.test_bit, value = arg.value;
     byte bitmask = (1 << bit);
     return value | bitmask;

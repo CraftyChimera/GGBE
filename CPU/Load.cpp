@@ -10,7 +10,8 @@ Load::op_args::op_args() {
     destination = Reg::a;
 }
 
-void Load::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Load::dispatch([[maybe_unused]] vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched,
+                    int addr_mode) {
 
     if (addr_mode == load::addr_modes::IMM_16) { //LD r16,u16
         int bitmask = (bytes_fetched[0] >> 4);

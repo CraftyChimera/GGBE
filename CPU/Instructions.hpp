@@ -5,7 +5,6 @@
 #ifndef DMGB_INSTRUCTIONS_HPP
 #define DMGB_INSTRUCTIONS_HPP
 
-#include "../Base/Common.hpp"
 #include "Utility.hpp"
 
 struct Instructions {

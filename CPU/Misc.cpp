@@ -10,7 +10,7 @@ const std::function<void(vector<Flag_Status> &, Cpu *)> Misc::op_codes[9] = {Mis
                                                                              Misc::NOP, Misc::SCF,
                                                                              Misc::HALT, Misc::STOP, Misc::DAA};
 
-void Misc::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched,
+void Misc::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, [[maybe_unused]] vector<byte> &bytes_fetched,
                     [[maybe_unused]] int addr_mode) {
     Misc::op_codes[op_id](flags, cpu);
 }
@@ -30,15 +30,12 @@ void Misc::CPL(vector<Flag_Status> &flags, Cpu *cpu) {
     cpu->set(Reg::a, A);
 }
 
-void Misc::DI(vector<Flag_Status> &flags, Cpu *cpu) {
-    cpu->write(IME, false);
-}
+//TODO implement Interrupt instructions properly
+void Misc::DI([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
 
-void Misc::EI(vector<Flag_Status> &flags, Cpu *cpu) {
-    cpu->write(IME, true);
-}
+void Misc::EI([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
 
-void Misc::NOP(vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
+void Misc::NOP([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
 
 void Misc::SCF(vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {
     flags.emplace_back(set(Flag::n, false));
@@ -46,10 +43,10 @@ void Misc::SCF(vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {
     flags.emplace_back(set(Flag::c, true));
 }
 
-void Misc::STOP(vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {
+void Misc::STOP([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {
     //cpu->halt(true);
 }
 
-void Misc::HALT(vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
+void Misc::HALT([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
 
-void Misc::DAA(vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}
+void Misc::DAA([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] Cpu *cpu) {}

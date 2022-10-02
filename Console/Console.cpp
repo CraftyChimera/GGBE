@@ -4,13 +4,18 @@
 
 #include "Console.hpp"
 
-Console::Console() : cpu(this), memory(array<byte, memory_map_size>{0}), rom_bank_number(0), ram_bank_number(0),
-                     ram_enabled(false), number_of_rom_banks(0), number_of_ram_banks(0), mode_flag(0) {}
+Console::Console() : cpu(this), memory(array<byte, memory_map_size>{0}), ram_enabled(false), rom_bank_number(0),
+                     ram_bank_number(0), mode_flag(0), number_of_rom_banks(0), number_of_ram_banks(0) {}
 
 void Console::boot(vector<byte> &data) {
     cartridge.init(data);
     number_of_rom_banks = cartridge.number_of_rom_banks;
     number_of_ram_banks = cartridge.number_of_ram_banks;
+}
+
+void Console::loop() {
+    [[maybe_unused]] auto cycles = cpu.loop();
+    std::cout << static_cast<int>(cpu.get(Reg::a));
 }
 
 void Console::write(word &address, byte value) {
@@ -80,7 +85,7 @@ byte Console::read(word &address) {
     if (address < 0x8000) {
         word offset = address - 0x4000;
         byte bitmask = (number_of_rom_banks - 1) & 0x11111;
-        byte high_bank_number = (ram_bank_number >> 5) & (number_of_rom_banks - 1) + (rom_bank_number & bitmask);
+        byte high_bank_number = ((ram_bank_number >> 5) & (number_of_rom_banks - 1)) + (rom_bank_number & bitmask);
         return cartridge.get_rom_bank(high_bank_number, offset);
     }
 

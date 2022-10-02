@@ -9,9 +9,9 @@
 #include "../Cartridge/Cartridge.hpp"
 
 class Console {
+    Cpu cpu;
     array<byte, memory_map_size> memory;
     bool ram_enabled;
-    Cpu cpu;
     Cartridge cartridge;
     byte rom_bank_number, ram_bank_number, mode_flag;
     size_t number_of_rom_banks, number_of_ram_banks;
@@ -22,6 +22,8 @@ public:
     void boot(vector<byte> &data);
 
     void write(word &address, byte value);
+
+    void loop();
 
     byte read(word &address);
 };

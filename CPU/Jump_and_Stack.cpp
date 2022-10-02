@@ -15,7 +15,8 @@ Jump::op_args::op_args() {
     condition = -1;
 }
 
-void Jump::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Jump::dispatch([[maybe_unused]] vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched,
+                    int addr_mode) {
     auto args = Jump::get_args(cpu, bytes_fetched, addr_mode);
     Jump::op_codes[op_id](cpu, args);
 }
@@ -67,8 +68,10 @@ void Jump::JP(Cpu *cpu, Jump::op_args &args) { //RST
 }
 
 void Jump::JPC(Cpu *cpu, Jump::op_args &args) {
-    if (checkCondition(cpu->get(Reg::f), args.condition))
+    if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::JP(cpu, args);
+        cpu->cycles_to_increment++;
+    }
 }
 
 void Jump::CALL(Cpu *cpu, Jump::op_args &args) {
@@ -80,11 +83,13 @@ void Jump::CALL(Cpu *cpu, Jump::op_args &args) {
 }
 
 void Jump::CALLC(Cpu *cpu, Jump::op_args &args) {
-    if (checkCondition(cpu->get(Reg::f), args.condition))
+    if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::CALL(cpu, args);
+        cpu->cycles_to_increment += 3;
+    }
 }
 
-void Jump::RET(Cpu *cpu, Jump::op_args &args) {
+void Jump::RET(Cpu *cpu, [[maybe_unused]] Jump::op_args &args) {
     word lo, hi;
     lo = cpu->pop();
     hi = cpu->pop();
@@ -92,8 +97,10 @@ void Jump::RET(Cpu *cpu, Jump::op_args &args) {
 }
 
 void Jump::RETC(Cpu *cpu, Jump::op_args &args) {
-    if (checkCondition(cpu->get(Reg::f), args.condition))
+    if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::RET(cpu, args);
+        cpu->cycles_to_increment += 3;
+    }
 }
 
 void Jump::RETI(Cpu *cpu, Jump::op_args &args) {

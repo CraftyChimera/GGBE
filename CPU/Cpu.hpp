@@ -5,19 +5,11 @@
 #ifndef DMGB_CPU_HPP
 #define DMGB_CPU_HPP
 
-#include <stack>
-#include "Arithmetic.hpp"
-#include "Unary.hpp"
-#include "Bit_Operations.hpp"
-#include "Load.hpp"
-#include "Store.hpp"
-#include "Jump_and_Stack.hpp"
-#include "Misc.hpp"
-#include "Instructions.hpp"
-
-class Console;
+#include "Utility.hpp"
 
 class Instructions;
+
+class Console;
 
 class Cpu {
     word SP, PC;
@@ -26,6 +18,8 @@ class Cpu {
     vector<Flag_Status> flags;
     Console *game;
 public:
+
+    int cycles_to_increment;
 
     explicit Cpu(Console *game);
 
@@ -53,7 +47,7 @@ public:
 
     void decode_and_execute(vector<byte> fetched, Instructions &instruction_data);
 
-    void loop();
+    int loop();
 };
 
 

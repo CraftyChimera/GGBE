@@ -4,7 +4,7 @@
 
 #include "Cartridge.hpp"
 
-Cartridge::Cartridge() : number_of_ram_banks(0), number_of_rom_banks(0) {
+Cartridge::Cartridge() : number_of_rom_banks(0), number_of_ram_banks(0) {
 }
 
 void Cartridge::init(vector<byte> &data) {

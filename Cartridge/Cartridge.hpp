@@ -14,7 +14,6 @@ public:
     size_t number_of_rom_banks;
     size_t number_of_ram_banks;
 
-public:
     Cartridge();
 
     void init(vector<byte> &data);
