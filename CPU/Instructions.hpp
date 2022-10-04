@@ -13,9 +13,7 @@ struct Instructions {
     int addr_mode;
     int bytes_to_fetch;
     int cycles;
-
-    Instructions() noexcept;
-
+    
     Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) noexcept;
 };
 

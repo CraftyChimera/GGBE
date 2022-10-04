@@ -7,23 +7,38 @@
 
 #include "../CPU/Cpu.hpp"
 #include "../Cartridge/Cartridge.hpp"
+#include "../GPU/Gpu.hpp"
+#include "SDL.h"
 
 class Console {
     Cpu cpu;
-    array<byte, memory_map_size> memory;
+    std::array<byte, memory_map_size> memory;
+
     bool ram_enabled;
     Cartridge cartridge;
+    GPU renderer;
+
     byte rom_bank_number, ram_bank_number, mode_flag;
     size_t number_of_rom_banks, number_of_ram_banks;
+
+    SDL_Window *window;
 
 public:
     Console();
 
-    void boot(vector<byte> &data);
+    ~Console();
 
-    void write(word &address, byte value);
+    void init(vector<byte> &data);
+
+    void init_cartridge(vector<byte> &data);
+
+    void init_renderer();
 
     void loop();
+
+    void run(vector<byte> &data);
+
+    void write(word &address, byte value);
 
     byte read(word &address);
 };

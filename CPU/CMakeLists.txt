@@ -12,3 +12,5 @@ add_library(${PROJECT_NAME}
         Misc.cpp
         Instructions.cpp
         )
+
+target_include_directories(${PROJECT_NAME} PUBLIC "../Base")

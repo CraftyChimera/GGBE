@@ -4,14 +4,6 @@
 
 #include "Instructions.hpp"
 
-Instructions::Instructions() noexcept {
-    Type = 0;
-    op_id = 0;
-    addr_mode = 0;
-    bytes_to_fetch = 0;
-    cycles = 0;
-}
-
 Instructions::Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) noexcept {
     this->Type = Type;
     this->op_id = op_id;

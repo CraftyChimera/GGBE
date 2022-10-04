@@ -12,13 +12,13 @@ vector<byte> read_file(const std::string &path) {
         exit(-1);
     }
     vector<byte> out;
-    auto buf = string(read_size, '\0');
+    auto buf = std::string(read_size, '\0');
     while (stream.read(&buf[0], read_size)) {
-        string temp(buf, 0, stream.gcount());
+        std::string temp(buf, 0, stream.gcount());
         for (auto x: temp)
             out.push_back(static_cast<byte>(x));
     }
-    string temp(buf, 0, stream.gcount());
+    std::string temp(buf, 0, stream.gcount());
     for (auto x: temp)
         out.push_back(static_cast<byte>(x));
     return out;

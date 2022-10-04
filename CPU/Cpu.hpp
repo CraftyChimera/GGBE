@@ -6,6 +6,7 @@
 #define DMGB_CPU_HPP
 
 #include "Utility.hpp"
+#include <stack>
 
 class Instructions;
 
@@ -13,7 +14,7 @@ class Console;
 
 class Cpu {
     word SP, PC;
-    array<byte, 9> reg_mapper{};
+    std::array<byte, 9> reg_mapper{};
     std::stack<byte> stack;
     vector<Flag_Status> flags;
     Console *game;

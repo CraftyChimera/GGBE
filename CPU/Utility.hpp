@@ -2,10 +2,14 @@
 // Created by drake on 14/9/22.
 //
 
-#ifndef DMGB_UTILITY_HPP
-#define DMGB_UTILITY_HPP
+#ifndef DMGB_CPU_UTILITY_HPP
+#define DMGB_CPU_UTILITY_HPP
 
-#include "../Base/Common.hpp"
+#include "Constants.hpp"
+#include <functional>
+#include <variant>
+
+using std::function;
 
 enum struct Reg {
     b [[maybe_unused]] = 0,
@@ -203,4 +207,4 @@ namespace misc {
 }
 
 
-#endif //DMGB_UTILITY_HPP
+#endif //DMGB_CPU_UTILITY_HPP

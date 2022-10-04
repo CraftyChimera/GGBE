@@ -14,7 +14,7 @@
 #include "../Console/Console.hpp"
 
 Cpu::Cpu(Console *game) {
-    reg_mapper = array<byte, 9>{0};
+    reg_mapper = std::array<byte, 9>{};
     cycles_to_increment = 0;
     auto zero = static_cast<word>(0);
     SP = zero;

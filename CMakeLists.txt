@@ -12,9 +12,10 @@ find_package(SDL2 REQUIRED)
 include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
 
 add_subdirectory(CPU)
+add_subdirectory(GPU)
 
 target_link_libraries(${PROJECT_NAME} CPU)
-target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} GPU)
 
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -pedantic -Werror)

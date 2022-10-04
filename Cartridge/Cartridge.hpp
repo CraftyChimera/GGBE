@@ -5,7 +5,10 @@
 #ifndef DMGB_CARTRIDGE_HPP
 #define DMGB_CARTRIDGE_HPP
 
-#include "../Base/Common.hpp"
+#include "../Base/Constants.hpp"
+#include <array>
+
+using std::array;
 
 class Cartridge {
     vector<array<byte, rom_block_size>> rom_banks;

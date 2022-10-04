@@ -5,7 +5,9 @@
 #ifndef DMGB_PARSER_HPP
 #define DMGB_PARSER_HPP
 
-#include "Common.hpp"
+#include "Constants.hpp"
+#include <string>
+#include <fstream>
 
 vector<byte> read_file(const std::string &path);
 
