@@ -4,6 +4,10 @@
 
 #include "Objects.hpp"
 
+byte Object::get_data(size_t x_pos, size_t y_pos) {
+    return pixel_data[x_pos][y_pos];
+}
+
 void Object::load(std::array<byte, memory_map_size> &data, int start) {
     for (int row = 0; row < 8; row++) {
         byte first = data[start + 2 * row], second = data[start + 2 * row + 1];

@@ -13,6 +13,8 @@ class Object {
 public:
     Object() = default;
 
+    byte get_data(size_t x_pos, size_t y_pos);
+
     void load(std::array<byte, memory_map_size> &data, int start);
 };
 

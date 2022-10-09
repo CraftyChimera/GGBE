@@ -5,7 +5,7 @@
 #include "Console.hpp"
 
 Console::Console() : cpu(this), memory(std::array<byte, memory_map_size>{0}),
-                     ram_enabled(false), renderer(),
+                     ram_enabled(false), renderer(this),
                      rom_bank_number(0), ram_bank_number(0), mode_flag(0),
                      number_of_rom_banks(0), number_of_ram_banks(0),
                      window(nullptr) {}
@@ -129,7 +129,6 @@ void Console::write(word &address, byte value) {
     }
 
     if (address < 0xFF80) { // IO-Registers: 0xFF00 - 0xFF7F
-        return;
     }
 
     if (address < 0xFFFF) { // High_RAM: 0xFF80 - 0xFFFE

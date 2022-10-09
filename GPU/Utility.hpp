@@ -7,6 +7,4 @@
 
 #include "Constants.hpp"
 
-inline constexpr auto vram_start = 0x8000;
-
 #endif //DMGB_GPU_UTILITY_HPP
