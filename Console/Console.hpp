@@ -5,13 +5,19 @@
 #ifndef DMGB_CONSOLE_HPP
 #define DMGB_CONSOLE_HPP
 
-#include "../CPU/Cpu.hpp"
-#include "../Cartridge/Cartridge.hpp"
-#include "../GPU/Gpu.hpp"
-#include "SDL.h"
+#include "Constants.hpp"
+#include "Cpu.hpp"
+#include "Gpu.hpp"
+#include "Cartridge.hpp"
+
+class GPU;
+
+class Cartridge;
+
+class CPU;
 
 class Console {
-    Cpu cpu;
+    CPU cpu;
     std::array<byte, memory_map_size> memory;
 
     bool ram_enabled;
@@ -21,18 +27,10 @@ class Console {
     byte rom_bank_number, ram_bank_number, mode_flag;
     size_t number_of_rom_banks, number_of_ram_banks;
 
-    SDL_Window *window;
-
 public:
     Console();
 
-    ~Console();
-
     void init(vector<byte> &data);
-
-    void init_cartridge(vector<byte> &data);
-
-    void init_renderer();
 
     void loop();
 

@@ -5,7 +5,7 @@
 #ifndef DMGB_OBJECTS_HPP
 #define DMGB_OBJECTS_HPP
 
-#include "Utility.hpp"
+#include "Constants.hpp"
 
 class Object {
     std::array<std::array<byte, 8>, 8> pixel_data;

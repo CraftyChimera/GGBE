@@ -7,7 +7,7 @@
 
 #include "Utility.hpp"
 
-class Cpu;
+class CPU;
 namespace Bit_Operations {
 
     struct op_args {
@@ -17,9 +17,9 @@ namespace Bit_Operations {
         op_args();
     };
 
-    Bit_Operations::op_args get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Bit_Operations::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
 
     word BIT(vector<Flag_Status> &, Bit_Operations::op_args);
 

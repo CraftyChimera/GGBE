@@ -1,3 +1,4 @@
 cmake-build-dmgb/
 .idea/
 CMakeFiles/
+roms/*.gb

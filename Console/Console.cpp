@@ -7,37 +7,12 @@
 Console::Console() : cpu(this), memory(std::array<byte, memory_map_size>{0}),
                      ram_enabled(false), renderer(this),
                      rom_bank_number(0), ram_bank_number(0), mode_flag(0),
-                     number_of_rom_banks(0), number_of_ram_banks(0),
-                     window(nullptr) {}
-
-Console::~Console() {
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    std::cout << "\nDestructor called\n";
-}
+                     number_of_rom_banks(0), number_of_ram_banks(0) {}
 
 void Console::init(vector<byte> &data) {
-    init_cartridge(data);
-    init_renderer();
-}
-
-void Console::init_cartridge(vector<byte> &data) {
     cartridge.init(data);
     number_of_rom_banks = cartridge.number_of_rom_banks;
     number_of_ram_banks = cartridge.number_of_ram_banks;
-}
-
-void Console::init_renderer() {
-    int flags = SDL_INIT_VIDEO, screen_width = 160, screen_height = 144;
-    if (SDL_Init(flags) < 0) { std::cout << "Init\n" << SDL_GetError() << "\n"; }
-
-    window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width,
-                              screen_height, SDL_WINDOW_SHOWN);
-    if (window == nullptr) { std::cout << "Window" << SDL_GetError() << "\n"; }
-
-    SDL_Surface *screenSurface = SDL_GetWindowSurface(window);
-    SDL_FillRect(screenSurface, nullptr, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
-    SDL_UpdateWindowSurface(window);
 }
 
 void Console::loop() {
@@ -47,16 +22,18 @@ void Console::loop() {
     while (open) {
 
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) open = false;
+            if (e.type == SDL_QUIT)
+                open = false;
         }
 
-        [[maybe_unused]] auto cycles = cpu.loop();
-        renderer.render(memory);
+        auto cycles = cpu.run_instruction_cycle();
+        renderer.update(cycles);
+
     }
 }
 
 void Console::run(vector<byte> &data) {
-    init(data);
+    cartridge.init(data);
     loop();
 }
 

@@ -12,7 +12,7 @@ const std::function<byte(vector<Flag_Status> &, Bit_Operations::op_args)> Bit_Op
 
 Bit_Operations::op_args::op_args() : test_bit(0), value(0), location(Reg::a) {}
 
-void Bit_Operations::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &fetched, int addr_mode) {
+void Bit_Operations::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &fetched, int addr_mode) {
     auto args = Bit_Operations::get_args(cpu, fetched, addr_mode);
     word value = Bit_Operations::op_codes[op_id](flags, args);
 
@@ -28,7 +28,7 @@ void Bit_Operations::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, v
 
 }
 
-Bit_Operations::op_args Bit_Operations::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Bit_Operations::op_args Bit_Operations::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Bit_Operations::op_args result;
     switch (addressing_mode) {
         case bit_op::addr_modes::REG : //BIT u3,r8

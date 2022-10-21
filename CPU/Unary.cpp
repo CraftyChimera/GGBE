@@ -26,7 +26,7 @@ void Unary::Un_16(word &value, int op_id) {
     Un[op_id](value);
 }
 
-void Unary::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Unary::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
 
     if (addr_mode == unary::addr_modes::REG_16) {
         int bitmask = (bytes_fetched[0] >> 4);
@@ -72,7 +72,7 @@ void Unary::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byt
 
 }
 
-Unary::op_args Unary::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Unary::op_args Unary::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Unary::op_args result;
     switch (addressing_mode) {
         case unary::addr_modes::REG: // INC r8

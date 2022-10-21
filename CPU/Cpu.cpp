@@ -13,7 +13,7 @@
 #include "Misc.hpp"
 #include "../Console/Console.hpp"
 
-Cpu::Cpu(Console *game) {
+CPU::CPU(Console *game) {
     reg_mapper = std::array<byte, 9>{};
     cycles_to_increment = 0;
     auto zero = static_cast<word>(0);
@@ -23,11 +23,11 @@ Cpu::Cpu(Console *game) {
     flags.reserve(10);
 }
 
-//void Cpu::halt(bool status) { //TODO implement correct halt logic
+//void CPU::halt(bool status) { //TODO implement correct halt logic
 //    Halt = status;
 //}
 
-int Cpu::loop() {
+int CPU::run_instruction_cycle() {
     flags.clear();
     byte index = read(PC);
     Instructions curr = Instruction_List[index];
@@ -41,30 +41,30 @@ int Cpu::loop() {
     return cycles_to_increment;
 }
 
-void Cpu::push(byte to_push) {
+void CPU::push(byte to_push) {
     stack.push(to_push);
 }
 
-byte Cpu::pop() {
+byte CPU::pop() {
     byte value = stack.top();
     stack.pop();
     return value;
 }
 
-byte Cpu::read(word address) {
+byte CPU::read(word address) {
     return game->read(address);
 }
 
-void Cpu::write(word address, byte value) {
+void CPU::write(word address, byte value) {
     game->write(address, value);
 }
 
-byte Cpu::get(Reg reg_index) {
+byte CPU::get(Reg reg_index) {
     auto index = static_cast<int>(reg_index);
     return reg_mapper[index];
 }
 
-word Cpu::get(DReg reg_index) {
+word CPU::get(DReg reg_index) {
     switch (reg_index) {
         case DReg::pc:
             return PC;
@@ -77,12 +77,12 @@ word Cpu::get(DReg reg_index) {
     }
 }
 
-void Cpu::set(Reg reg_index, byte value) {
+void CPU::set(Reg reg_index, byte value) {
     auto index = static_cast<int>(reg_index);
     reg_mapper[index] = value;
 }
 
-void Cpu::set(DReg reg_index, word val) {
+void CPU::set(DReg reg_index, word val) {
     auto index = static_cast<int>(reg_index);
     switch (reg_index) {
         case DReg::pc:
@@ -98,7 +98,7 @@ void Cpu::set(DReg reg_index, word val) {
     }
 }
 
-void Cpu::set_flags(vector<Flag_Status> &flag_array) {
+void CPU::set_flags(vector<Flag_Status> &flag_array) {
     byte F = reg_mapper[8];
     for (auto flag_c: flag_array) {
         Flag bit = flag_c.bit;
@@ -113,7 +113,7 @@ void Cpu::set_flags(vector<Flag_Status> &flag_array) {
     reg_mapper[8] = F;
 }
 
-vector<byte> Cpu::fetch(Instructions &instruction_data) {
+vector<byte> CPU::fetch(Instructions &instruction_data) {
     vector<byte> fetched;
 
     auto bytes_to_fetch = instruction_data.bytes_to_fetch;
@@ -129,7 +129,7 @@ vector<byte> Cpu::fetch(Instructions &instruction_data) {
     return fetched;
 }
 
-void Cpu::decode_and_execute(vector<byte> fetched, Instructions &instruction_data) {
+void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_data) {
     auto Type = instruction_data.Type;
     auto op_id = instruction_data.op_id;
     auto addr_mode = instruction_data.addr_mode;

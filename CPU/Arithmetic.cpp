@@ -39,7 +39,7 @@ word ADD_SP(vector<Flag_Status> &flags, word src, s_byte offset) { //TODO Weird 
     return static_cast<word>(temp & 0xFFFF);
 }
 
-void Arithmetic::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
 
     if (addr_mode == arithmetic::addr_modes::ADD_16) {
 
@@ -67,7 +67,7 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vecto
     cpu->set(Reg::a, result);
 }
 
-Arithmetic::op_args Arithmetic::get_args(Cpu *cpu, vector<byte> bytes_fetched, int addressing_mode) {
+Arithmetic::op_args Arithmetic::get_args(CPU *cpu, vector<byte> bytes_fetched, int addressing_mode) {
     Arithmetic::op_args result;
     result.src_value = cpu->get(Reg::a);
     switch (addressing_mode) {

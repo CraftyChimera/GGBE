@@ -7,7 +7,7 @@
 
 #include "Utility.hpp"
 
-class Cpu;
+class CPU;
 namespace Arithmetic {
     struct op_args {
         byte value;
@@ -16,9 +16,9 @@ namespace Arithmetic {
         op_args();
     };
 
-    op_args get_args(Cpu *cpu, vector<byte> bytes_fetched, int addressing_mode);
+    op_args get_args(CPU *cpu, vector<byte> bytes_fetched, int addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
 
     byte ADD(vector<Flag_Status> &, Arithmetic::op_args arg);
 

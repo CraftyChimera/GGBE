@@ -7,7 +7,7 @@
 
 #include "Utility.hpp"
 
-class Cpu;
+class CPU;
 namespace Load {
 
     struct op_args {
@@ -17,9 +17,9 @@ namespace Load {
         op_args();
     };
 
-    void dispatch(vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    void dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
 
-    Load::op_args get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Load::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
 }
 
 #endif //DMGB_LOAD_HPP

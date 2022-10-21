@@ -12,7 +12,7 @@ class Instructions;
 
 class Console;
 
-class Cpu {
+class CPU {
     word SP, PC;
     std::array<byte, 9> reg_mapper{};
     std::stack<byte> stack;
@@ -22,7 +22,7 @@ public:
 
     int cycles_to_increment;
 
-    explicit Cpu(Console *game);
+    explicit CPU(Console *game);
 
     //void halt(bool status);
 
@@ -48,7 +48,7 @@ public:
 
     void decode_and_execute(vector<byte> fetched, Instructions &instruction_data);
 
-    int loop();
+    int run_instruction_cycle();
 };
 
 

@@ -3,19 +3,111 @@
 //
 
 #include "Gpu.hpp"
-#include "../Console/Console.hpp"
+#include "Console.hpp"
+#include "SDL.h"
 
-word GPU::LCD_C = 0xFF40;
-word GPU::SCX = 0xFF42;
-word GPU::SCY = 0xFF43;
+class Sprite {
+    byte x_pos, y_pos;
+    byte tile_id;
+    byte flags;
+};
 
+const State &operator++(State &current_state) {
+    switch (current_state) {
+        case State::OAM_SCAN:
+            return current_state = State::DRAW_PIXELS;
+        case State::DRAW_PIXELS:
+            return current_state = State::H_BLANK;
+        case State::H_BLANK:
+            return current_state = State::OAM_SCAN;
+        default:
+            return current_state;
+    }
+}
 
-GPU::GPU(Console *game) noexcept: tile_data(std::array<std::array<Object, 128>, 3>{}),
-                                  tile_map(std::array<std::array<byte, 0x400>, 2>{}),
-                                  game(game),
-                                  stale(false) {}
+GPU::GPU(Console *game) noexcept: sprites_fetched(false), sprites_loaded{}, cycles_left(0), cycles_accumulated(0),
+                                  fetcher_x(0), fetcher_y(0), pixels{}, state_duration{}, current_scanline{} {
+    this->game = game;
+    int flags = SDL_INIT_VIDEO;
 
-void GPU::fill(std::array<std::array<byte, 0x100>, 0x100> &tile_map_pixels, Object &object_to_load, byte object_x_pos,
+    if (SDL_Init(flags) < 0) {
+        std::cout << "Init\n" << SDL_GetError() << "\n";
+        return;
+    }
+
+    display_window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width,
+                                      screen_height, SDL_WINDOW_SHOWN);
+    if (display_window == nullptr) {
+        std::cout << "Window" << SDL_GetError() << "\n";
+        return;
+    }
+
+    state_duration[State::OAM_SCAN] = 80;
+    state_duration[State::DRAW_PIXELS] = 172;
+    state_duration[State::H_BLANK] = 204;
+    state_duration[State::V_BLANK] = 456;
+
+    current_ppu_state = State::OAM_SCAN;
+    cycles_left = state_duration[current_ppu_state];
+}
+
+void GPU::update(int cycles) {
+    cycles_accumulated += cycles;
+    cycles_left -= cycles;
+
+    switch (current_ppu_state) {
+
+        case State::OAM_SCAN: {
+            if (!sprites_fetched) {
+                scan_sprites();
+                sprites_fetched = true;
+            }
+            break;
+        }
+
+        case State::DRAW_PIXELS: {
+            draw_scanline();
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    if (cycles_left <= 0) {
+        ++current_ppu_state;
+
+        if (cycles_accumulated >= 456) {
+            fetcher_y++;
+            cycles_accumulated = 0;
+
+            if (fetcher_y == screen_height) {
+                current_ppu_state = State::V_BLANK;
+            }
+
+            if (fetcher_y == screen_height_with_pseudo_scan_lines) {
+                fetcher_y = 0;
+                current_ppu_state = State::OAM_SCAN;
+                //TODO:Draw Logic
+                SDL_Delay(17);
+            }
+        }
+
+        cycles_left = state_duration[current_ppu_state];
+    }
+
+}
+
+GPU::~GPU() {
+    SDL_DestroyWindow(display_window);
+    SDL_Quit();
+}
+
+void GPU::scan_sprites() {
+
+}
+
+/*void GPU::fill(std::array<std::array<byte, 0x100>, 0x100> &tile_map_pixels, Object &object_to_load, byte object_x_pos,
                byte object_y_pos) {
     for (size_t x_dir = 0; x_dir < 8; x_dir++)
         for (size_t y_dir = 0; y_dir < 8; y_dir++) {
@@ -48,9 +140,9 @@ void GPU::load_tile_data(std::array<byte, memory_map_size> &memory) {
         }
     }
 }
+*/
 
-void GPU::render(std::array<byte, memory_map_size> &memory) {
-
+/*void GPU::update(int cycles) {
     if (stale) {
         load_data(memory);
         stale = false;
@@ -89,5 +181,4 @@ void GPU::render(std::array<byte, memory_map_size> &memory) {
             view_port[x_pos][y_pos] = tile_map_pixels[(scx_value + x_pos) % tile_map_length_in_bytes][
                     (scy_value + y_pos) % tile_map_length_in_bytes];
         }
-
-}
+*/

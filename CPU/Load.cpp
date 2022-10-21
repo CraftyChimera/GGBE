@@ -10,7 +10,7 @@ Load::op_args::op_args() {
     destination = Reg::a;
 }
 
-void Load::dispatch([[maybe_unused]] vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched,
+void Load::dispatch([[maybe_unused]] vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
                     int addr_mode) {
 
     if (addr_mode == load::addr_modes::IMM_16) { //LD r16,u16
@@ -50,7 +50,7 @@ void Load::dispatch([[maybe_unused]] vector<Flag_Status> &flags, Cpu *cpu, int o
     cpu->set(args.destination, args.src_value);
 }
 
-Load::op_args Load::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Load::op_args Load::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Load::op_args result;
     switch (addressing_mode) {
         case load::addr_modes::IMM : // Load r8,u8

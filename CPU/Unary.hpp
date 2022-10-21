@@ -7,7 +7,7 @@
 
 #include "Utility.hpp"
 
-class Cpu;
+class CPU;
 
 namespace Unary {
 
@@ -18,9 +18,9 @@ namespace Unary {
         op_args();
     };
 
-    Unary::op_args get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Unary::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
 
     void Un_16(word &value, int op_id);
 

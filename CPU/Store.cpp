@@ -10,7 +10,7 @@ Store::op_args::op_args() {
     destination = 0;
 }
 
-void Store::dispatch([[maybe_unused]]vector<Flag_Status> &flags, Cpu *cpu, int op_id, vector<byte> &bytes_fetched,
+void Store::dispatch([[maybe_unused]]vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
                      int addr_mode) {
 
     if (addr_mode == store::addr_modes::SP) { //LD [u16],SP
@@ -40,7 +40,7 @@ void Store::dispatch([[maybe_unused]]vector<Flag_Status> &flags, Cpu *cpu, int o
 }
 
 
-Store::op_args Store::get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Store::op_args Store::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
     Store::op_args result;
     switch (addressing_mode) {
         case store::addr_modes::IMM: //STORE [HL],u8

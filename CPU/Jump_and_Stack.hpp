@@ -7,7 +7,7 @@
 
 #include "Utility.hpp"
 
-class Cpu;
+class CPU;
 
 namespace Jump {
     struct op_args {
@@ -17,29 +17,29 @@ namespace Jump {
         op_args();
     };
 
-    Jump::op_args get_args(Cpu *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Jump::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, Cpu *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
 
-    void JP(Cpu *cpu, Jump::op_args &args);
+    void JP(CPU *cpu, Jump::op_args &args);
 
-    void JPC(Cpu *cpu, Jump::op_args &args);
+    void JPC(CPU *cpu, Jump::op_args &args);
 
-    void CALL(Cpu *cpu, Jump::op_args &args);
+    void CALL(CPU *cpu, Jump::op_args &args);
 
-    void CALLC(Cpu *cpu, Jump::op_args &args);
+    void CALLC(CPU *cpu, Jump::op_args &args);
 
-    void RET(Cpu *cpu, Jump::op_args &args);
+    void RET(CPU *cpu, Jump::op_args &args);
 
-    void RETC(Cpu *cpu, Jump::op_args &args);
+    void RETC(CPU *cpu, Jump::op_args &args);
 
-    void RETI(Cpu *cpu, Jump::op_args &args);
+    void RETI(CPU *cpu, Jump::op_args &args);
 
-    void POP(Cpu *cpu, Jump::op_args &args);
+    void POP(CPU *cpu, Jump::op_args &args);
 
-    void PUSH(Cpu *cpu, Jump::op_args &args);
+    void PUSH(CPU *cpu, Jump::op_args &args);
 
-    extern const std::function<void(Cpu *, Jump::op_args &)> op_codes[9];
+    extern const std::function<void(CPU *, Jump::op_args &)> op_codes[9];
 
 }
 #endif //DMGB_JUMP_AND_STACK_HPP
