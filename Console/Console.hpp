@@ -5,10 +5,10 @@
 #ifndef DMGB_CONSOLE_HPP
 #define DMGB_CONSOLE_HPP
 
-#include "Constants.hpp"
-#include "Cpu.hpp"
-#include "Gpu.hpp"
-#include "Cartridge.hpp"
+#include "../Base/Constants.hpp"
+#include "../CPU/Cpu.hpp"
+#include "../GPU/Gpu.hpp"
+#include "../Cartridge/Cartridge.hpp"
 
 class GPU;
 
@@ -30,15 +30,18 @@ class Console {
 public:
     Console();
 
+    void run(vector<byte> &data);
+
+    void write(word address, byte value);
+
+    byte read(word address);
+
+private:
     void init(vector<byte> &data);
 
     void loop();
 
-    void run(vector<byte> &data);
-
-    void write(word &address, byte value);
-
-    byte read(word &address);
+    void boot_rom();
 };
 
 #endif //DMGB_CONSOLE_HPP

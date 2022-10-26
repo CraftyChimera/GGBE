@@ -5,14 +5,14 @@
 #ifndef DMGB_CPU_UTILITY_HPP
 #define DMGB_CPU_UTILITY_HPP
 
-#include "Constants.hpp"
+#include "../Base/Constants.hpp"
 #include <functional>
 #include <variant>
 
 using std::function;
 
 enum struct Reg {
-    b [[maybe_unused]] = 0,
+    b = 0,
     c = 1,
     d [[maybe_unused]] = 2,
     e [[maybe_unused]] = 3,

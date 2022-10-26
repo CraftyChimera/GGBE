@@ -175,7 +175,8 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::MEM, 1, 2),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::REG, 1, 1),
 
-                Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
+                //TODO wrong instruction 136
+                Instructions(Type::ARITHMETIC, arithmetic::op::SUB, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),

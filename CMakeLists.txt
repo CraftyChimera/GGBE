@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(DMGB CXX)
 
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Warray-bounds")
+
 add_executable(${PROJECT_NAME}
         main.cpp
         Base/Parser.cpp
@@ -17,7 +19,3 @@ add_subdirectory(Console)
 
 target_link_libraries(${PROJECT_NAME} CPU)
 target_link_libraries(${PROJECT_NAME} GPU)
-target_link_libraries(${PROJECT_NAME} Console)
-
-set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-Wall -Wextra -pedantic -Werror)

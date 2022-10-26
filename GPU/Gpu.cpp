@@ -4,30 +4,16 @@
 
 #include "Gpu.hpp"
 #include "Console.hpp"
-#include "SDL.h"
 
-class Sprite {
-    byte x_pos, y_pos;
-    byte tile_id;
-    byte flags;
-};
+GPU::GPU(Console *game) noexcept: sprites_fetched(false), cycles_accumulated(0), cycles_delayed(0),
+                                  pixels{}, mapper(game) {
+    native_surface = nullptr;
 
-const State &operator++(State &current_state) {
-    switch (current_state) {
-        case State::OAM_SCAN:
-            return current_state = State::DRAW_PIXELS;
-        case State::DRAW_PIXELS:
-            return current_state = State::H_BLANK;
-        case State::H_BLANK:
-            return current_state = State::OAM_SCAN;
-        default:
-            return current_state;
-    }
-}
-
-GPU::GPU(Console *game) noexcept: sprites_fetched(false), sprites_loaded{}, cycles_left(0), cycles_accumulated(0),
-                                  fetcher_x(0), fetcher_y(0), pixels{}, state_duration{}, current_scanline{} {
     this->game = game;
+
+    if (game != nullptr)
+        std::cout << "Initialized\n";
+
     int flags = SDL_INIT_VIDEO;
 
     if (SDL_Init(flags) < 0) {
@@ -36,37 +22,59 @@ GPU::GPU(Console *game) noexcept: sprites_fetched(false), sprites_loaded{}, cycl
     }
 
     display_window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width,
-                                      screen_height, SDL_WINDOW_SHOWN);
+                                      screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+
     if (display_window == nullptr) {
         std::cout << "Window" << SDL_GetError() << "\n";
         return;
     }
 
-    state_duration[State::OAM_SCAN] = 80;
-    state_duration[State::DRAW_PIXELS] = 172;
-    state_duration[State::H_BLANK] = 204;
-    state_duration[State::V_BLANK] = 456;
+    int channels = 3, native_width = 160, native_height = 144;
+
+    formatted_pixels = new char[native_width * native_height * channels];
+
+    for (int index = 0; index < native_width * native_height * 3; index++)
+        formatted_pixels[index] = 0xF;
 
     current_ppu_state = State::OAM_SCAN;
-    cycles_left = state_duration[current_ppu_state];
 }
 
 void GPU::update(int cycles) {
+
     cycles_accumulated += cycles;
-    cycles_left -= cycles;
+
+    /*if (cycles_delayed > 0) {
+    int cycles_left = cycles_delayed - cycles;
+    cycles = std::max(0, -cycles_left);
+    cycles_delayed = std::max(0, cycles_left);
+
+    if (cycles_left > 0)
+        return;
+    }*/
 
     switch (current_ppu_state) {
 
         case State::OAM_SCAN: {
-            if (!sprites_fetched) {
-                scan_sprites();
-                sprites_fetched = true;
+
+            //if (!sprites_fetched) {
+            // scan_sprites();
+            //    sprites_fetched = true;
+            //}
+
+            if (cycles_accumulated >= 80) {
+                current_ppu_state = State::DRAW_PIXELS;
+                // cycles_delayed += 12;//TODO: incorporate Window and start_of_scanline_delay
             }
+
             break;
         }
 
         case State::DRAW_PIXELS: {
-            draw_scanline();
+            mapper(cycles);
+
+            if (mapper.fetcher_x == screen_width)
+                current_ppu_state = State::H_BLANK;
+
             break;
         }
 
@@ -74,111 +82,93 @@ void GPU::update(int cycles) {
             break;
     }
 
-    if (cycles_left <= 0) {
-        ++current_ppu_state;
+    if (cycles_accumulated >= 456) {
 
-        if (cycles_accumulated >= 456) {
-            fetcher_y++;
-            cycles_accumulated = 0;
+        //sprites_fetched = false;
+        cycles_accumulated -= 456;
 
-            if (fetcher_y == screen_height) {
-                current_ppu_state = State::V_BLANK;
-            }
-
-            if (fetcher_y == screen_height_with_pseudo_scan_lines) {
-                fetcher_y = 0;
-                current_ppu_state = State::OAM_SCAN;
-                //TODO:Draw Logic
-                SDL_Delay(17);
-            }
+        if (current_ppu_state == State::H_BLANK) {
+            pixels.at(mapper.fetcher_y) = mapper.current_scanline;
         }
 
-        cycles_left = state_duration[current_ppu_state];
+        current_ppu_state = mapper.advance_scan_line();
+
+        if (mapper.screen_drawn) {
+            mapper.screen_drawn = false;
+            draw_screen();
+            SDL_Delay(17);
+        }
+
     }
 
 }
 
 GPU::~GPU() {
+    delete[] formatted_pixels;
     SDL_DestroyWindow(display_window);
     SDL_Quit();
 }
 
 void GPU::scan_sprites() {
+    auto object_size = 8;
+    std::size_t max_sprites_per_scan_line = 10;
+    auto sprite_count = 40;
+    byte index_in_loaded_sprites = 0;
 
-}
-
-/*void GPU::fill(std::array<std::array<byte, 0x100>, 0x100> &tile_map_pixels, Object &object_to_load, byte object_x_pos,
-               byte object_y_pos) {
-    for (size_t x_dir = 0; x_dir < 8; x_dir++)
-        for (size_t y_dir = 0; y_dir < 8; y_dir++) {
-            tile_map_pixels[8 * object_x_pos + x_dir][8 * object_y_pos + y_dir] = object_to_load.get_data(x_dir, y_dir);
-        }
-}
+    auto &sprites_loaded_ref = mapper.sprites_loaded;
+    auto &sprite_position_map_ref = mapper.sprite_position_map;
+    auto line_y = mapper.fetcher_y;
 
 
-void GPU::load_data(std::array<byte, memory_map_size> &memory) {
-    load_tile_data(memory);
-    load_tile_map(memory);
-}
+    for (int sprite_id = 0; sprite_id < sprite_count; sprite_id++) {
+        word sprite_data_start_address = oam_start + 4 * sprite_id;
 
-void GPU::load_tile_map(std::array<byte, memory_map_size> &memory) {
-    constexpr auto tile_map_start = 0x9800, TILE_MAP_COUNT = 2, TILE_MAP_SIZE = 0x400;
-    for (auto tile_map_number = 0; tile_map_number < TILE_MAP_COUNT; tile_map_number++) {
-        for (auto tile_map_id = 0; tile_map_id < TILE_MAP_SIZE; tile_map_id++) {
-            tile_map[tile_map_number][tile_map_id] = memory[tile_map_start + tile_map_number * TILE_MAP_SIZE +
-                                                            tile_map_id];
-        }
-    }
-}
+        byte flags = game->read(sprite_data_start_address);
+        byte tile_index = game->read(sprite_data_start_address + 1);
 
-void GPU::load_tile_data(std::array<byte, memory_map_size> &memory) {
-    constexpr auto vram_start = 0x8000, BLOCK_COUNT = 3, BLOCK_SIZE = 128, OBJECT_SIZE = 16;
-    for (auto block_number = 0; block_number < BLOCK_COUNT; block_number++) {
-        for (auto block_id = 0; block_id < BLOCK_SIZE; block_id++) {
-            tile_data[block_number][block_id].load(memory,
-                                                   vram_start + OBJECT_SIZE * (block_number * BLOCK_SIZE + block_id));
+        byte sprite_x = game->read(sprite_data_start_address + 2);
+        int sprite_y = game->read(sprite_data_start_address + 3);
+        sprite_y -= 16;
+        
+        if (sprites_loaded_ref.size() == max_sprites_per_scan_line) // 10 sprites have already been drawn
+            return;
+
+        if (sprite_y <= line_y && line_y < sprite_y + object_size) {
+            sprites_loaded_ref.push_back({tile_index, PPU_flags(flags)});
+            sprite_position_map_ref.emplace_back(std::make_pair(sprite_x, index_in_loaded_sprites));
+            index_in_loaded_sprites++;
         }
     }
+    std::sort(sprite_position_map_ref.begin(), sprite_position_map_ref.end());
 }
-*/
 
-/*void GPU::update(int cycles) {
-    if (stale) {
-        load_data(memory);
-        stale = false;
-    }
+void GPU::draw_screen() {
+    int channels = 3;
+    for (auto y_co_ordinate = 0; y_co_ordinate < screen_height; y_co_ordinate++) {
+        for (auto x_co_ordinate = 0; x_co_ordinate < screen_width; x_co_ordinate++) {
+            auto current_index = (screen_width * y_co_ordinate + x_co_ordinate) * 3;
 
-    auto LCD_Control = game->read(LCD_C);
-
-    auto bg_tile_map_area_bit = ((LCD_Control & (1 << BG_TILE_MAP_AREA)) > 0);
-    auto tile_data_area_bit = ((LCD_Control & (1 << BG_WINDOW_TILE_DATA_AREA)) > 0);
-    auto map_area_used = tile_map[bg_tile_map_area_bit];
-
-
-    auto constexpr tile_map_length_in_tiles = 0x20;
-    auto constexpr tile_map_length_in_bytes = 0x100;
-
-    std::array<std::array<byte, tile_map_length_in_bytes>, tile_map_length_in_bytes> tile_map_pixels{};
-    std::array<std::array<byte, 160>, 144> view_port{};
-
-
-    for (auto object_id = 0; object_id < tile_map_length_in_tiles * tile_map_length_in_tiles; object_id++) {
-        byte byte_index = map_area_used[object_id], block_index = byte_index & 0x7F, block_number = (
-                (byte_index & (1 << 7)) > 0);
-        if (tile_data_area_bit == 0)
-            block_number = 3 - block_number;
-
-        byte object_x_pos = object_id / tile_map_length_in_tiles, object_y_pos = object_id % tile_map_length_in_tiles;
-
-        Object temp = tile_data[block_number][block_index];
-        fill(tile_map_pixels, temp, object_x_pos, object_y_pos);
-    }
-
-    auto scx_value = game->read(SCX), scy_value = game->read(SCY);
-
-    for (size_t x_pos = 0; x_pos < 160; x_pos++)
-        for (size_t y_pos = 0; y_pos < 144; y_pos++) {
-            view_port[x_pos][y_pos] = tile_map_pixels[(scx_value + x_pos) % tile_map_length_in_bytes][
-                    (scy_value + y_pos) % tile_map_length_in_bytes];
+            formatted_pixels[current_index] = static_cast<char>(pixels[y_co_ordinate][x_co_ordinate] & 0xFF);
+            formatted_pixels[current_index + 1] = formatted_pixels[current_index];
+            formatted_pixels[current_index + 2] = formatted_pixels[current_index];
         }
-*/
+    }
+    native_surface = SDL_CreateRGBSurfaceFrom((void *) formatted_pixels,
+                                              screen_width,
+                                              screen_height,
+                                              channels * 8,
+                                              screen_width * channels,
+                                              0x0000FF,
+                                              0x00FF00,
+                                              0xFF0000,
+                                              0);
+
+
+    SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
+    SDL_UpdateWindowSurface(display_window);
+}
+
+void GPU::resize() {
+    SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
+    SDL_UpdateWindowSurface(display_window);
+}

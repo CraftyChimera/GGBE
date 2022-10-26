@@ -45,6 +45,8 @@ void Jump::PUSH(CPU *cpu, Jump::op_args &args) {
         reg = DReg::af;
     word next = cpu->get(reg);
     byte hi = next >> 8, lo = next & 0xFF;
+    word temp = cpu->get(DReg::sp);
+    cpu->set(DReg::sp, temp - 2);
     cpu->push(hi);
     cpu->push(lo);
 }
@@ -55,6 +57,8 @@ void Jump::POP(CPU *cpu, Jump::op_args &args) {
         reg = DReg::af;
 
     word lo, hi, value;
+    word temp = cpu->get(DReg::sp);
+    cpu->set(DReg::sp, temp + 2);
     lo = cpu->pop();
     hi = cpu->pop();
     value = lo + (hi << 8);

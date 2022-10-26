@@ -15,10 +15,17 @@
 
 CPU::CPU(Console *game) {
     reg_mapper = std::array<byte, 9>{};
+    set(Reg::a, 0x01);
+    set(Reg::b, 0xFF);
+    set(Reg::c, 0x13);
+    set(Reg::e, 0xc1);
+    set(Reg::h, 0x84);
+    set(Reg::l, 0x03);
+    set(DReg::sp, 0xFFFE);
+
     cycles_to_increment = 0;
-    auto zero = static_cast<word>(0);
-    SP = zero;
-    PC = zero;
+    SP = 0xFFFE;
+    PC = 0x0100;
     this->game = game;
     flags.reserve(10);
 }
@@ -28,17 +35,18 @@ CPU::CPU(Console *game) {
 //}
 
 int CPU::run_instruction_cycle() {
+
     flags.clear();
     byte index = read(PC);
     Instructions curr = Instruction_List[index];
 
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
-
+    
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
-    return cycles_to_increment;
+    return 2;
 }
 
 void CPU::push(byte to_push) {
