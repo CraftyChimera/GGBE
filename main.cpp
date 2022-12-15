@@ -5,11 +5,18 @@
 #include "Console/Console.hpp"
 #include "Base/Parser.hpp"
 
-int main([[maybe_unused]] int argv, char **argc) {
+int main(int argv, char **argc) {
     Console x;
+    if (argv != 2) {
+        std::cout << "Usage: ./program_name path_to_rom";
+        return -1;
+    }
+
     std::string path(argc[1]);
     auto data = read_file(path);
-    x.run(data);
+    auto boot_data = read_file("boot.gb");
+
+    x.run(data, boot_data);
     return 0;
 }
 

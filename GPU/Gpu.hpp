@@ -8,9 +8,9 @@
 #include "Pixel_Mapper.hpp"
 #include "SDL.h"
 
-class Console;
+class MMU;
 
-class Sprite;
+struct Sprite;
 
 class GPU {
 
@@ -27,13 +27,13 @@ private:
     char *formatted_pixels;
     SDL_Surface *native_surface;
 
-    Console *game;
+    MMU *mem_ptr;
     SDL_Window *display_window;
     Pixel_Mapper mapper;
 
 public:
 
-    explicit GPU(Console *game) noexcept;
+    explicit GPU(MMU *mmu) noexcept;
 
     void update(int cycles);
 

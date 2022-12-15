@@ -49,4 +49,28 @@ void Misc::STOP([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU
 
 void Misc::HALT([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {}
 
-void Misc::DAA([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {}
+void Misc::DAA([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {
+    byte flag = cpu->get(Reg::f);
+    byte a_reg = cpu->get(Reg::a);
+
+    byte n_flag = flag & (1 << Flag::n);
+    byte c_flag = flag & (1 << Flag::c);
+    byte h_flag = flag & (1 << Flag::h);
+
+    if (!n_flag) {
+        if (c_flag || a_reg > 0x99) {
+            a_reg += 0x60;
+            flags.emplace_back(set(Flag::c, true));
+        }
+        if (h_flag || (a_reg & 0x0f) > 0x09) {
+            a_reg += 0x6;
+        }
+    } else {
+        if (c_flag) { a_reg -= 0x60; }
+        if (h_flag) { a_reg -= 0x6; }
+    }
+    a_reg &= 0xFF;
+    flags.emplace_back(set(Flag::z, (a_reg == 0)));
+    flags.emplace_back(set(Flag::h, false));
+    cpu->set(Reg::a, a_reg);
+}

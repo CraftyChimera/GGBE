@@ -2,20 +2,16 @@
 // Created by drake on 23/10/22.
 //
 
+#include <algorithm>
 #include "Pixel_Mapper.hpp"
-#include "Console.hpp"
+#include "../MMU/Mmu.hpp"
 
-Pixel_Mapper::Pixel_Mapper(Console *mem) : screen_drawn(false), current_scanline{}, fetcher_x(0), fetcher_y(0),
-                                           console(mem) {
-    std::cout << "hi";
-}
+Pixel_Mapper::Pixel_Mapper(MMU *mem) : screen_drawn(false), current_scanline{}, fetcher_x(0), fetcher_y(0),
+                                       mem_ptr(mem) {}
 
 
 int Pixel_Mapper::operator()(int cycles) {
     int delay = 0;
-    //static bool first = true;
-    //if (fetcher_y == screen_height_with_pseudo_scan_lines)
-    //first = false;
     while (cycles > 0) {
         cycles--;
         if (background_pixel_queue.empty())
@@ -84,7 +80,7 @@ State Pixel_Mapper::advance_scan_line() {
 void Pixel_Mapper::get_current_background_pixels() {
     byte tile_map_bit = 1;
 
-    byte scx = console->read(scx_address), scy = console->read(scy_address);
+    byte scx = mem_ptr->read(scx_address), scy = mem_ptr->read(scy_address);
 
     byte tile_x = ((scx / 8) + fetcher_x) & 0x1F;
     byte tile_y = ((scy + fetcher_y) & 0xFF) / 8;
@@ -117,7 +113,7 @@ std::deque<Pixel_Info> Pixel_Mapper::get_current_sprite_pixels() {
     auto tile_id = current.tile_id;
     auto flag_data = current.flags;
 
-    byte scy = console->read(scy_address);
+    byte scy = mem_ptr->read(scy_address);
 
     auto tile_data = current_pixel_data_fetch_address(tile_id, 1);
 
@@ -167,8 +163,8 @@ vector<vector<byte>> Pixel_Mapper::current_pixel_data_fetch_address(byte tile_id
     for (auto row = 0; row < object_size; row++) {
         tile_data.push_back(
                 {
-                        console->read(start_of_tile + row * block_length), //TODO adjust for obj size 16
-                        console->read(start_of_tile + row * block_length + 1)
+                        mem_ptr->read(start_of_tile + row * block_length), //TODO adjust for obj size 16
+                        mem_ptr->read(start_of_tile + row * block_length + 1)
                 });
     }
     return tile_data;
@@ -188,7 +184,7 @@ void Pixel_Mapper::load_pixels_into_sprite_queue(std::deque<Pixel_Info> pixels) 
 }
 
 Pixel_Info Pixel_Mapper::get_mixed_pixel() {
-    Pixel_Info current_background_pixel = background_pixel_queue.front(), current_sprite_pixel{};
+    Pixel_Info current_background_pixel = background_pixel_queue.front(), current_sprite_pixel;
     current_sprite_pixel = current_background_pixel;
 
     if (!sprite_pixel_queue.empty())
@@ -204,7 +200,7 @@ Pixel_Info Pixel_Mapper::get_mixed_pixel() {
 }
 
 int Pixel_Mapper::get_sprite_delay() {
-    return 11 - std::min(5, (fetcher_x + console->read(scx_address)) % 8);
+    return 11 - std::min(5, (fetcher_x + mem_ptr->read(scx_address)) % 8);
 }
 
 hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
@@ -213,16 +209,16 @@ hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
     if (pixel_data.is_sprite) {
         switch (pixel_data.palette) {
             case 0:
-                color_data = console->read(obj0_palette);
+                color_data = mem_ptr->read(obj0_palette);
                 break;
             case 1:
-                color_data = console->read(obj1_palette);
+                color_data = mem_ptr->read(obj1_palette);
                 break;
             default:
                 break;
         }
     } else {
-        color_data = console->read(bgp_palette);
+        color_data = mem_ptr->read(bgp_palette);
     }
 
     auto color_no = pixel_data.color_id;

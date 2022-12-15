@@ -8,7 +8,7 @@ add_executable(${PROJECT_NAME}
         Base/Parser.cpp
         Cartridge/Cartridge.cpp
         Console/Console.cpp
-        )
+        Boot/Boot.cpp Boot/Boot.hpp MMU/Mmu.cpp MMU/Mmu.hpp)
 
 find_package(SDL2 REQUIRED)
 include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})

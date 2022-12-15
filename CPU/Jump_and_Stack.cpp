@@ -41,12 +41,12 @@ bool checkCondition(byte F, int cond_id) {
 
 void Jump::PUSH(CPU *cpu, Jump::op_args &args) {
     DReg reg = static_cast<DReg>(args.condition);
+
     if (reg == DReg::sp)
         reg = DReg::af;
+
     word next = cpu->get(reg);
     byte hi = next >> 8, lo = next & 0xFF;
-    word temp = cpu->get(DReg::sp);
-    cpu->set(DReg::sp, temp - 2);
     cpu->push(hi);
     cpu->push(lo);
 }
@@ -57,8 +57,6 @@ void Jump::POP(CPU *cpu, Jump::op_args &args) {
         reg = DReg::af;
 
     word lo, hi, value;
-    word temp = cpu->get(DReg::sp);
-    cpu->set(DReg::sp, temp + 2);
     lo = cpu->pop();
     hi = cpu->pop();
     value = lo + (hi << 8);
@@ -74,7 +72,7 @@ void Jump::JP(CPU *cpu, Jump::op_args &args) { //RST
 void Jump::JPC(CPU *cpu, Jump::op_args &args) {
     if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::JP(cpu, args);
-        cpu->cycles_to_increment++;
+        cpu->cycles_to_increment += 1;
     }
 }
 

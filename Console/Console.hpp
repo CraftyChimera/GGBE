@@ -8,6 +8,7 @@
 #include "../Base/Constants.hpp"
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
+#include "../MMU/Mmu.hpp"
 #include "../Cartridge/Cartridge.hpp"
 
 class GPU;
@@ -17,31 +18,17 @@ class Cartridge;
 class CPU;
 
 class Console {
+    MMU mmu;
     CPU cpu;
-    std::array<byte, memory_map_size> memory;
-
-    bool ram_enabled;
-    Cartridge cartridge;
     GPU renderer;
-
-    byte rom_bank_number, ram_bank_number, mode_flag;
-    size_t number_of_rom_banks, number_of_ram_banks;
 
 public:
     Console();
 
-    void run(vector<byte> &data);
-
-    void write(word address, byte value);
-
-    byte read(word address);
+    void run(vector<byte> &data, vector<byte> &boot_data);
 
 private:
-    void init(vector<byte> &data);
-
     void loop();
-
-    void boot_rom();
 };
 
 #endif //DMGB_CONSOLE_HPP

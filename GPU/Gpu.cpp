@@ -5,14 +5,10 @@
 #include "Gpu.hpp"
 #include "Console.hpp"
 
-GPU::GPU(Console *game) noexcept: sprites_fetched(false), cycles_accumulated(0), cycles_delayed(0),
-                                  pixels{}, mapper(game) {
+GPU::GPU(MMU *mem) noexcept: sprites_fetched(false), cycles_accumulated(0), cycles_delayed(0),
+                             pixels{}, mapper(mem) {
     native_surface = nullptr;
-
-    this->game = game;
-
-    if (game != nullptr)
-        std::cout << "Initialized\n";
+    mem_ptr = mem;
 
     int flags = SDL_INIT_VIDEO;
 
@@ -123,13 +119,13 @@ void GPU::scan_sprites() {
     for (int sprite_id = 0; sprite_id < sprite_count; sprite_id++) {
         word sprite_data_start_address = oam_start + 4 * sprite_id;
 
-        byte flags = game->read(sprite_data_start_address);
-        byte tile_index = game->read(sprite_data_start_address + 1);
+        byte flags = mem_ptr->read(sprite_data_start_address);
+        byte tile_index = mem_ptr->read(sprite_data_start_address + 1);
 
-        byte sprite_x = game->read(sprite_data_start_address + 2);
-        int sprite_y = game->read(sprite_data_start_address + 3);
+        byte sprite_x = mem_ptr->read(sprite_data_start_address + 2);
+        int sprite_y = mem_ptr->read(sprite_data_start_address + 3);
         sprite_y -= 16;
-        
+
         if (sprites_loaded_ref.size() == max_sprites_per_scan_line) // 10 sprites have already been drawn
             return;
 
@@ -166,6 +162,17 @@ void GPU::draw_screen() {
 
     SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
     SDL_UpdateWindowSurface(display_window);
+    static bool first = true;
+    if (first) {
+        for (int i = 0; i < 4; i++) {
+            std::cout << std::hex << 0x8000 + 16 * i << " :";
+            for (int j = 0; j < 16; j++) {
+                std::cout << std::hex << (int) mem_ptr->read(0x8000 + 16 * i + j) << " ";
+            }
+            std::cout << "\n";
+        }
+        first = false;
+    }
 }
 
 void GPU::resize() {

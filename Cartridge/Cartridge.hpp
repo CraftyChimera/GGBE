@@ -11,9 +11,10 @@
 using std::array;
 
 class Cartridge {
+public:
     vector<array<byte, rom_block_size>> rom_banks;
     vector<array<byte, ram_block_size>> ram_banks;
-public:
+    
     size_t number_of_rom_banks;
     size_t number_of_ram_banks;
 

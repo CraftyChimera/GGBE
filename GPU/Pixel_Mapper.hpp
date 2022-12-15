@@ -7,7 +7,7 @@
 
 #include "GPU_Utility.hpp"
 
-class Console;
+class MMU;
 
 struct Pixel_Info {
     bool is_sprite;
@@ -20,7 +20,7 @@ struct Pixel_Info {
 class Pixel_Mapper {
 
 public:
-    explicit Pixel_Mapper(Console *console);
+    explicit Pixel_Mapper(MMU *mmu);
 
     bool screen_drawn;
 
@@ -36,7 +36,7 @@ public:
     State advance_scan_line();
 
 private:
-    Console *console;
+    MMU *mem_ptr;
     std::deque<Pixel_Info> background_pixel_queue, sprite_pixel_queue;
     std::deque<Pixel_Info> sprites_in_scanline;
     std::deque<bool> background_priority;

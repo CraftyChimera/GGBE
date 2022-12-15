@@ -6,23 +6,21 @@
 #define DMGB_CPU_HPP
 
 #include "Utility.hpp"
-#include <stack>
 
 class Instructions;
 
-class Console;
+class MMU;
 
 class CPU {
     word SP, PC;
     std::array<byte, 9> reg_mapper{};
-    std::stack<byte> stack;
     vector<Flag_Status> flags;
-    Console *game;
+    MMU *mem_ptr;
 public:
 
     int cycles_to_increment;
 
-    explicit CPU(Console *game);
+    explicit CPU(MMU *mmu);
 
     //void halt(bool status);
 
