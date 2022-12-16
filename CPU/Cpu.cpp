@@ -22,6 +22,11 @@ CPU::CPU(MMU *mmu) {
     PC = 0x0100;
     mem_ptr = mmu;
     flags.reserve(10);
+
+    set(DReg::af, 0x01B0);
+    set(DReg::hl, 0x014D);
+    set(DReg::bc, 0x0013);
+    set(DReg::de, 0x00D8);
 }
 
 //void CPU::halt(bool status) { //TODO implement correct halt logic
@@ -44,11 +49,11 @@ int CPU::run_instruction_cycle() {
 }
 
 void CPU::push(byte to_push) {
-    mem_ptr->write(--SP, to_push);
+    write(--SP, to_push);
 }
 
 byte CPU::pop() {
-    return mem_ptr->read(SP++);
+    return read(SP++);
 }
 
 byte CPU::read(word address) {

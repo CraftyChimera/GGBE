@@ -29,7 +29,8 @@ void Console::loop() {
     }
 }
 
-void Console::run(vector<byte> &data, vector<byte> &boot_data) {
+void Console::run(vector<byte> &data) {
     mmu.init_data(data);
+    Boot::boot(&mmu);
     loop();
 }

@@ -14,9 +14,8 @@ int main(int argv, char **argc) {
 
     std::string path(argc[1]);
     auto data = read_file(path);
-    auto boot_data = read_file("boot.gb");
 
-    x.run(data, boot_data);
+    x.run(data);
     return 0;
 }
 

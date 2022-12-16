@@ -10,6 +10,7 @@
 #include "../GPU/Gpu.hpp"
 #include "../MMU/Mmu.hpp"
 #include "../Cartridge/Cartridge.hpp"
+#include "../Boot/Boot.hpp"
 
 class GPU;
 
@@ -25,7 +26,7 @@ class Console {
 public:
     Console();
 
-    void run(vector<byte> &data, vector<byte> &boot_data);
+    void run(vector<byte> &data);
 
 private:
     void loop();

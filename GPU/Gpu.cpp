@@ -52,10 +52,10 @@ void GPU::update(int cycles) {
 
         case State::OAM_SCAN: {
 
-            //if (!sprites_fetched) {
-            // scan_sprites();
-            //    sprites_fetched = true;
-            //}
+            if (!sprites_fetched) {
+                scan_sprites();
+                sprites_fetched = true;
+            }
 
             if (cycles_accumulated >= 80) {
                 current_ppu_state = State::DRAW_PIXELS;
@@ -80,7 +80,7 @@ void GPU::update(int cycles) {
 
     if (cycles_accumulated >= 456) {
 
-        //sprites_fetched = false;
+        sprites_fetched = false;
         cycles_accumulated -= 456;
 
         if (current_ppu_state == State::H_BLANK) {
