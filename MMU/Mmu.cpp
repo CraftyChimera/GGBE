@@ -15,34 +15,51 @@ void MMU::init_data(vector<byte> &data) {
     number_of_ram_banks = cartridge.number_of_ram_banks;
 }
 
-
 void MMU::write(word address, byte value) {
+    memory.at(address) = value;
+
+    if (address == 0xFF01)
+        std::cout << (int) value << "\n";
+}
+
+byte MMU::read(word address) {
+    if (address < 0x4000) {
+        return cartridge.get_rom_bank(0, address);
+    }
+    if (address < 0x8000) {
+        word offset = address - 0x4000;
+        return cartridge.get_rom_bank(1, offset);
+    }
+    return memory.at(address);
+}
+
+//models MBC1
+/*void MMU::write(word address, byte value) {
     memory.at(address) = value;
 
     // Read Only Segments
 
-    if (address < 0x2000) { // RAM_enable: 0x0000 - 0x1FFF
-        if (number_of_ram_banks > 0)
-            ram_enabled = ((value & 0xF) == 0xA);
+    if (address < 0x2000) { // RAM_enable: 0x0000 - 0x1FFF, TODO:ram_bank>0 needed?
+        ram_enabled = ((value & 0xF) == 0xA);
         return;
     }
 
     if (address < 0x4000) { // ROM_Bank_Number: 0x2000 - 0x3FFF
-        byte bitmask = (number_of_rom_banks - 1) & 0x11111;
+        byte bitmask = (number_of_rom_banks - 1) & 31;
         if (value == 0) {
-            rom_bank_number = 0;
+            rom_bank_number = 1;
         } else
             rom_bank_number = value & bitmask;
         return;
     }
 
     if (address < 0x6000) { // RAM_Bank_Number: 0x4000 - 0x5FFF
-        ram_bank_number = value & 0x11;
+        ram_bank_number = value & 3;
         return;
     }
 
     if (address < 0x8000) { // Mode_Select: 0x6000 - 0x7FFF
-        mode_flag = (address & 1);
+        mode_flag = address & 1;
         return;
     }
 
@@ -83,7 +100,12 @@ void MMU::write(word address, byte value) {
         return;
     }
 
+    if (address == 0xFF01) {
+        std::cout << (int) memory.at(0xFF01) << "\n";
+    }
+
     if (address < 0xFF80) { // IO-Registers: 0xFF00 - 0xFF7F
+        return;
     }
 
     if (address < 0xFFFF) { // High_RAM: 0xFF80 - 0xFFFE
@@ -97,7 +119,6 @@ void MMU::write(word address, byte value) {
 
 
 byte MMU::read(word address) {
-
     if (address < 0x4000) { // ROM_BANK_00: 0x0000 - 0x3FFF
 
         if (mode_flag == 0)
@@ -113,7 +134,7 @@ byte MMU::read(word address) {
 
     if (address < 0x8000) { // ROM_BANK_NN: 0x4000 - 0x7FFF
         word offset = address - 0x4000;
-        byte bitmask = (number_of_rom_banks - 1) & 0x11111;
+        byte bitmask = (number_of_rom_banks - 1) & 31;
         byte high_bank_number = ((ram_bank_number >> 5) & (number_of_rom_banks - 1)) + (rom_bank_number & bitmask);
         return cartridge.get_rom_bank(high_bank_number, offset);
     }
@@ -166,4 +187,4 @@ byte MMU::read(word address) {
         return memory.at(address);
     }
     return 0xAB;
-}
+}*/

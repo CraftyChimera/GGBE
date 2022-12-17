@@ -14,50 +14,33 @@ const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> Arithmetic
                                                                                                  Arithmetic::SUB,
                                                                                                  Arithmetic::XOR};
 
-Arithmetic::op_args::op_args() {
-    value = 0;
-    src_value = 0;
-}
-
-word ADD_16(vector<Flag_Status> &flags, word src, word addend) {
-    d_word temp = src + addend;
-
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, ((src & 0xFFF) + (addend & 0xFFF) > 0xFFF)));
-    flags.emplace_back(set(Flag::c, ((src & 0xFFFF) + (addend & 0xFFFF) > 0xFFFF)));
-
-    return static_cast<word>(temp & 0xFFFF);
-}
-
-word ADD_SP(vector<Flag_Status> &flags, word src, s_byte offset) { //TODO Weird Instruction
-    d_word temp = src;
-    temp += offset;
-    flags.emplace_back(set(Flag::z, false));
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, (offset > 0) && ((offset & 0xF) + (src & 0xF) > 0xF)));
-    flags.emplace_back(set(Flag::c, (offset > 0) && ((offset & 0xFF) + (src & 0xFF) > 0xFF)));
-    return static_cast<word>(temp & 0xFFFF);
-}
+Arithmetic::op_args::op_args(byte src_value, byte value) : src_value(src_value), value(value) {};
 
 void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
 
     if (addr_mode == arithmetic::addr_modes::ADD_16) {
 
-        word src = cpu->get(DReg::hl), addend, result;
+        word src = cpu->get(DReg::hl);
 
+        // 0x09 - ADD HL,BC
+        // 0x19 - ADD HL,DE
+        // 0x29 - ADD HL,HL
+        // 0x39 - ADD HL,SP
         int bitmask = (bytes_fetched[0] >> 4);
         DReg reg_index = static_cast<DReg>(2 * bitmask);
+        word addend = cpu->get(reg_index);
 
-        addend = cpu->get(reg_index);
-        result = ADD_16(flags, src, addend);
+        word result = ADD_16(flags, src, addend);
         cpu->set(DReg::hl, result);
+
         return;
     }
 
     if (addr_mode == arithmetic::addr_modes::SP) { //ADD SP,e8
         auto offset = static_cast<s_byte>(bytes_fetched[1]);
         word src = cpu->get(DReg::sp);
-        word result = ADD_SP(flags, src, offset);
+
+        word result = ADD_TO_SP(flags, src, offset);
         cpu->set(DReg::sp, result);
         return;
     }
@@ -68,115 +51,162 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vecto
 }
 
 Arithmetic::op_args Arithmetic::get_args(CPU *cpu, vector<byte> bytes_fetched, int addressing_mode) {
-    Arithmetic::op_args result;
-    result.src_value = cpu->get(Reg::a);
+    byte src_value = cpu->get(Reg::a);
+    byte value = 0;
+
     switch (addressing_mode) {
         case arithmetic::addr_modes::IMM : //ADC A,u8
         {
-            result.value = bytes_fetched[1];
+            value = bytes_fetched[1];
             break;
         }
         case arithmetic::addr_modes::REG : //ADC A,r8
         {
-            result.value = cpu->get(static_cast<Reg>(bytes_fetched[0] & 0x7));
+            value = cpu->get(static_cast<Reg>(bytes_fetched[0] & 0x7));
             break;
         }
         case arithmetic::addr_modes::MEM :// ADC A,[HL]
         {
-            result.value = cpu->read(cpu->get(DReg::hl));
+            value = cpu->read(cpu->get(DReg::hl));
             break;
         }
         default:
             break;
     }
-    return result;
+
+    return {src_value, value};
 }
 
-byte Arithmetic::ADD(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte value = arg.value, src = arg.src_value;
-    word temp = arg.src_value;
-    temp += arg.value;
 
-    flags.emplace_back(set(Flag::z, ((temp & 0xFF) == 0)));
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, ((src & 0xF) + (value & 0xF) > 0xF)));
-    flags.emplace_back(set(Flag::c, (temp > 0xFF)));
+word Arithmetic::ADD_16(vector<Flag_Status> &flags, word src, word addend) {
+    word temp = src + addend;
 
-    return static_cast<byte>(temp & 0xFF);
+    bool n_bit = false;
+    bool h_bit = (src & 0xFFF) + (addend & 0xFFF) > 0xFFF;
+    bool c_bit = (src & 0xFFFF) + (addend & 0xFFFF) > 0xFFFF;
+
+    flags.emplace_back(set(Flag::n, n_bit));
+    flags.emplace_back(set(Flag::h, h_bit));
+    flags.emplace_back(set(Flag::c, c_bit));
+
+    return temp;
+}
+
+word Arithmetic::ADD_TO_SP(vector<Flag_Status> &flags, word src, s_byte signed_offset) { //TODO Weird Instruction
+    word temp = src + signed_offset;
+
+    bool z_bit = false;
+    bool n_bit = false;
+    bool h_bit = (signed_offset > 0) && ((signed_offset & 0xF) + (src & 0xF) > 0xF);
+    bool c_bit = (signed_offset > 0) && ((signed_offset & 0xFF) + (src & 0xFF) > 0xFF);
+
+    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+    return temp;
 }
 
 byte Arithmetic::ADC(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A, carry = flags.size();
-
+    byte temp, carry = flags.size(), old_value = arg.value;
+    flags.clear();
+    //Reduce to ADD case by incrementing the value to be added by carry. Is Valid if arg.value + carry <= 255(i.e. sum gives a valid 8-bit byte without wraparound)
     arg.value += carry;
+    temp = Arithmetic::ADD(flags, arg);
 
-    A = Arithmetic::ADD(flags, arg);
-
-    if ((arg.value == 0) && (carry != 0)) {
+    //Wraparound case
+    if (old_value + carry > 0xFF) {
         flags.emplace_back(set(Flag::h, true));
         flags.emplace_back(set(Flag::c, true));
     }
-    return A;
-}
 
-byte Arithmetic::AND(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A = arg.src_value, value = arg.value;
-    A = A & value;
-    flags.emplace_back(set(Flag::z, (A == 0)));
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, true));
-    flags.emplace_back(set(Flag::c, false));
-    return A;
-}
-
-byte Arithmetic::CP(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A = arg.src_value, value = arg.value;
-    flags.emplace_back(set(Flag::z, (value == A)));
-    flags.emplace_back(set(Flag::n, true));
-    flags.emplace_back(set(Flag::h, ((value & 0xF) > (A & 0xF))));
-    flags.emplace_back(set(Flag::c, (value > A)));
-    return A;
-}
-
-byte Arithmetic::OR(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A = arg.src_value, value = arg.value;
-    A = A | value;
-    flags.emplace_back(set(Flag::z, (A == 0)));
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, false));
-    flags.emplace_back(set(Flag::c, false));
-    return A;
-}
-
-byte Arithmetic::SUB(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A, value = arg.value;
-    A = Arithmetic::CP(flags, arg);
-    A -= value;
-    return A;
+    return temp;
 }
 
 byte Arithmetic::SBC(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A, carry = flags.size();
+    byte temp, carry = flags.size(), old_value = arg.value;
+    flags.clear();
 
+    //Reduce to SUB case by incrementing the value to be subtracted by carry. Is Valid if arg.value + carry <= 255(i.e. sum gives a valid 8-bit byte without wraparound)
     arg.value += carry;
+    temp = Arithmetic::SUB(flags, arg);
 
-    A = Arithmetic::SUB(flags, arg);
-
-    if ((arg.value == 0) && (carry != 0)) {
+    //Wraparound case
+    if (old_value + carry > 0xFF) {
         flags.emplace_back(set(Flag::c, true));
         flags.emplace_back(set(Flag::h, true));
     }
 
-    return A;
+    return temp;
 }
 
 
+byte Arithmetic::ADD(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
+    byte value = arg.value, src = arg.src_value;
+    byte temp = src + value;
+
+    bool z_bit = temp == 0;
+    bool n_bit = false;
+    bool h_bit = (src & 0xF) + (value & 0xF) > 0xF;
+    bool c_bit = (src & 0xFF) + (value & 0xFF) > 0xFF;
+
+    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+    return temp;
+}
+
+byte Arithmetic::AND(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
+    byte src = arg.src_value, value = arg.value;
+    byte temp = src & value;
+
+    bool z_bit = temp == 0;
+    bool n_bit = false;
+    bool h_bit = true;
+    bool c_bit = false;
+
+    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+    return temp;
+}
+
+byte Arithmetic::OR(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
+    byte src = arg.src_value, value = arg.value;
+    byte temp = src | value;
+
+    bool z_bit = temp == 0;
+    bool n_bit = false;
+    bool h_bit = false;
+    bool c_bit = false;
+
+    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+    return temp;
+}
+
+byte Arithmetic::CP(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
+    byte src = arg.src_value, value = arg.value;
+
+    bool z_bit = src - value == 0;
+    bool n_bit = true;
+    bool h_bit = (value & 0xF) > (src & 0xF);
+    bool c_bit = (value & 0xFF) > (src & 0xFF);
+
+    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+    return src;
+}
+
+byte Arithmetic::SUB(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
+    byte src, value = arg.value;
+    src = Arithmetic::CP(flags, arg);
+    byte temp = src - value;
+
+    //All flags set by CP instruction
+    return temp;
+}
+
 byte Arithmetic::XOR(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
-    byte A = arg.src_value, value = arg.value;
-    A = A ^ value;
-    flags.emplace_back(set(Flag::z, (A == 0)));
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, false));
-    flags.emplace_back(set(Flag::c, false));
-    return A;
+    byte src = arg.src_value, value = arg.value;
+    byte temp = src ^ value;
+
+    bool z_bit = temp == 0;
+    bool n_bit = false;
+    bool h_bit = false;
+    bool c_bit = false;
+
+    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+    return temp;
 }

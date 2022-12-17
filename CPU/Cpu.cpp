@@ -15,14 +15,13 @@
 
 CPU::CPU(MMU *mmu) {
     reg_mapper = {};
-    set(DReg::sp, 0xFFFE);
 
     cycles_to_increment = 0;
-    SP = 0xFFFE;
-    PC = 0x0100;
     mem_ptr = mmu;
     flags.reserve(10);
 
+    SP = 0xFFFE;
+    PC = 0x0100;
     set(DReg::af, 0x01B0);
     set(DReg::hl, 0x014D);
     set(DReg::bc, 0x0013);
@@ -37,7 +36,6 @@ int CPU::run_instruction_cycle() {
     cycles_to_increment = 0;
     flags.clear();
     byte index = read(PC);
-
     Instructions curr = Instruction_List[index];
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
@@ -75,10 +73,11 @@ word CPU::get(DReg reg_index) {
             return PC;
         case DReg::sp:
             return SP;
-        default:
+        default: {
             auto index = static_cast<int>(reg_index);
             word value = (reg_mapper[index] << 8) + reg_mapper[index + 1];
             return value;
+        }
     }
 }
 
@@ -127,44 +126,47 @@ vector<byte> CPU::fetch(Instructions &instruction_data) {
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
     }
+
     byte flag_data = get(Reg::f);
-    if ((flag_data & (1 << Flag::c)) > 0) {
+
+    //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions
+    if (flag_data & (1 << Flag::c)) {
         flags.emplace_back(Flag_Status(Flag::c, true));
     }
     return fetched;
 }
 
 void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_data) {
-    auto Type = instruction_data.Type;
+    auto Type = instruction_data.instr_type;
     auto op_id = instruction_data.op_id;
     auto addr_mode = instruction_data.addr_mode;
 
     switch (Type) {
-        case 0: {
+        case Type::ARITHMETIC: {
             Arithmetic::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
-        case 1: {
+        case Type::UNARY: {
             Unary::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
-        case 2: {
+        case Type::BIT_OP: {
             Bit_Operations::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
-        case 3: {
+        case Type::LOAD: {
             Load::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
-        case 4: {
+        case Type::STORE: {
             Store::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
-        case 5: {
+        case Type::JUMP: {
             Jump::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }
-        case 6: {
+        case Type::MISC: {
             Misc::dispatch(flags, this, op_id, fetched, addr_mode);
             return;
         }

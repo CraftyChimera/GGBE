@@ -11,20 +11,20 @@
 
 using std::function;
 
-enum struct Reg {
+enum class Reg {
     b = 0,
     c = 1,
-    d [[maybe_unused]] = 2,
-    e [[maybe_unused]] = 3,
-    h [[maybe_unused]] = 4,
-    l [[maybe_unused]] = 5,
+    d = 2,
+    e = 3,
+    h = 4,
+    l = 5,
     a = 7,
     f = 8
 };
 
-enum struct DReg {
-    bc [[maybe_unused]] = 0,
-    de [[maybe_unused]] = 2,
+enum class DReg {
+    bc = 0,
+    de = 2,
     hl = 4,
     af = 7,
     sp = 6,
@@ -38,8 +38,6 @@ enum Flag {
     c = 4
 };
 
-inline constexpr word IME = 0xFFFF;
-
 struct Flag_Status {
     Flag bit;
     bool status;
@@ -49,15 +47,17 @@ struct Flag_Status {
 
 Flag_Status set(Flag bit, bool status);
 
+vector<Flag_Status> batch_fill(std::array<bool, 4> statuses);
 
-enum Type {
-    ARITHMETIC = 0,
-    UNARY = 1,
-    BIT_OP = 2,
-    LOAD = 3,
-    STORE = 4,
-    JUMP = 5,
-    MISC = 6
+enum class Type {
+    ARITHMETIC,
+    UNARY,
+    BIT_OP,
+    LOAD,
+    STORE,
+    JUMP,
+    MISC,
+    NONE
 };
 
 namespace arithmetic {

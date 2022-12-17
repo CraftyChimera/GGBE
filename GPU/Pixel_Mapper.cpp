@@ -184,7 +184,7 @@ void Pixel_Mapper::load_pixels_into_sprite_queue(std::deque<Pixel_Info> pixels) 
 }
 
 Pixel_Info Pixel_Mapper::get_mixed_pixel() {
-    Pixel_Info current_background_pixel = background_pixel_queue.front(), current_sprite_pixel;
+    Pixel_Info current_background_pixel = background_pixel_queue.front(), current_sprite_pixel{};
     current_sprite_pixel = current_background_pixel;
 
     if (!sprite_pixel_queue.empty())

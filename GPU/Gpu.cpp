@@ -39,14 +39,14 @@ void GPU::update(int cycles) {
 
     cycles_accumulated += cycles;
 
-    /*if (cycles_delayed > 0) {
-    int cycles_left = cycles_delayed - cycles;
-    cycles = std::max(0, -cycles_left);
-    cycles_delayed = std::max(0, cycles_left);
+    if (cycles_delayed > 0) {
+        int cycles_left = cycles_delayed - cycles;
+        cycles = std::max(0, -cycles_left);
+        cycles_delayed = std::max(0, cycles_left);
 
-    if (cycles_left > 0)
-        return;
-    }*/
+        if (cycles_left > 0)
+            return;
+    }
 
     switch (current_ppu_state) {
 
@@ -88,6 +88,7 @@ void GPU::update(int cycles) {
         }
 
         current_ppu_state = mapper.advance_scan_line();
+        mem_ptr->write(0xFF44, mapper.fetcher_y);
 
         if (mapper.screen_drawn) {
             mapper.screen_drawn = false;
@@ -162,17 +163,6 @@ void GPU::draw_screen() {
 
     SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
     SDL_UpdateWindowSurface(display_window);
-    static bool first = true;
-    if (first) {
-        for (int i = 0; i < 4; i++) {
-            std::cout << std::hex << 0x8000 + 16 * i << " :";
-            for (int j = 0; j < 16; j++) {
-                std::cout << std::hex << (int) mem_ptr->read(0x8000 + 16 * i + j) << " ";
-            }
-            std::cout << "\n";
-        }
-        first = false;
-    }
 }
 
 void GPU::resize() {

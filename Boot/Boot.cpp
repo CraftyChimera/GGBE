@@ -58,7 +58,7 @@ void init_tile_map(MMU *mem_ptr) {
         mem_ptr->write(hl--, a);
         c--;
         if (c != 0) goto Loop;
-        ((hl >>= 4) <<= 4) += 0x0f;
+        (hl &= 0xF0) += 0x0F;
     }
 }
 
@@ -86,7 +86,7 @@ void Boot::boot(MMU *mem_ptr) {
     constexpr word bgp = 0xFF47;
     constexpr word scy = 0xFF42;
     constexpr word lcd = 0xFF40;
-    
+
     init_audio(mem_ptr);
     mem_ptr->write(bgp, 0x54);//BGP palette
     word hl = load_logo(mem_ptr);

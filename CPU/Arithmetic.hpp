@@ -10,15 +10,19 @@
 class CPU;
 namespace Arithmetic {
     struct op_args {
-        byte value;
         byte src_value;
-
-        op_args();
+        byte value;
+        
+        op_args(byte src_value, byte value);
     };
 
     op_args get_args(CPU *cpu, vector<byte> bytes_fetched, int addressing_mode);
 
     void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
+
+    word ADD_16(vector<Flag_Status> &flags, word src, word addend);
+
+    word ADD_TO_SP(vector<Flag_Status> &flags, word src, s_byte signed_offset);
 
     byte ADD(vector<Flag_Status> &, Arithmetic::op_args arg);
 

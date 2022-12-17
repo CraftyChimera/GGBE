@@ -8,13 +8,13 @@
 #include "Utility.hpp"
 
 struct Instructions {
-    int Type;
+    Type instr_type;
     int op_id;
     int addr_mode;
     int bytes_to_fetch;
     int cycles;
-    
-    Instructions(int Type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) noexcept;
+
+    Instructions(Type type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) noexcept;
 };
 
 extern const Instructions Instruction_List[256];
