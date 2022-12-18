@@ -62,7 +62,8 @@ Arithmetic::op_args Arithmetic::get_args(CPU *cpu, vector<byte> bytes_fetched, i
         }
         case arithmetic::addr_modes::REG : //ADC A,r8
         {
-            value = cpu->get(static_cast<Reg>(bytes_fetched[0] & 0x7));
+            Reg reg_index = static_cast<Reg>(bytes_fetched[0] & 0x7);
+            value = cpu->get(reg_index);
             break;
         }
         case arithmetic::addr_modes::MEM :// ADC A,[HL]
@@ -85,10 +86,11 @@ word Arithmetic::ADD_16(vector<Flag_Status> &flags, word src, word addend) {
     bool h_bit = (src & 0xFFF) + (addend & 0xFFF) > 0xFFF;
     bool c_bit = (src & 0xFFFF) + (addend & 0xFFFF) > 0xFFFF;
 
-    flags.emplace_back(set(Flag::n, n_bit));
-    flags.emplace_back(set(Flag::h, h_bit));
-    flags.emplace_back(set(Flag::c, c_bit));
-
+    flags = {
+            {Flag::n, n_bit},
+            {Flag::h, h_bit},
+            {Flag::c, c_bit}
+    };
     return temp;
 }
 
@@ -107,14 +109,17 @@ word Arithmetic::ADD_TO_SP(vector<Flag_Status> &flags, word src, s_byte signed_o
 byte Arithmetic::ADC(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
     byte temp, carry = flags.size(), old_value = arg.value;
     flags.clear();
+
     //Reduce to ADD case by incrementing the value to be added by carry. Is Valid if arg.value + carry <= 255(i.e. sum gives a valid 8-bit byte without wraparound)
     arg.value += carry;
     temp = Arithmetic::ADD(flags, arg);
 
     //Wraparound case
     if (old_value + carry > 0xFF) {
-        flags.emplace_back(set(Flag::h, true));
-        flags.emplace_back(set(Flag::c, true));
+        flags.insert(flags.end(), {
+                {Flag::h, true},
+                {Flag::c, true}
+        });
     }
 
     return temp;
@@ -130,8 +135,10 @@ byte Arithmetic::SBC(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
 
     //Wraparound case
     if (old_value + carry > 0xFF) {
-        flags.emplace_back(set(Flag::c, true));
-        flags.emplace_back(set(Flag::h, true));
+        flags.insert(flags.end(), {
+                {Flag::h, true},
+                {Flag::c, true}
+        });
     }
 
     return temp;

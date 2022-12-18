@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(DMGB CXX)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Warray-bounds")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Warray-bounds -Werror")
 
 add_executable(${PROJECT_NAME}
         main.cpp

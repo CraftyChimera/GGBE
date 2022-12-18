@@ -18,6 +18,7 @@ enum class Reg {
     e = 3,
     h = 4,
     l = 5,
+    hl = 6,
     a = 7,
     f = 8
 };
@@ -26,8 +27,8 @@ enum class DReg {
     bc = 0,
     de = 2,
     hl = 4,
-    af = 7,
     sp = 6,
+    af,
     pc
 };
 

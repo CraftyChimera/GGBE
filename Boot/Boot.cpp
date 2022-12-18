@@ -5,7 +5,7 @@
 #include "Boot.hpp"
 
 void init_audio(MMU *mem_ptr) {
-
+    mem_ptr->write(0, 0);
 }
 
 void play_sound() {
