@@ -60,8 +60,10 @@ void Jump::POP(CPU *cpu, Jump::op_args &args) {
     lo = cpu->pop();
     hi = cpu->pop();
     value = lo + (hi << 8);
+
     if (reg == DReg::af)
-        (value >>= 4) <<= 4;
+        value &= 0xFFF0;
+
     cpu->set(reg, value);
 }
 

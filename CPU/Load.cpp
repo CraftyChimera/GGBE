@@ -5,97 +5,136 @@
 #include "Load.hpp"
 #include "Cpu.hpp"
 
-Load::op_args::op_args() {
-    src_value = 0;
-    destination = Reg::a;
-}
+//TODO: CHECK OP_CODE MAPPING
+void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+    switch (addr_mode) {
 
-void Load::dispatch([[maybe_unused]] vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
-                    int addr_mode) {
-
-    if (addr_mode == load::addr_modes::IMM_16) { //LD r16,u16
-        int bitmask = (bytes_fetched[0] >> 4);
-        DReg reg_index = static_cast<DReg>(2 * bitmask);
-        word lo = bytes_fetched[1], hi = bytes_fetched[2];
-        cpu->set(reg_index, lo + (hi << 8));
-        return;
-    }
-
-    if (addr_mode == load::addr_modes::REL_16) { //LD HL,SP+i8
-        auto offset = static_cast<s_byte>(bytes_fetched[1]);
-        word src_value = cpu->get(DReg::sp);
-        cpu->set(DReg::hl, src_value + offset);
-        return;
-    }
-    if (addr_mode == load::addr_modes::SP) { //LD SP,HL
-        word src_value = cpu->get(DReg::hl);
-        cpu->set(DReg::sp, src_value);
-        return;
-    }
-
-    if (addr_mode == load::addr_modes::MEM_IMM && op_id != load::op::NOTHING) { //LDH A,[C] and LDH A,[u8]
-        if (op_id == load::op::HIGH_C) //LDH A,[C]
-            bytes_fetched.emplace_back(cpu->get(Reg::c));
-        bytes_fetched.emplace_back(0xFF);
-    }
-
-    auto args = Load::get_args(cpu, bytes_fetched, addr_mode);
-
-    if (addr_mode == load::addr_modes::MEM_DI) { //LD A,[HL+]/[HL-]
-        auto value = cpu->get(DReg::hl);
-        value += ((op_id == load::op::INCREMENT) * (1) + (op_id == load::op::DECREMENT) * (-1));
-        cpu->set(DReg::hl, value);
-    }
-
-    cpu->set(args.destination, args.src_value);
-}
-
-Load::op_args Load::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
-    Load::op_args result;
-    switch (addressing_mode) {
-        case load::addr_modes::IMM : // Load r8,u8
+        case load::addr_modes::SP: //LD SP,HL
         {
-            byte reg_calc = 2 * (bytes_fetched[0] >> 4) + ((bytes_fetched[0] & 0x8) > 0);
-            result.destination = static_cast<Reg>(reg_calc);
-            result.src_value = bytes_fetched[1];
-            break;
+            DReg src_reg = DReg::hl;
+            DReg dest_reg = DReg::sp;
+
+            word src_value = cpu->get(src_reg);
+            cpu->set(dest_reg, src_value);
+            return;
         }
+
+        case load::addr_modes::REL_16: //LD HL,SP+i8
+        {
+            //TODO: unsigned-to-signed can be dangerous
+            auto offset = static_cast<s_byte>(bytes_fetched[1]);
+            DReg dest_reg = DReg::hl;
+
+            word src_value = cpu->get(DReg::sp) + offset;
+            cpu->set(dest_reg, src_value);
+            return;
+        }
+
+        case load::addr_modes::IMM_16:  //LD r16,u16
+        {
+            int bitmask = bytes_fetched[0] >> 4;
+            DReg reg_index = static_cast<DReg>(2 * bitmask);
+            word lo = bytes_fetched.at(1), hi = bytes_fetched.at(2);
+
+            //Little Endian machine
+            word src_value = lo + (hi << 8);
+            cpu->set(reg_index, src_value);
+            return;
+        }
+
+        case load::addr_modes::IMM: //LD r8,u8
+        {
+            auto src_value = bytes_fetched[1];
+            auto row = bytes_fetched[0] >> 4;
+
+            auto column = -1;
+            auto reg_mask = bytes_fetched[0] & 0xF;
+            if (reg_mask == 0x6) column = 0;
+            if (reg_mask == 0xE) column = 1;
+
+            byte reg_calc = 2 * row + column;
+            Reg dest_reg = static_cast<Reg>(reg_calc);
+
+            cpu->set(dest_reg, src_value);
+            return;
+        }
+
         case load::addr_modes::REG : //Load r8,r8
         {
-            Reg source_reg = static_cast<Reg>(bytes_fetched[0] & 0x7);
+            Reg src_reg = static_cast<Reg>(bytes_fetched[0] & 0x7);
             Reg dest_reg = static_cast<Reg>((bytes_fetched[0] >> 3) & 0x7);
-            result.src_value = cpu->get(source_reg);
-            result.destination = dest_reg;
-            break;
+
+            auto src_value = cpu->get(src_reg);
+            cpu->set(dest_reg, src_value);
+            return;
         }
-        case load::addr_modes::MEM_HL ://Load r8,[HL]
+
+        case load::addr_modes::MEM_HL: //Load r8,(HL)
         {
-            result.src_value = cpu->read(cpu->get(DReg::hl));
-            result.destination = static_cast<Reg>((bytes_fetched[0] >> 3) & 0x7);
-            break;
+            word src_address = cpu->get(DReg::hl);
+            Reg dest_reg = static_cast<Reg>((bytes_fetched[0] >> 3) & 0x7);
+
+            auto src_value = cpu->read(src_address);
+            cpu->set(dest_reg, src_value);
+            return;
         }
-        case load::addr_modes::MEM_r16 ://Load A,[r16]
+
+        case load::addr_modes::MEM_r16: //Load A,(BC) and LOAD A,(DE)
         {
-            DReg source_reg = static_cast<DReg>(2 * (bytes_fetched[0] >> 4));
-            result.src_value = cpu->get(source_reg);
-            result.destination = Reg::a;
-            break;
+            auto src_index = 2 * (bytes_fetched[0] >> 4);
+            DReg src_reg = static_cast<DReg>(src_index);
+            word src_address = cpu->get(src_reg);
+            Reg dest_reg = Reg::a;
+
+            byte src_value = cpu->read(src_address);
+            cpu->set(dest_reg, src_value);
+            return;
         }
-        case load::addr_modes::MEM_DI ://Load A,[HL+] ,Load A,[HL-]
+
+        case load::addr_modes::MEM_DI: //LD A,[HL+/-]
         {
-            result.src_value = cpu->read(cpu->get(DReg::hl));
-            result.destination = Reg::a;
-            break;
+            word address = cpu->get(DReg::hl);
+            Reg dest_reg = Reg::a;
+            byte src_value = cpu->read(address);
+
+            if (op_id == load::op::INCREMENT) address++;
+            if (op_id == load::op::DECREMENT) address--;
+
+            cpu->set(DReg::hl, address);
+            cpu->set(dest_reg, src_value);
+            return;
         }
-        case load::addr_modes::MEM_IMM ://Load A,[u16]
+
+        case load::addr_modes::MEM_IMM: //LOAD A,[u16]
         {
-            word lo = bytes_fetched[1], hi = bytes_fetched[2];
-            result.src_value = cpu->read(lo + (hi << 8));
-            result.destination = Reg::a;
-            break;
+            byte lo = bytes_fetched.at(1), hi = bytes_fetched.at(2);
+            word address = lo + (hi << 8);
+            Reg dest_reg = Reg::a;
+
+            byte src_value = cpu->read(address);
+            cpu->set(dest_reg, src_value);
+            return;
         }
-        default:
-            break;
+
+        case load::addr_modes::HIGH: //LDH A,[C] LDH A,[u8]
+        {
+            word address = 0xFF00;
+            Reg dest_reg = Reg::a;
+
+            if (op_id == load::op::HIGH_C)
+                address += cpu->get(Reg::c);
+            if (op_id == load::op::HIGH_IMMEDIATE)
+                address += bytes_fetched[1];
+
+            byte src_value = cpu->read(address);
+            cpu->set(dest_reg, src_value);
+            return;
+        }
+
+        default: {
+            std::cout << "Fall through Load\n";
+            return;
+        }
     }
-    return result;
+
 }

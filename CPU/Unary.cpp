@@ -70,20 +70,13 @@ Unary::op_args Unary::get_args_non_cb(CPU *cpu, vector<byte> &bytes_fetched) {
     auto row = bytes_fetched[0] >> 4;
 
     int column = -1;
-    switch (bytes_fetched[0] & 0xF) {
-        case 0x4:
-        case 0x5:
-            column = 0;
-            break;
-        case 0xC:
-        case 0xD:
-            column = 1;
-            break;
-        default: {
-            std::cout << "Fall through INC/DEC \n";
-        }
-    }
+    auto reg_mask = bytes_fetched[0] & 0xF;
 
+    if (reg_mask == 0x4 || reg_mask == 0x5)
+        column = 0;
+    if (reg_mask == 0xC || reg_mask == 0xD)
+        column = 1;
+    
     byte reg_calc = 2 * row + column;
 
     if (reg_calc == 6) {
@@ -203,7 +196,7 @@ byte RL_helper(vector<Flag_Status> &flags, Unary::op_args arg, byte lsb) {
 byte RR_helper(vector<Flag_Status> &flags, Unary::op_args arg, byte msb) {
     auto value = arg.value;
     byte carry = value & 1;
-    
+
     // b_7 b_6 b_5 b_4 b_3 b_2 b_1 b_0 -> msb b_7 b_6 b_5 b_4 b_3 b_2 b_1
     // carry -> b_0
     word temp = value;

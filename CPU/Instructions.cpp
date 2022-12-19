@@ -25,7 +25,9 @@ const Instructions Instruction_List[256] =
 
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::SP, 3, 5),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::ADD_16, 1, 2),
+
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::MEM_r16, 1, 2),
+
                 Instructions(Type::UNARY, unary::op::DEC, unary::addr_modes::REG_16, 1, 2),
                 Instructions(Type::UNARY, unary::op::INC, unary::addr_modes::REG, 1, 1),
                 Instructions(Type::UNARY, unary::op::DEC, unary::addr_modes::REG, 1, 1),
@@ -147,12 +149,13 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::REG, 1, 1),
 
 
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 2),
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 2),
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 2),
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 2),
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 2),
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 2),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
+
                 Instructions(Type::MISC, misc::op::HALT, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 1),
 
@@ -176,7 +179,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::REG, 1, 1),
 
                 //TODO wrong instruction 136
-                Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
+                Instructions(Type::ARITHMETIC, arithmetic::op::SBC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
@@ -281,9 +284,9 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
 
 
-                Instructions(Type::STORE, store::op::HIGH_IMM, store::addr_modes::MEM_IMM, 2, 3),
+                Instructions(Type::STORE, store::op::HIGH_IMMEDIATE, store::addr_modes::HIGH, 2, 3),
                 Instructions(Type::JUMP, jump_stack::op::POP, jump_stack::addr_modes::PUSH_POP, 1, 3),
-                Instructions(Type::STORE, store::op::HIGH_C, store::addr_modes::MEM_IMM, 1, 2),
+                Instructions(Type::STORE, store::op::HIGH_C, store::addr_modes::HIGH, 1, 2),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::JUMP, jump_stack::op::PUSH, jump_stack::addr_modes::PUSH_POP, 1, 4),
@@ -300,9 +303,9 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
 
 
-                Instructions(Type::LOAD, load::op::HIGH_IMM, load::addr_modes::MEM_IMM, 2, 3),
+                Instructions(Type::LOAD, load::op::HIGH_IMMEDIATE, load::addr_modes::HIGH, 2, 3),
                 Instructions(Type::JUMP, jump_stack::op::POP, jump_stack::addr_modes::PUSH_POP, 1, 3),
-                Instructions(Type::LOAD, load::op::HIGH_C, load::addr_modes::MEM_IMM, 1, 2),
+                Instructions(Type::LOAD, load::op::HIGH_C, load::addr_modes::HIGH, 1, 2),
                 Instructions(Type::MISC, misc::op::DI, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::JUMP, jump_stack::op::PUSH, jump_stack::addr_modes::PUSH_POP, 1, 4),

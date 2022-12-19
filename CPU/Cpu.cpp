@@ -155,11 +155,11 @@ void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_dat
             return;
         }
         case Type::LOAD: {
-            Load::dispatch(flags, this, op_id, fetched, addr_mode);
+            Load::dispatch(this, op_id, fetched, addr_mode);
             return;
         }
         case Type::STORE: {
-            Store::dispatch(flags, this, op_id, fetched, addr_mode);
+            Store::dispatch(this, op_id, fetched, addr_mode);
             return;
         }
         case Type::JUMP: {

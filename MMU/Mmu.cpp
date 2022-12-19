@@ -17,9 +17,6 @@ void MMU::init_data(vector<byte> &data) {
 
 void MMU::write(word address, byte value) {
     memory.at(address) = value;
-
-    if (address == 0xFF02)
-        std::cout << (int) memory.at(0xFF01) << "\n";
 }
 
 byte MMU::read(word address) {

@@ -125,34 +125,35 @@ namespace bit_op {
 
 namespace load {
     enum op {
-        NOTHING = 0,
-        INCREMENT = 1,
-        HIGH_C = 1,
-        HIGH_IMM = 2,
-        DECREMENT = 2
+        NOTHING = -1,
+        INCREMENT = 0,
+        DECREMENT = 1,
+        HIGH_C = 0,
+        HIGH_IMMEDIATE = 1
     };
 
     enum addr_modes {
-        SP = -3,
+        IMM_16 = -3,
         REL_16 = -2,
-        IMM_16 = -1,
+        SP = -1,
         IMM = 0,
         REG = 1,
-        MEM_HL = 2,
-        MEM_r16 = 3,
-        MEM_DI = 4,
-        MEM_IMM = 5
+        MEM_r16 = 2,
+        MEM_DI = 3,
+        MEM_IMM = 4,
+        HIGH = 5,
+        MEM_HL = 6,
     };
 
 }
 
 namespace store {
     enum op {
-        NOTHING = 0,
-        INCREMENT = 1,
-        HIGH_C = 1,
-        HIGH_IMM = 2,
-        DECREMENT = 2
+        NOTHING = -1,
+        INCREMENT = 0,
+        DECREMENT = 1,
+        HIGH_C = 0,
+        HIGH_IMMEDIATE = 1,
     };
 
     enum addr_modes {
@@ -161,7 +162,8 @@ namespace store {
         REG = 1,
         MEM_r16 = 2,
         MEM_DI = 3,
-        MEM_IMM = 4
+        MEM_IMM = 4,
+        HIGH = 5
     };
 
 
