@@ -15,8 +15,7 @@ Jump::op_args::op_args() {
     condition = -1;
 }
 
-void Jump::dispatch([[maybe_unused]] vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
-                    int addr_mode) {
+void Jump::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, jump_stack::addr_modes addr_mode) {
     auto args = Jump::get_args(cpu, bytes_fetched, addr_mode);
     Jump::op_codes[op_id](cpu, args);
 }
@@ -111,7 +110,7 @@ void Jump::RETI(CPU *cpu, Jump::op_args &args) {
     Jump::RET(cpu, args);
 }
 
-Jump::op_args Jump::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Jump::op_args Jump::get_args(CPU *cpu, vector<byte> &bytes_fetched, jump_stack::addr_modes addressing_mode) {
     Jump::op_args result;
     switch (addressing_mode) {
         case jump_stack::addr_modes::PUSH_POP :// PUSH/POP r16

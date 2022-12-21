@@ -23,13 +23,14 @@ namespace Unary {
 
     };
 
-    Unary::op_args get_args_cb(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Unary::op_args get_args_cb(CPU *cpu, vector<byte> &bytes_fetched, unary::addr_modes addressing_mode);
 
     Unary::op_args get_args_non_cb(CPU *cpu, vector<byte> &bytes_fetched);
 
-    Unary::op_args get_args(CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    Unary::op_args get_args(CPU *cpu, int op_id, vector<byte> &bytes_fetched, unary::addr_modes addr_mode);
 
-    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
+                  unary::addr_modes addressing_mode);
 
     void DI_r16(CPU *cpu, vector<byte> &bytes_fetched, int op_id);
 

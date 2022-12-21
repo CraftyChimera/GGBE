@@ -143,31 +143,31 @@ void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_dat
 
     switch (Type) {
         case Type::ARITHMETIC: {
-            Arithmetic::dispatch(flags, this, op_id, fetched, addr_mode);
+            Arithmetic::dispatch(flags, this, op_id, fetched, std::get<arithmetic::addr_modes>(addr_mode));
             return;
         }
         case Type::UNARY: {
-            Unary::dispatch(flags, this, op_id, fetched, addr_mode);
+            Unary::dispatch(flags, this, op_id, fetched, std::get<unary::addr_modes>(addr_mode));
             return;
         }
         case Type::BIT_OP: {
-            Bit_Operations::dispatch(flags, this, op_id, fetched, addr_mode);
+            Bit_Operations::dispatch(flags, this, op_id, fetched, std::get<bit_op::addr_modes>(addr_mode));
             return;
         }
         case Type::LOAD: {
-            Load::dispatch(this, op_id, fetched, addr_mode);
+            Load::dispatch(this, op_id, fetched, std::get<load::addr_modes>(addr_mode));
             return;
         }
         case Type::STORE: {
-            Store::dispatch(this, op_id, fetched, addr_mode);
+            Store::dispatch(this, op_id, fetched, std::get<store::addr_modes>(addr_mode));
             return;
         }
         case Type::JUMP: {
-            Jump::dispatch(flags, this, op_id, fetched, addr_mode);
+            Jump::dispatch(this, op_id, fetched, std::get<jump_stack::addr_modes>(addr_mode));
             return;
         }
         case Type::MISC: {
-            Misc::dispatch(flags, this, op_id, fetched, addr_mode);
+            Misc::dispatch(flags, this, op_id);
             return;
         }
         default:

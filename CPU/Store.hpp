@@ -9,8 +9,8 @@
 
 class CPU;
 namespace Store {
-    
-    void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+
+    void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, store::addr_modes addr_mode);
 
 }
 

@@ -5,11 +5,10 @@
 #include "Store.hpp"
 #include "Cpu.hpp"
 
-void Store::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched,
-                     int addr_mode) {
+void Store::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, store::addr_modes addr_mode) {
 
     switch (addr_mode) {
-        
+
         case store::addr_modes::SP: { // STORE [u16],SP
             word lo = bytes_fetched[1], hi = bytes_fetched[2];
             word src_value = cpu->get(DReg::sp);

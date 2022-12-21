@@ -9,7 +9,7 @@
 
 class CPU;
 namespace Load {
-    void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr_modes addr_mode);
 }
 
 #endif //DMGB_LOAD_HPP

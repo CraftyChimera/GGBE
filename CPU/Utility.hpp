@@ -74,12 +74,12 @@ namespace arithmetic {
         XOR = 7
     };
 
-    enum addr_modes {
-        SP = -2,
-        ADD_16 = -1,
-        IMM = 0,
-        REG = 1,
-        MEM = 2
+    enum class addr_modes {
+        SP,
+        ADD_16,
+        IMM,
+        REG,
+        MEM
     };
 }
 
@@ -102,10 +102,10 @@ namespace unary {
         SRA = 13
     };
 
-    enum addr_modes {
-        REG_16 = -1,
-        REG = 0,
-        MEM = 1
+    enum class addr_modes {
+        REG_16,
+        REG,
+        MEM
     };
 }
 
@@ -116,54 +116,54 @@ namespace bit_op {
         SET = 2
     };
 
-    enum addr_modes {
-        REG = 0,
-        MEM = 1
+    enum class addr_modes {
+        REG,
+        MEM
     };
 
 }
 
 namespace load {
     enum op {
-        NOTHING = -1,
-        INCREMENT = 0,
-        DECREMENT = 1,
-        HIGH_C = 0,
-        HIGH_IMMEDIATE = 1
+        NOTHING = 0,
+        INCREMENT = 1,
+        DECREMENT = 2,
+        HIGH_C = 3,
+        HIGH_IMMEDIATE = 4
     };
 
-    enum addr_modes {
-        IMM_16 = -3,
-        REL_16 = -2,
-        SP = -1,
-        IMM = 0,
-        REG = 1,
-        MEM_r16 = 2,
-        MEM_DI = 3,
-        MEM_IMM = 4,
-        HIGH = 5,
-        MEM_HL = 6,
+    enum class addr_modes {
+        IMM_16,
+        REL_16,
+        SP,
+        IMM,
+        REG,
+        MEM_r16,
+        MEM_DI,
+        MEM_IMM,
+        HIGH,
+        MEM_HL
     };
 
 }
 
 namespace store {
     enum op {
-        NOTHING = -1,
-        INCREMENT = 0,
-        DECREMENT = 1,
-        HIGH_C = 0,
-        HIGH_IMMEDIATE = 1,
+        NOTHING = 0,
+        INCREMENT = 1,
+        DECREMENT = 2,
+        HIGH_C = 3,
+        HIGH_IMMEDIATE = 4,
     };
 
-    enum addr_modes {
-        SP = -1,
-        IMM = 0,
-        REG = 1,
-        MEM_r16 = 2,
-        MEM_DI = 3,
-        MEM_IMM = 4,
-        HIGH = 5
+    enum class addr_modes {
+        SP,
+        IMM,
+        REG,
+        MEM_r16,
+        MEM_DI,
+        MEM_IMM,
+        HIGH
     };
 
 
@@ -182,12 +182,12 @@ namespace jump_stack {
         POP = 8
     };
 
-    enum addr_modes {
-        PUSH_POP = -1,
-        MEM = 0,
-        IMM = 1,
-        REL = 2,
-        RST = 3
+    enum class addr_modes {
+        PUSH_POP,
+        MEM,
+        IMM,
+        REL,
+        RST
     };
 }
 
@@ -204,8 +204,8 @@ namespace misc {
         DAA = 8
     };
 
-    enum addr_modes {
-        NOTHING = 0
+    enum class addr_modes {
+        NOTHING
     };
 }
 

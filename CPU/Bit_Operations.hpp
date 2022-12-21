@@ -22,9 +22,10 @@ namespace Bit_Operations {
         op_args(byte test_bit, byte value, word address);
     };
 
-    Bit_Operations::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Bit_Operations::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, bit_op::addr_modes addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    void
+    dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, bit_op::addr_modes addr_mode);
 
     byte BIT(vector<Flag_Status> &, Bit_Operations::op_args);
 

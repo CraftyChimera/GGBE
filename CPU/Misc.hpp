@@ -11,8 +11,7 @@ class CPU;
 
 namespace Misc {
 
-    void
-    dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, [[maybe_unused]] int addr_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id);
 
     void CCF(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
 

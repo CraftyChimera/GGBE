@@ -4,7 +4,7 @@
 
 #include "Instructions.hpp"
 
-Instructions::Instructions(Type instr_type, int op_id, int addr_mode, int bytes_to_fetch, int cycles) noexcept {
+Instructions::Instructions(Type instr_type, int op_id, addr_type addr_mode, int bytes_to_fetch, int cycles) noexcept {
     this->instr_type = instr_type;
     this->op_id = op_id;
     this->addr_mode = addr_mode;
@@ -25,9 +25,7 @@ const Instructions Instruction_List[256] =
 
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::SP, 3, 5),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::ADD_16, 1, 2),
-
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::MEM_r16, 1, 2),
-
                 Instructions(Type::UNARY, unary::op::DEC, unary::addr_modes::REG_16, 1, 2),
                 Instructions(Type::UNARY, unary::op::INC, unary::addr_modes::REG, 1, 1),
                 Instructions(Type::UNARY, unary::op::DEC, unary::addr_modes::REG, 1, 1),
@@ -155,9 +153,8 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
-
                 Instructions(Type::MISC, misc::op::HALT, misc::addr_modes::NOTHING, 1, 1),
-                Instructions(Type::STORE, load::op::NOTHING, load::addr_modes::REG, 1, 1),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 1),
 
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::REG, 1, 1),
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::REG, 1, 1),
@@ -258,7 +255,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::RETC, jump_stack::addr_modes::IMM, 1, 2),
                 Instructions(Type::JUMP, jump_stack::op::RET, jump_stack::addr_modes::IMM, 1, 4),
                 Instructions(Type::JUMP, jump_stack::op::JPC, jump_stack::addr_modes::IMM, 3, 3),
-                Instructions(Type::NONE, -1, -1, 2, 1),
+                Instructions(Type::NONE, misc::op::NOP, misc::addr_modes::NOTHING, 2, 1),
                 Instructions(Type::JUMP, jump_stack::op::CALLC, jump_stack::addr_modes::IMM, 3, 3),
                 Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::IMM, 3, 6),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::IMM, 2, 2),

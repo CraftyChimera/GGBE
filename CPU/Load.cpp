@@ -6,7 +6,7 @@
 #include "Cpu.hpp"
 
 //TODO: CHECK OP_CODE MAPPING
-void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr_modes addr_mode) {
     switch (addr_mode) {
 
         case load::addr_modes::SP: //LD SP,HL

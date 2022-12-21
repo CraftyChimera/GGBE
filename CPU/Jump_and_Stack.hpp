@@ -17,9 +17,9 @@ namespace Jump {
         op_args();
     };
 
-    Jump::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode);
+    Jump::op_args get_args(CPU *cpu, vector<byte> &bytes_fetched, jump_stack::addr_modes addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode);
+    void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, jump_stack::addr_modes addr_mode);
 
     void JP(CPU *cpu, Jump::op_args &args);
 

@@ -12,13 +12,14 @@ namespace Arithmetic {
     struct op_args {
         byte src_value;
         byte value;
-        
+
         op_args(byte src_value, byte value);
     };
 
-    op_args get_args(CPU *cpu, vector<byte> bytes_fetched, int addressing_mode);
+    op_args get_args(CPU *cpu, vector<byte> bytes_fetched, arithmetic::addr_modes addressing_mode);
 
-    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addressing_mode);
+    void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
+                  arithmetic::addr_modes addressing_mode);
 
     word ADD_16(vector<Flag_Status> &flags, word src, word addend);
 

@@ -19,7 +19,8 @@ Bit_Operations::op_args::op_args(byte test_bit, byte value, Reg reg) : test_bit(
 Bit_Operations::op_args::op_args(byte test_bit, byte value, word address) : test_bit(test_bit), value(value),
                                                                             location(address) {}
 
-void Bit_Operations::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &fetched, int addr_mode) {
+void Bit_Operations::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &fetched,
+                              bit_op::addr_modes addr_mode) {
     auto args = Bit_Operations::get_args(cpu, fetched, addr_mode);
 
     word value = Bit_Operations::op_codes[op_id](flags, args);
@@ -39,7 +40,8 @@ void Bit_Operations::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, v
     }
 }
 
-Bit_Operations::op_args Bit_Operations::get_args(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Bit_Operations::op_args
+Bit_Operations::get_args(CPU *cpu, vector<byte> &bytes_fetched, bit_op::addr_modes addressing_mode) {
     byte temp = bytes_fetched.at(1);
     byte value = (temp >> 3) & 0x7;
 

@@ -16,7 +16,8 @@ const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> Arithmetic
 
 Arithmetic::op_args::op_args(byte src_value, byte value) : src_value(src_value), value(value) {};
 
-void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
+                          arithmetic::addr_modes addr_mode) {
 
     if (addr_mode == arithmetic::addr_modes::ADD_16) {
 
@@ -50,7 +51,7 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vecto
     cpu->set(Reg::a, result);
 }
 
-Arithmetic::op_args Arithmetic::get_args(CPU *cpu, vector<byte> bytes_fetched, int addressing_mode) {
+Arithmetic::op_args Arithmetic::get_args(CPU *cpu, vector<byte> bytes_fetched, arithmetic::addr_modes addressing_mode) {
     byte src_value = cpu->get(Reg::a);
     byte value = 0;
 

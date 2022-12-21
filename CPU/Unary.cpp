@@ -20,7 +20,8 @@ Unary::op_args::op_args(Reg reg, byte value) : location(reg), value(value) {}
 
 Unary::op_args::op_args(word address, byte value) : location(address), value(value) {}
 
-void Unary::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+void Unary::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
+                     unary::addr_modes addr_mode) {
 
     if (addr_mode == unary::addr_modes::REG_16) {
         DI_r16(cpu, bytes_fetched, op_id);
@@ -44,7 +45,7 @@ void Unary::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byt
     }
 }
 
-Unary::op_args Unary::get_args(CPU *cpu, int op_id, vector<byte> &bytes_fetched, int addr_mode) {
+Unary::op_args Unary::get_args(CPU *cpu, int op_id, vector<byte> &bytes_fetched, unary::addr_modes addr_mode) {
     switch (op_id) {
         case unary::op::INC:
         case unary::op::DEC:
@@ -76,7 +77,7 @@ Unary::op_args Unary::get_args_non_cb(CPU *cpu, vector<byte> &bytes_fetched) {
         column = 0;
     if (reg_mask == 0xC || reg_mask == 0xD)
         column = 1;
-    
+
     byte reg_calc = 2 * row + column;
 
     if (reg_calc == 6) {
@@ -88,7 +89,7 @@ Unary::op_args Unary::get_args_non_cb(CPU *cpu, vector<byte> &bytes_fetched) {
     return {reg, cpu->get(reg)};
 }
 
-Unary::op_args Unary::get_args_cb(CPU *cpu, vector<byte> &bytes_fetched, int addressing_mode) {
+Unary::op_args Unary::get_args_cb(CPU *cpu, vector<byte> &bytes_fetched, unary::addr_modes addressing_mode) {
     switch (addressing_mode) {
         case unary::addr_modes::REG: // INC r8
         {

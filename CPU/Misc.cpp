@@ -10,8 +10,7 @@ const std::function<void(vector<Flag_Status> &, CPU *)> Misc::op_codes[9] = {Mis
                                                                              Misc::NOP, Misc::SCF,
                                                                              Misc::HALT, Misc::STOP, Misc::DAA};
 
-void Misc::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, [[maybe_unused]] vector<byte> &bytes_fetched,
-                    [[maybe_unused]] int addr_mode) {
+void Misc::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id) {
     Misc::op_codes[op_id](flags, cpu);
 }
 
