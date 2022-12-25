@@ -96,8 +96,8 @@ int CPU::run_instruction_cycle() {
 
     std::string to_write = string_write(this);
 
-    static int max_c = 7429762;
-    if (PC >= 0x0100) {
+    static int max_c = 223892;
+    {
         write_file << to_write << "\n";
         counter++;
 

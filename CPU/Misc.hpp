@@ -13,25 +13,23 @@ namespace Misc {
 
     void dispatch(vector<Flag_Status> &, CPU *cpu, int op_id);
 
-    void CCF(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
+    void DAA(vector<Flag_Status> &flags, CPU *cpu);
 
     void CPL(vector<Flag_Status> &flags, CPU *cpu);
 
-    void DI(vector<Flag_Status> &flags, CPU *cpu);
+    void CCF(vector<Flag_Status> &flags);
 
-    void EI(vector<Flag_Status> &flags, CPU *cpu);
+    void SCF(vector<Flag_Status> &flags);
 
-    void NOP(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
+    void HALT(CPU *cpu);
 
-    void SCF(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
+    void STOP(CPU *cpu);
 
-    void HALT(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
+    void DI(CPU *cpu);
 
-    void STOP(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
+    void EI(CPU *cpu);
 
-    void DAA(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu);
-
-    extern const std::function<void(vector<Flag_Status> &, CPU *)> op_codes[9];
+    void NOP();
 }
 
 #endif //DMGB_MISC_HPP

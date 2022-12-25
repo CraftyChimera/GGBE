@@ -95,7 +95,7 @@ word Arithmetic::ADD_16(vector<Flag_Status> &flags, word src, word addend) {
     return temp;
 }
 
-word Arithmetic::ADD_TO_SP(vector<Flag_Status> &flags, word src_value, byte offset) { //TODO Weird Instruction
+word Arithmetic::ADD_TO_SP(vector<Flag_Status> &flags, word src_value, byte offset) {
     word signed_offset = get_signed_offset(offset);
     word temp = src_value + signed_offset;
 

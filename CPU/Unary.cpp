@@ -257,9 +257,6 @@ byte Unary::SRA(vector<Flag_Status> &flags, Unary::op_args arg) {
     return RR_helper(flags, arg, msb);
 }
 
-
-//TODO: Potentially dangerous clever code
-
 // special variant of RL/RR for register A
 byte Unary::RLA(vector<Flag_Status> &flags, Unary::op_args arg) {
     auto value = RL(flags, arg);

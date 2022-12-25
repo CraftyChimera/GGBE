@@ -6,49 +6,46 @@
 #include "Cpu.hpp"
 
 
-const std::function<void(vector<Flag_Status> &, CPU *)> Misc::op_codes[9] = {Misc::CCF, Misc::CPL, Misc::DI, Misc::EI,
+/*const std::function<void(vector<Flag_Status> &, CPU *)> Misc::op_codes[9] = {Misc::CCF, Misc::CPL, Misc::DI, Misc::EI,
                                                                              Misc::NOP, Misc::SCF,
                                                                              Misc::HALT, Misc::STOP, Misc::DAA};
+                                                                             */
 
 void Misc::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id) {
-    Misc::op_codes[op_id](flags, cpu);
+    switch (op_id) {
+        case misc::op::CCF:
+            Misc::CCF(flags);
+            return;
+        case misc::op::CPL:
+            Misc::CPL(flags, cpu);
+            return;
+        case misc::op::DI:
+            Misc::DI(cpu);
+            return;
+        case misc::op::EI:
+            Misc::EI(cpu);
+            return;
+        case misc::op::NOP:
+            Misc::NOP();
+            return;
+        case misc::op::SCF:
+            Misc::SCF(flags);
+            return;
+        case misc::op::HALT:
+            Misc::HALT(cpu);
+            return;
+        case misc::op::STOP:
+            Misc::STOP(cpu);
+            return;
+        case misc::op::DAA:
+            Misc::DAA(flags, cpu);
+            return;
+        default:
+            return;
+    }
 }
 
-void Misc::CCF(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {
-    bool flag_status = !flags.empty();
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, false));
-    flags.emplace_back(set(Flag::c, !flag_status));
-}
-
-void Misc::CPL(vector<Flag_Status> &flags, CPU *cpu) {
-    byte A = cpu->get(Reg::a);
-    A = ~A;
-    flags.emplace_back(set(Flag::n, true));
-    flags.emplace_back(set(Flag::h, true));
-    cpu->set(Reg::a, A);
-}
-
-//TODO implement Interrupt instructions properly
-void Misc::DI([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {}
-
-void Misc::EI([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {}
-
-void Misc::NOP([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {}
-
-void Misc::SCF(vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {
-    flags.emplace_back(set(Flag::n, false));
-    flags.emplace_back(set(Flag::h, false));
-    flags.emplace_back(set(Flag::c, true));
-}
-
-void Misc::STOP([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {
-    //cpu->halt(true);
-}
-
-void Misc::HALT([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {}
-
-void Misc::DAA([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU *cpu) {
+void Misc::DAA(vector<Flag_Status> &flags, CPU *cpu) {
     byte flag = cpu->get(Reg::f);
     byte a_reg = cpu->get(Reg::a);
 
@@ -73,3 +70,54 @@ void Misc::DAA([[maybe_unused]]vector<Flag_Status> &flags, [[maybe_unused]] CPU 
     flags.emplace_back(set(Flag::h, false));
     cpu->set(Reg::a, a_reg);
 }
+
+void Misc::CPL(vector<Flag_Status> &flags, CPU *cpu) {
+    byte A = cpu->get(Reg::a);
+
+    bool n_bit = true;
+    bool h_bit = true;
+
+    flags = {
+            set(Flag::n, n_bit),
+            set(Flag::h, h_bit)
+    };
+
+    A = ~A;
+    cpu->set(Reg::a, A);
+}
+
+void Misc::CCF(vector<Flag_Status> &flags) {
+    bool n_bit = false;
+    bool h_bit = false;
+    bool c_bit = flags.empty();
+
+    flags = {
+            set(Flag::n, n_bit),
+            set(Flag::h, h_bit),
+            set(Flag::c, c_bit)
+    };
+}
+
+void Misc::SCF(vector<Flag_Status> &flags) {
+
+    bool n_bit = false;
+    bool h_bit = false;
+    bool c_bit = true;
+
+    flags = {
+            set(Flag::n, n_bit),
+            set(Flag::h, h_bit),
+            set(Flag::c, c_bit)
+    };
+}
+
+void Misc::HALT([[maybe_unused]] CPU *cpu) {}
+
+void Misc::STOP([[maybe_unused]] CPU *cpu) {}
+
+//TODO implement Interrupt instructions properly
+void Misc::DI([[maybe_unused]] CPU *cpu) {}
+
+void Misc::EI([[maybe_unused]] CPU *cpu) {}
+
+void Misc::NOP() {}
