@@ -12,6 +12,7 @@
 #include "Jump_and_Stack.hpp"
 #include "Misc.hpp"
 #include "../MMU/Mmu.hpp"
+#include <sstream>
 
 CPU::CPU(MMU *mmu) {
     reg_mapper = {};
@@ -19,18 +20,71 @@ CPU::CPU(MMU *mmu) {
     cycles_to_increment = 0;
     mem_ptr = mmu;
     flags.reserve(10);
-
+    counter = 0;
     SP = 0xFFFE;
     PC = 0x0100;
     set(DReg::af, 0x01B0);
     set(DReg::hl, 0x014D);
     set(DReg::bc, 0x0013);
     set(DReg::de, 0x00D8);
+    write_file.open("roms/Gameboy-logs/test.txt");
 }
 
 //void CPU::halt(bool status) { //TODO implement correct halt logic
 //    Halt = status;
 //}
+
+std::string byte_to_string(byte x) {
+    std::stringstream stream;
+    stream << std::hex << static_cast<int>(x);
+    std::string result(stream.str());
+    result = std::string(2 - result.size(), '0') + result;
+
+    for (auto &y: result) {
+        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
+            y -= 32;
+    }
+
+    return result;
+}
+
+std::string word_to_string(word x) {
+    std::stringstream stream;
+    stream << std::hex << static_cast<int>(x);
+    std::string result(stream.str());
+    result = std::string(4 - result.size(), '0') + result;
+
+    for (auto &y: result) {
+        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
+            y -= 32;
+    }
+
+    return result;
+}
+
+std::string string_write(CPU *cpu) {
+
+    std::string _8bit_to_write = "A: " + byte_to_string(cpu->get(Reg::a)) +
+                                 " F: " + byte_to_string(cpu->get(Reg::f)) +
+                                 " B: " + byte_to_string(cpu->get(Reg::b)) +
+                                 " C: " + byte_to_string(cpu->get(Reg::c)) +
+                                 " D: " + byte_to_string(cpu->get(Reg::d)) +
+                                 " E: " + byte_to_string(cpu->get(Reg::e)) +
+                                 " H: " + byte_to_string(cpu->get(Reg::h)) +
+                                 " L: " + byte_to_string(cpu->get(Reg::l));
+
+    std::string _16bit_to_write = " SP: " + word_to_string(cpu->get(DReg::sp)) +
+                                  " PC: 00:" + word_to_string(cpu->get(DReg::pc));
+
+    word PC = cpu->get(DReg::pc);
+    std::string mem_bits = " (" + byte_to_string(cpu->read(PC)) +
+                           " " + byte_to_string(cpu->read(PC + 1)) +
+                           " " + byte_to_string(cpu->read(PC + 2)) +
+                           " " + byte_to_string(cpu->read(PC + 3)) +
+                           ")";
+
+    return _8bit_to_write + _16bit_to_write + mem_bits;
+}
 
 int CPU::run_instruction_cycle() {
     cycles_to_increment = 0;
@@ -40,6 +94,19 @@ int CPU::run_instruction_cycle() {
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
 
+    std::string to_write = string_write(this);
+
+    static int max_c = 7429762;
+    if (PC >= 0x0100) {
+        write_file << to_write << "\n";
+        counter++;
+
+        if (counter == max_c) {
+            std::cout << "Done";
+            write_file.close();
+            exit(1);
+        }
+    }
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
@@ -91,10 +158,10 @@ void CPU::set(DReg reg_index, word val) {
     switch (reg_index) {
         case DReg::pc:
             PC = val;
-            break;
+            return;
         case DReg::sp:
             SP = val;
-            break;
+            return;
         default:
             reg_mapper[index + 1] = val & 0xFF;
             val >>= 8;
@@ -103,7 +170,7 @@ void CPU::set(DReg reg_index, word val) {
 }
 
 void CPU::set_flags(vector<Flag_Status> &flag_array) {
-    byte F = reg_mapper[8];
+    byte F = get(Reg::f);
     for (auto flag_c: flag_array) {
         Flag bit = flag_c.bit;
         bool set = flag_c.status;
@@ -114,7 +181,7 @@ void CPU::set_flags(vector<Flag_Status> &flag_array) {
         else
             F &= bitmask;
     }
-    reg_mapper[8] = F;
+    set(Reg::f, F);
 }
 
 vector<byte> CPU::fetch(Instructions &instruction_data) {
@@ -154,20 +221,24 @@ void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_dat
             Bit_Operations::dispatch(flags, this, op_id, fetched, std::get<bit_op::addr_modes>(addr_mode));
             return;
         }
+        case Type::MISC: {
+            Misc::dispatch(flags, this, op_id);
+            return;
+        }
+
         case Type::LOAD: {
+            flags.clear();
             Load::dispatch(this, op_id, fetched, std::get<load::addr_modes>(addr_mode));
             return;
         }
         case Type::STORE: {
+            flags.clear();
             Store::dispatch(this, op_id, fetched, std::get<store::addr_modes>(addr_mode));
             return;
         }
         case Type::JUMP: {
+            flags.clear();
             Jump::dispatch(this, op_id, fetched, std::get<jump_stack::addr_modes>(addr_mode));
-            return;
-        }
-        case Type::MISC: {
-            Misc::dispatch(flags, this, op_id);
             return;
         }
         default:

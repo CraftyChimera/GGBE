@@ -148,8 +148,8 @@ byte Unary::DEC(vector<Flag_Status> &flags, Unary::op_args arg) {
     value--;
 
     bool z_bit = value == 0;
-    bool n_bit = false;
-    bool h_bit = (value & 0xF) == 0;
+    bool n_bit = true;
+    bool h_bit = (value & 0xF) == 0xF;
 
     flags = {
             {Flag::z, z_bit},

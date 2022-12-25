@@ -43,20 +43,20 @@ void Bit_Operations::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, v
 Bit_Operations::op_args
 Bit_Operations::get_args(CPU *cpu, vector<byte> &bytes_fetched, bit_op::addr_modes addressing_mode) {
     byte temp = bytes_fetched.at(1);
-    byte value = (temp >> 3) & 0x7;
+    byte test_bit = (temp >> 3) & 0x7;
 
     switch (addressing_mode) {
         //All the instructions of this class are CB prefixed
         case bit_op::addr_modes::REG : //BIT u3,r8
         {
             Reg reg_index = static_cast<Reg>(temp & 0x7);
-            return {cpu->get(reg_index), value, reg_index};
+            return {test_bit, cpu->get(reg_index), reg_index};
         }
 
         case bit_op::addr_modes::MEM :  // BIT u3,[HL]
         {
             word address = cpu->get(DReg::hl);
-            return {cpu->read(address), value, address};
+            return {test_bit, cpu->read(address), address};
         }
         default: {
             std::cout << "Fall-through bit-op\n";

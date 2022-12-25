@@ -38,8 +38,8 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vecto
     }
 
     if (addr_mode == arithmetic::addr_modes::SP) { //ADD SP,e8
-        auto offset = static_cast<s_byte>(bytes_fetched[1]);
         word src = cpu->get(DReg::sp);
+        auto offset = bytes_fetched[1];
 
         word result = ADD_TO_SP(flags, src, offset);
         cpu->set(DReg::sp, result);
@@ -95,13 +95,15 @@ word Arithmetic::ADD_16(vector<Flag_Status> &flags, word src, word addend) {
     return temp;
 }
 
-word Arithmetic::ADD_TO_SP(vector<Flag_Status> &flags, word src, s_byte signed_offset) { //TODO Weird Instruction
-    word temp = src + signed_offset;
+word Arithmetic::ADD_TO_SP(vector<Flag_Status> &flags, word src_value, byte offset) { //TODO Weird Instruction
+    word signed_offset = get_signed_offset(offset);
+    word temp = src_value + signed_offset;
 
     bool z_bit = false;
     bool n_bit = false;
-    bool h_bit = (signed_offset > 0) && ((signed_offset & 0xF) + (src & 0xF) > 0xF);
-    bool c_bit = (signed_offset > 0) && ((signed_offset & 0xFF) + (src & 0xFF) > 0xFF);
+    bool h_bit = (src_value & 0xF) + (signed_offset & 0xF) > 0xF;
+    bool c_bit = (src_value & 0xFF) + (signed_offset & 0xFF) > 0xFF;
+
 
     flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
     return temp;
@@ -111,17 +113,16 @@ byte Arithmetic::ADC(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
     byte temp, carry = flags.size(), old_value = arg.value;
     flags.clear();
 
-    //Reduce to ADD case by incrementing the value to be added by carry. Is Valid if arg.value + carry <= 255(i.e. sum gives a valid 8-bit byte without wraparound)
+    //Reduce to ADD case by incrementing the value to be added by carry. Is Valid if arg.value + carry <= 0xFF(i.e. sum gives a valid 8-bit byte without wraparound)
     arg.value += carry;
     temp = Arithmetic::ADD(flags, arg);
 
     //Wraparound case
-    if (old_value + carry > 0xFF) {
-        flags.insert(flags.end(), {
-                {Flag::h, true},
-                {Flag::c, true}
-        });
-    }
+    if ((old_value & 0xF) + (carry & 0xF) > 0xF)
+        flags.emplace_back(set(Flag::h, true));
+
+    if (old_value + carry > 0xFF)
+        flags.emplace_back(set(Flag::c, true));
 
     return temp;
 }
@@ -135,12 +136,11 @@ byte Arithmetic::SBC(vector<Flag_Status> &flags, Arithmetic::op_args arg) {
     temp = Arithmetic::SUB(flags, arg);
 
     //Wraparound case
-    if (old_value + carry > 0xFF) {
-        flags.insert(flags.end(), {
-                {Flag::h, true},
-                {Flag::c, true}
-        });
-    }
+    if (old_value + carry > 0xFF)
+        flags.emplace_back(set(Flag::c, true));
+
+    if ((old_value & 0xF) + (carry & 0xF) > 0xF)
+        flags.emplace_back(set(Flag::h, true));
 
     return temp;
 }

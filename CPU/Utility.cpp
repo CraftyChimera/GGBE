@@ -18,3 +18,13 @@ vector<Flag_Status> batch_fill(std::array<bool, 4> statuses) {
 
     return result;
 }
+
+word get_signed_offset(byte unsigned_offset) {
+    word res = unsigned_offset;
+    bool negative = unsigned_offset & (1 << 7);
+
+    if (negative)
+        return res + 0xFF00;
+
+    return res;
+}

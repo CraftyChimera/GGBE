@@ -50,6 +50,8 @@ Flag_Status set(Flag bit, bool status);
 
 vector<Flag_Status> batch_fill(std::array<bool, 4> statuses);
 
+word get_signed_offset(byte unsigned_offset);
+
 enum class Type {
     ARITHMETIC,
     UNARY,

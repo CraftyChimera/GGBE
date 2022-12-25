@@ -6,6 +6,7 @@
 #define DMGB_CPU_HPP
 
 #include "Utility.hpp"
+#include <fstream>
 
 class Instructions;
 
@@ -16,9 +17,11 @@ class CPU {
     std::array<byte, 9> reg_mapper{};
     vector<Flag_Status> flags;
     MMU *mem_ptr;
+    std::ofstream write_file;
 public:
 
     int cycles_to_increment;
+    int counter;
 
     explicit CPU(MMU *mmu);
 

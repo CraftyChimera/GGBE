@@ -21,11 +21,21 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
 
         case load::addr_modes::REL_16: //LD HL,SP+i8
         {
-            //TODO: unsigned-to-signed can be dangerous
-            auto offset = static_cast<s_byte>(bytes_fetched[1]);
-            DReg dest_reg = DReg::hl;
+            auto signed_offset = get_signed_offset(bytes_fetched[1]);
 
-            word src_value = cpu->get(DReg::sp) + offset;
+            DReg dest_reg = DReg::hl;
+            auto src_value = cpu->get(DReg::sp);
+
+            bool z_bit = false;
+            bool n_bit = false;
+            bool h_bit = (src_value & 0xF) + (signed_offset & 0xF) > 0xF;
+            bool c_bit = (src_value & 0xFF) + (signed_offset & 0xFF) > 0xFF;
+
+            auto flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+
+            src_value += signed_offset;
+
+            cpu->set_flags(flags);
             cpu->set(dest_reg, src_value);
             return;
         }
@@ -124,8 +134,14 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
             if (op_id == load::op::HIGH_C)
                 address += cpu->get(Reg::c);
             if (op_id == load::op::HIGH_IMMEDIATE)
-                address += bytes_fetched[1];
+                address += bytes_fetched.at(1);
 
+            static bool first = true;
+            if (first) {
+                std::cout << std::hex << address << " " << (int) bytes_fetched.at(1) << " " << (int) cpu->read(address)
+                          << "\n";
+                first = false;
+            }
             byte src_value = cpu->read(address);
             cpu->set(dest_reg, src_value);
             return;

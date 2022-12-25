@@ -52,13 +52,13 @@ void Jump::PUSH(CPU *cpu, Jump::op_args &args) {
 
 void Jump::POP(CPU *cpu, Jump::op_args &args) {
     DReg reg = static_cast<DReg>(args.condition);
+
     if (reg == DReg::sp)
         reg = DReg::af;
 
-    word lo, hi, value;
-    lo = cpu->pop();
-    hi = cpu->pop();
-    value = lo + (hi << 8);
+    byte lo = cpu->pop();
+    byte hi = cpu->pop();
+    word value = lo + (hi << 8);
 
     if (reg == DReg::af)
         value &= 0xFFF0;
@@ -66,7 +66,7 @@ void Jump::POP(CPU *cpu, Jump::op_args &args) {
     cpu->set(reg, value);
 }
 
-void Jump::JP(CPU *cpu, Jump::op_args &args) { //RST
+void Jump::JP(CPU *cpu, Jump::op_args &args) {
     cpu->set(DReg::pc, args.jump_address);
 }
 
@@ -77,7 +77,7 @@ void Jump::JPC(CPU *cpu, Jump::op_args &args) {
     }
 }
 
-void Jump::CALL(CPU *cpu, Jump::op_args &args) {
+void Jump::CALL(CPU *cpu, Jump::op_args &args) { //RST
     word next = cpu->get(DReg::pc);
     byte hi = next >> 8, lo = next & 0xFF;
     cpu->push(hi);
@@ -137,10 +137,14 @@ Jump::op_args Jump::get_args(CPU *cpu, vector<byte> &bytes_fetched, jump_stack::
         }
         case jump_stack::addr_modes::REL ://JR e8
         {
-            auto offset = static_cast<s_byte>(bytes_fetched[1]);
+            auto offset = static_cast<s_byte>(bytes_fetched.at(1));
             byte opc = bytes_fetched[0];
+
             result.condition = 2 * ((opc & 0x10) > 0) + ((opc & 0x08) > 0);
             result.jump_address = cpu->get(DReg::pc) + offset;
+
+            if (opc == 0x30)
+                result.condition = 2;
             break;
         }
         case jump_stack::addr_modes::RST ://RSTs

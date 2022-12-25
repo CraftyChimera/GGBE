@@ -174,9 +174,8 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::MEM, 1, 2),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::REG, 1, 1),
-
-                //TODO wrong instruction 136
-                Instructions(Type::ARITHMETIC, arithmetic::op::SBC, arithmetic::addr_modes::REG, 1, 1),
+                
+                Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::REG, 1, 1),
@@ -250,7 +249,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::CALLC, jump_stack::addr_modes::IMM, 3, 3),
                 Instructions(Type::JUMP, jump_stack::op::PUSH, jump_stack::addr_modes::PUSH_POP, 1, 4),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
                 Instructions(Type::JUMP, jump_stack::op::RETC, jump_stack::addr_modes::IMM, 1, 2),
                 Instructions(Type::JUMP, jump_stack::op::RET, jump_stack::addr_modes::IMM, 1, 4),
@@ -259,7 +258,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::CALLC, jump_stack::addr_modes::IMM, 3, 3),
                 Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::IMM, 3, 6),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
 
                 Instructions(Type::JUMP, jump_stack::op::RETC, jump_stack::addr_modes::IMM, 1, 2),
@@ -269,7 +268,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::CALLC, jump_stack::addr_modes::IMM, 3, 3),
                 Instructions(Type::JUMP, jump_stack::op::PUSH, jump_stack::addr_modes::PUSH_POP, 1, 4),
                 Instructions(Type::ARITHMETIC, arithmetic::op::SUB, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
                 Instructions(Type::JUMP, jump_stack::op::RETC, jump_stack::addr_modes::IMM, 1, 2),
                 Instructions(Type::JUMP, jump_stack::op::RETI, jump_stack::addr_modes::IMM, 1, 4),
@@ -278,7 +277,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::CALLC, jump_stack::addr_modes::IMM, 3, 3),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::SBC, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
 
                 Instructions(Type::STORE, store::op::HIGH_IMMEDIATE, store::addr_modes::HIGH, 2, 3),
@@ -288,7 +287,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::JUMP, jump_stack::op::PUSH, jump_stack::addr_modes::PUSH_POP, 1, 4),
                 Instructions(Type::ARITHMETIC, arithmetic::op::AND, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::SP, 2, 4),
                 Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::MEM, 1, 4),
@@ -297,7 +296,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::XOR, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
 
                 Instructions(Type::LOAD, load::op::HIGH_IMMEDIATE, load::addr_modes::HIGH, 2, 3),
@@ -307,7 +306,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::JUMP, jump_stack::op::PUSH, jump_stack::addr_modes::PUSH_POP, 1, 4),
                 Instructions(Type::ARITHMETIC, arithmetic::op::OR, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::REL_16, 2, 3),
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::SP, 1, 2),
@@ -316,7 +315,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::ARITHMETIC, arithmetic::op::CP, arithmetic::addr_modes::IMM, 2, 2),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::RST, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
         };
 
 const Instructions Prefix_List[256] = {

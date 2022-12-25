@@ -29,14 +29,15 @@ void Console::loop() {
 
         static std::set<byte> read;
 
-        if (mmu.read(0xff02) == 0x81) {
+        /*if (mmu.read(0xff02) == 0x81) {
             auto value_to_be_read = mmu.read(0xff01);
             if (!read.count(value_to_be_read)) {
                 std::cout << std::hex << (int) mmu.read(0xff01) << " - " << std::dec << (int) mmu.read(0xff01) << "\n";
+                mmu.write(0xff02, 0);
                 read.insert(value_to_be_read);
             }
-        }
-        
+        }*/
+
     }
 }
 

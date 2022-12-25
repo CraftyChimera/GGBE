@@ -13,9 +13,13 @@ void MMU::init_data(vector<byte> &data) {
     cartridge.init(data);
     number_of_rom_banks = cartridge.number_of_rom_banks;
     number_of_ram_banks = cartridge.number_of_ram_banks;
+    memory.at(0xFF44) = 0x90;
 }
 
 void MMU::write(word address, byte value) {
+    if (address == 0xFF44)
+        return;
+
     memory.at(address) = value;
 }
 

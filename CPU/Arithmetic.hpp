@@ -23,7 +23,7 @@ namespace Arithmetic {
 
     word ADD_16(vector<Flag_Status> &flags, word src, word addend);
 
-    word ADD_TO_SP(vector<Flag_Status> &flags, word src, s_byte signed_offset);
+    word ADD_TO_SP(vector<Flag_Status> &flags, word src_value, byte signed_offset);
 
     byte ADD(vector<Flag_Status> &, Arithmetic::op_args arg);
 
