@@ -13,6 +13,7 @@
 #include "Misc.hpp"
 #include "Mmu.hpp"
 #include <sstream>
+#include "../Base/Parser.hpp"
 
 CPU::CPU(MMU *mmu) {
     reg_mapper = {};
@@ -21,18 +22,24 @@ CPU::CPU(MMU *mmu) {
     mem_ptr = mmu;
     flags.reserve(10);
     counter = 0;
-    SP = 0xFFFE;
-    PC = 0x0100;
-    set(DReg::af, 0x01B0);
-    set(DReg::hl, 0x014D);
-    set(DReg::bc, 0x0013);
-    set(DReg::de, 0x00D8);
+    SP = 0x0000;
+    PC = 0x0000;
+    is_boot = true;
     write_file.open("roms/Gameboy-logs/test.txt");
+    boot_data = read_file("roms/boot.gb");
 }
 
 //void CPU::halt(bool status) { //TODO implement correct halt logic
 //    Halt = status;
 //}
+
+void CPU::run_boot_rom() {
+    while (PC < 0x1000) {
+        run_instruction_cycle();
+    }
+    is_boot = false;
+    write(0xFF44, 0x90);
+}
 
 std::string byte_to_string(byte x) {
     std::stringstream stream;
@@ -98,7 +105,7 @@ int CPU::run_instruction_cycle() {
     std::string to_write = string_write(this);
 
     static int max_c = 223892;
-    {
+    if (PC >= 0x0100) {
         write_file << to_write << "\n";
         counter++;
 
@@ -124,7 +131,13 @@ byte CPU::pop() {
 }
 
 byte CPU::read(word address) {
-    return mem_ptr->read(address);
+    if (address >= 0x0100)
+        return mem_ptr->read(address);
+
+    if (is_boot)
+        return boot_data.at(address);
+    else
+        return mem_ptr->read(address);
 }
 
 void CPU::write(word address, byte value) {

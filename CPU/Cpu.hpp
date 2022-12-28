@@ -18,6 +18,9 @@ class CPU {
     vector<Flag_Status> flags;
     MMU *mem_ptr;
     std::ofstream write_file;
+    vector<byte> boot_data;
+    bool is_boot;
+
 public:
 
     int cycles_to_increment;
@@ -26,6 +29,8 @@ public:
     explicit CPU(MMU *mmu);
 
     //void halt(bool status);
+    
+    void run_boot_rom();
 
     void push(byte to_push);
 

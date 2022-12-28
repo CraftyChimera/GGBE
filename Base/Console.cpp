@@ -29,6 +29,7 @@ void Console::loop() {
 }
 
 void Console::run() {
-    Boot::boot(&mmu);
+    //Boot::boot(&mmu);
+    cpu.run_boot_rom();
     loop();
 }
