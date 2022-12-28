@@ -6,7 +6,6 @@
 #define DMGB_CONSOLE_HPP
 
 #include "Constants.hpp"
-#include "Boot.hpp"
 
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
