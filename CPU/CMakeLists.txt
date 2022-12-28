@@ -13,4 +13,4 @@ add_library(${PROJECT_NAME}
         Instructions.cpp
         )
 
-target_include_directories(${PROJECT_NAME} PUBLIC "../Base")
+target_include_directories(${PROJECT_NAME} PUBLIC "../Base" "../MMU")

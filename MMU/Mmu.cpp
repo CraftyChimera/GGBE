@@ -3,189 +3,96 @@
 //
 
 #include "Mmu.hpp"
+#include "MBC0.hpp"
 
-MMU::MMU() : memory{}, ram_enabled(false), mode_flag(0),
-             rom_bank_number(0), ram_bank_number(0),
-             number_of_rom_banks(0), number_of_ram_banks(0) {};
+MMU::MMU(vector<byte> &data)
+        : memory_controller{}, vram_segment{}, work_ram_segment{},
+          oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
 
-
-void MMU::init_data(vector<byte> &data) {
-    cartridge.init(data);
-    number_of_rom_banks = cartridge.number_of_rom_banks;
-    number_of_ram_banks = cartridge.number_of_ram_banks;
-    memory.at(0xFF44) = 0x90;
-}
+    memory_controller = new MBC0();
+    memory_controller->init_data(data);
+    write(0xFF44, 0x90);
+};
 
 void MMU::write(word address, byte value) {
-    if (address == 0xFF44)
-        return;
 
-    memory.at(address) = value;
-}
-
-byte MMU::read(word address) {
-    if (address < 0x4000) {
-        return cartridge.get_rom_bank(0, address);
-    }
     if (address < 0x8000) {
-        word offset = address - 0x4000;
-        return cartridge.get_rom_bank(1, offset);
+        memory_controller->write_to_rom(address, value);
+        return;
     }
-    return memory.at(address);
+
+    if (address < 0xA000) {
+        vram_segment.at(address - 0x8000) = value;
+        return;
+    }
+    if (address < 0xC000) {
+        memory_controller->write_to_ram(address, value);
+        return;
+    }
+
+    if (address < 0xD000) {
+        work_ram_segment.at(0).at(address - 0xC000) = value;
+        return;
+    }
+
+    if (address < 0xE000) {
+        work_ram_segment.at(1).at(address - 0xD000) = value;
+        return;
+    }
+
+    if (address < 0xFE00) return;
+
+    if (address < 0xFEA0) {
+        oam_segment.at(address - 0xFE00) = value;
+        return;
+    }
+
+    if (address < 0xFF00) return;
+
+    if (address < 0xFF80) {
+        io_regs.at(address - 0xFF00) = value;
+        return;
+    }
+
+    if (address < 0xFFFF) {
+        high_ram_segment.at(address - 0xFF80) = value;
+        return;
+    }
+
+    interrupt_enable = value;
 }
-
-//models MBC1
-/*void MMU::write(word address, byte value) {
-    memory.at(address) = value;
-
-    // Read Only Segments
-
-    if (address < 0x2000) { // RAM_enable: 0x0000 - 0x1FFF, TODO:ram_bank>0 needed?
-        ram_enabled = ((value & 0xF) == 0xA);
-        return;
-    }
-
-    if (address < 0x4000) { // ROM_Bank_Number: 0x2000 - 0x3FFF
-        byte bitmask = (number_of_rom_banks - 1) & 31;
-        if (value == 0) {
-            rom_bank_number = 1;
-        } else
-            rom_bank_number = value & bitmask;
-        return;
-    }
-
-    if (address < 0x6000) { // RAM_Bank_Number: 0x4000 - 0x5FFF
-        ram_bank_number = value & 3;
-        return;
-    }
-
-    if (address < 0x8000) { // Mode_Select: 0x6000 - 0x7FFF
-        mode_flag = address & 1;
-        return;
-    }
-
-    // Read Write Segments
-
-    if (address < 0xA000) { // VRAM: 0x8000 - 0x9FFF
-        return;
-    }
-
-    if (address < 0xC000) { // External_RAM: 0xA000 - 0xBFFF
-        if (ram_enabled) {
-            word offset = address - 0xA000;
-            if (mode_flag == 0)
-                cartridge.set_ram_bank(0, offset, value);
-            if (mode_flag == 1)
-                cartridge.set_ram_bank(ram_bank_number, offset, value);
-        }
-        return;
-    }
-
-    if (address < 0xD000) { // Fixed_WRAM: 0xC000 - 0xCFFF
-        return;
-    }
-
-    if (address < 0xE000) { // Swappable_WRAM(in CGB): 0xD000 - 0xDFFF
-        return;
-    }
-
-    if (address < 0xFE00) { // Mirror_RAM: 0xE000 - 0xFDFF
-        return;
-    }
-
-    if (address < 0xFEA0) { // Sprite_OAM: 0xFE00 - 0xFE9F
-        return;
-    }
-
-    if (address < 0xFF00) { // Unused: 0xFEA0 - 0xFEFF
-        return;
-    }
-
-    if (address == 0xFF01) {
-        std::cout << (int) memory.at(0xFF01) << "\n";
-    }
-
-    if (address < 0xFF80) { // IO-Registers: 0xFF00 - 0xFF7F
-        return;
-    }
-
-    if (address < 0xFFFF) { // High_RAM: 0xFF80 - 0xFFFE
-        return;
-    }
-
-    if (address == 0xFFFF) { //Interrupt_Enable: 0xFFFF - 0xFFFF
-        return;
-    }
-}
-
 
 byte MMU::read(word address) {
-    if (address < 0x4000) { // ROM_BANK_00: 0x0000 - 0x3FFF
 
-        if (mode_flag == 0)
-            return cartridge.get_rom_bank(0, address);
+    if (address < 0x8000)
+        return memory_controller->read_from_rom(address);
 
-        else {
-            byte zero_bank_number = ((ram_bank_number) << 5) & (number_of_rom_banks - 1);
-            //TODO Multi ROM carts behavior different
-            return cartridge.get_rom_bank(zero_bank_number, address);
-        }
+    if (address < 0xA000)
+        return vram_segment.at(address - 0x8000);
 
-    }
+    if (address < 0xC000)
+        return memory_controller->read_from_rom(address);
 
-    if (address < 0x8000) { // ROM_BANK_NN: 0x4000 - 0x7FFF
-        word offset = address - 0x4000;
-        byte bitmask = (number_of_rom_banks - 1) & 31;
-        byte high_bank_number = ((ram_bank_number >> 5) & (number_of_rom_banks - 1)) + (rom_bank_number & bitmask);
-        return cartridge.get_rom_bank(high_bank_number, offset);
-    }
+    if (address < 0xD000)
+        return work_ram_segment.at(0).at(address - 0xC000);
 
-    if (address < 0xA000) { // VRAM: 0x8000 - 0x9FFF
-        return memory.at(address);
-    }
+    if (address < 0xE000)
+        return work_ram_segment.at(1).at(address - 0xD000);
 
-    if (address < 0xC000) { // External_RAM: 0xA000 - 0xBFFF
-        if (!ram_enabled)
-            return 0xFF;
-
-        word offset = address - 0xA000;
-
-        if (mode_flag == 0)
-            return cartridge.get_ram_bank(0, offset);
-        else
-            return cartridge.get_ram_bank(ram_bank_number, offset);
-    }
-
-    if (address < 0xD000) { // Fixed_WRAM: 0xC000 - 0xCFFF
-        return memory.at(address);
-    }
-
-    if (address < 0xE000) { // Swappable_WRAM(in CGB): 0xD000 - 0xDFFF
-        return memory.at(address);
-    }
-
-    if (address < 0xFE00) { // Mirror_RAM: 0xE000 - 0xFDFF
+    if (address < 0xFE00)
         return 0xFF;
-    }
 
-    if (address < 0xFEA0) { // Sprite_OAM: 0xFE00 - 0xFE9F
-        return memory.at(address);
-    }
+    if (address < 0xFEA0)
+        return oam_segment.at(address - 0xFE00);
 
-    if (address < 0xFF00) { // Unused: 0xFEA0 - 0xFEFF
+    if (address < 0xFF00)
         return 0xFF;
-    }
 
-    if (address < 0xFF80) { // IO-Registers: 0xFF00 - 0xFF7F
-        return memory.at(address);
-    }
+    if (address < 0xFF80)
+        return io_regs.at(address - 0xFF00);
 
-    if (address < 0xFFFF) { // High_RAM: 0xFF80 - 0xFFFE
-        return memory.at(address);
-    }
+    if (address < 0xFFFF)
+        return high_ram_segment.at(address - 0xFF80);
 
-    if (address == 0xFFFF) { //Interrupt_Enable: 0xFFFF - 0xFFFF
-        return memory.at(address);
-    }
-    return 0xAB;
-}*/
+    return interrupt_enable;
+}

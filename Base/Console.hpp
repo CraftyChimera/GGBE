@@ -5,18 +5,12 @@
 #ifndef DMGB_CONSOLE_HPP
 #define DMGB_CONSOLE_HPP
 
-#include "../Base/Constants.hpp"
+#include "Constants.hpp"
+#include "Boot.hpp"
+
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
 #include "../MMU/Mmu.hpp"
-#include "../Cartridge/Cartridge.hpp"
-#include "../Boot/Boot.hpp"
-
-class GPU;
-
-class Cartridge;
-
-class CPU;
 
 class Console {
     MMU mmu;
@@ -24,9 +18,9 @@ class Console {
     GPU renderer;
 
 public:
-    Console();
+    explicit Console(vector<byte> &data);
 
-    void run(vector<byte> &data);
+    void run();
 
 private:
     void loop();

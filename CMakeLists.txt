@@ -5,17 +5,18 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Warray-bounds -Werror")
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        Base/Parser.cpp
-        Cartridge/Cartridge.cpp
-        Console/Console.cpp
-        Boot/Boot.cpp Boot/Boot.hpp MMU/Mmu.cpp MMU/Mmu.hpp)
+        MMU/Mmu.cpp
+        )
 
 find_package(SDL2 REQUIRED)
 include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
 
 add_subdirectory(CPU)
 add_subdirectory(GPU)
-add_subdirectory(Console)
+add_subdirectory(Base)
+add_subdirectory(MMU)
 
+target_link_libraries(${PROJECT_NAME} Base)
 target_link_libraries(${PROJECT_NAME} CPU)
 target_link_libraries(${PROJECT_NAME} GPU)
+target_link_libraries(${PROJECT_NAME} MMU)

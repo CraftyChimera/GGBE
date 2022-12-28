@@ -88,7 +88,7 @@ void GPU::update(int cycles) {
         }
 
         current_ppu_state = mapper.advance_scan_line();
-        mem_ptr->write(0xFF44, mapper.fetcher_y);
+        //mem_ptr->write(0xFF44, mapper.fetcher_y);
 
         if (mapper.screen_drawn) {
             mapper.screen_drawn = false;

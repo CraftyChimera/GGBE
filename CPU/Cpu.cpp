@@ -11,7 +11,7 @@
 #include "Store.hpp"
 #include "Jump_and_Stack.hpp"
 #include "Misc.hpp"
-#include "../MMU/Mmu.hpp"
+#include "Mmu.hpp"
 #include <sstream>
 
 CPU::CPU(MMU *mmu) {
@@ -94,6 +94,7 @@ int CPU::run_instruction_cycle() {
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
 
+
     std::string to_write = string_write(this);
 
     static int max_c = 223892;
@@ -107,6 +108,7 @@ int CPU::run_instruction_cycle() {
             exit(1);
         }
     }
+
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
@@ -126,6 +128,9 @@ byte CPU::read(word address) {
 }
 
 void CPU::write(word address, byte value) {
+    if (address == 0xFF44) //Read-Only register for CPU
+        return;
+
     mem_ptr->write(address, value);
 }
 
@@ -196,7 +201,7 @@ vector<byte> CPU::fetch(Instructions &instruction_data) {
 
     byte flag_data = get(Reg::f);
 
-    //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions
+    //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions. Problematic for Instructions that directly modify F register
     if (flag_data & (1 << Flag::c)) {
         flags.emplace_back(Flag_Status(Flag::c, true));
     }

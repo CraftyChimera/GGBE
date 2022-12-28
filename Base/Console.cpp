@@ -3,9 +3,8 @@
 //
 
 #include "Console.hpp"
-#include <set>
 
-Console::Console() : mmu(), cpu(&mmu), renderer(&mmu) {}
+Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {}
 
 void Console::loop() {
     SDL_Event e;
@@ -26,23 +25,10 @@ void Console::loop() {
         }
         auto cycles = cpu.run_instruction_cycle();
         renderer.update(cycles);
-
-        static std::set<byte> read;
-
-        /*if (mmu.read(0xff02) == 0x81) {
-            auto value_to_be_read = mmu.read(0xff01);
-            if (!read.count(value_to_be_read)) {
-                std::cout << std::hex << (int) mmu.read(0xff01) << " - " << std::dec << (int) mmu.read(0xff01) << "\n";
-                mmu.write(0xff02, 0);
-                read.insert(value_to_be_read);
-            }
-        }*/
-
     }
 }
 
-void Console::run(vector<byte> &data) {
-    mmu.init_data(data);
+void Console::run() {
     Boot::boot(&mmu);
     loop();
 }

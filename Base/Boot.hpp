@@ -1,11 +1,11 @@
 //
-// Created by drake on 15/12/22.
+// Created by drake on 27/12/22.
 //
 
 #ifndef DMGB_BOOT_HPP
 #define DMGB_BOOT_HPP
 
-#include "../Base/Constants.hpp"
+#include "Constants.hpp"
 #include "../MMU/Mmu.hpp"
 
 namespace Boot {
