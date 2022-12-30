@@ -6,7 +6,6 @@
 #define DMGB_CONSOLE_HPP
 
 #include "Constants.hpp"
-#include "Boot.hpp"
 
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
@@ -21,6 +20,8 @@ public:
     explicit Console(vector<byte> &data);
 
     void run();
+
+    void run_boot_rom();
 
 private:
     void loop();

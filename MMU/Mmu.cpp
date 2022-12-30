@@ -11,7 +11,6 @@ MMU::MMU(vector<byte> &data)
 
     memory_controller = new MBC0();
     memory_controller->init_data(data);
-    write(0xFF44, 0x90);
 };
 
 void MMU::write(word address, byte value) {

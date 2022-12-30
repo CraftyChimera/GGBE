@@ -1,6 +1,6 @@
 project(Base)
 
-add_library(${PROJECT_NAME} Console.cpp Boot.cpp Parser.cpp)
+add_library(${PROJECT_NAME} Console.cpp Parser.cpp)
 
 find_package(SDL2 REQUIRED)
 include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})

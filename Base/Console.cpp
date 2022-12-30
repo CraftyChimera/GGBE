@@ -23,13 +23,18 @@ void Console::loop() {
                 }
             }
         }
-        auto cycles = cpu.run_instruction_cycle();
+        
+        //Accidentally coded cpu cycles in terms of m-cycles while renderer code was in terms of t-cycles
+        auto cycles = 4 * cpu.run_instruction_cycle();
         renderer.update(cycles);
     }
 }
 
-void Console::run() {
-    //Boot::boot(&mmu);
+void Console::run_boot_rom() {
     cpu.run_boot_rom();
+}
+
+void Console::run() {
+    run_boot_rom();
     loop();
 }

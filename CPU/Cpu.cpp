@@ -16,16 +16,15 @@
 #include "../Base/Parser.hpp"
 
 CPU::CPU(MMU *mmu) {
-    reg_mapper = {};
-
     cycles_to_increment = 0;
     mem_ptr = mmu;
     flags.reserve(10);
     counter = 0;
+    reg_mapper = {};
     SP = 0x0000;
     PC = 0x0000;
     is_boot = true;
-    write_file.open("roms/Gameboy-logs/test.txt");
+    // write_file.open("roms/Gameboy-logs/test.txt");
     boot_data = read_file("roms/boot.gb");
 }
 
@@ -93,15 +92,7 @@ std::string string_write(CPU *cpu) {
     return _8bit_to_write + _16bit_to_write + mem_bits;
 }
 
-int CPU::run_instruction_cycle() {
-    cycles_to_increment = 0;
-    flags.clear();
-    byte index = read(PC);
-    Instructions curr = Instruction_List[index];
-    if (index == 0xCB)
-        curr = Prefix_List[read(PC + 1)];
-
-
+void CPU::write_to_file() {
     std::string to_write = string_write(this);
 
     static int max_c = 223892;
@@ -115,6 +106,17 @@ int CPU::run_instruction_cycle() {
             exit(1);
         }
     }
+}
+
+int CPU::run_instruction_cycle() {
+    cycles_to_increment = 0;
+    flags.clear();
+    byte index = read(PC);
+    Instructions curr = Instruction_List[index];
+    if (index == 0xCB)
+        curr = Prefix_List[read(PC + 1)];
+
+    // write_to_file();
 
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);

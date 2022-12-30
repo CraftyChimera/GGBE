@@ -29,7 +29,8 @@ public:
     explicit CPU(MMU *mmu);
 
     //void halt(bool status);
-    
+    void write_to_file();
+
     void run_boot_rom();
 
     void push(byte to_push);
