@@ -16,4 +16,7 @@ using byte = uint8_t;
 using s_byte = int8_t;
 using word = uint16_t;
 
+constexpr auto scy_address = 0xFF42;
+constexpr auto scx_address = 0xFF43;
+
 #endif //DMGB_CONSTANTS_HPP

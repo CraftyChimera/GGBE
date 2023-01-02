@@ -17,9 +17,7 @@ void GPU::init_sdl() {
 
 void GPU::init_screen() {
     int channels = 3;
-    int native_width = 160;
-    int native_height = 144;
-    int size = native_height * native_width * channels;
+    int size = screen_height * screen_width * channels;
 
     formatted_pixels = new char[size];
     memset(formatted_pixels, 0x00, size);
@@ -31,44 +29,29 @@ GPU::GPU(MMU *mem) noexcept: pixels{}, formatted_pixels{}, native_surface{}, dis
 
     init_sdl();
     init_screen();
-    mem_ptr->write(0xFF44, 0x90);
 
     current_ppu_state = State::V_BLANK;
     first_frame = true;
 }
 
 void GPU::update(int cycles) {
-    cycles_accumulated += cycles;
     state_dispatch(cycles);
 
-    if (cycles_accumulated < 456)
-        return;
+    cycles_accumulated += cycles;
+    if (cycles_accumulated < line_duration_in_t_cycles) return;
+    cycles_accumulated -= line_duration_in_t_cycles;
 
-    cycles_accumulated -= 456;
-    byte &fetcher_y = mapper.fetcher_y;
-
-    if (fetcher_y < screen_height)
-        pixels.at(fetcher_y) = mapper.current_scanline;
-
-    current_ppu_state = mapper.advance_scan_line();
-
-    // fetcher_y moving back to 0 means frame has been drawn completely except in case of first frame
-    if (fetcher_y == 0) {
-        if (first_frame) {
-            first_frame = false;
-            return;
-        }
-
-        draw_screen();
-        SDL_Delay(17); // wait 1/60th of a sec each time a frame is drawn
-    }
+    advance_scanline();
 }
 
 void GPU::state_dispatch(int cycles) {
     switch (current_ppu_state) {
         case State::OAM_SCAN: {
-            if (cycles_accumulated >= 80)
+
+            if (cycles_accumulated >= oam_duration_in_t_cycles) {
                 current_ppu_state = State::DRAW_PIXELS;
+                mapper(cycles_accumulated - oam_duration_in_t_cycles);
+            }
 
             return;
         }
@@ -88,6 +71,27 @@ void GPU::state_dispatch(int cycles) {
     }
 }
 
+void GPU::advance_scanline() {
+    byte &fetcher_y = mapper.fetcher_y;
+
+    if (fetcher_y < screen_height)
+        pixels.at(fetcher_y) = mapper.current_scanline;
+
+    current_ppu_state = mapper.advance_scan_line();
+
+    //Update LY value
+    mem_ptr->write(0xFF44, fetcher_y);
+
+    if (fetcher_y == 0) {
+        if (first_frame) {
+            first_frame = false;
+            return;
+        }
+        draw_screen();
+        // SDL_Delay(17);
+    }
+}
+
 void GPU::draw_screen() {
     int channels = 3;
 
@@ -99,9 +103,9 @@ void GPU::draw_screen() {
             auto color = pixels.at(y_co_ordinate).at(x_co_ordinate);
 
             formatted_pixels[current_index + 2] = static_cast<char>( color & 0xFF );
-            color >>= 2;
+            color >>= 8;
             formatted_pixels[current_index + 1] = static_cast<char>( color & 0xFF );
-            color >>= 2;
+            color >>= 8;
             formatted_pixels[current_index] = static_cast<char>( color & 0xFF );
         }
     }
@@ -114,6 +118,39 @@ void GPU::draw_screen() {
     SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
     SDL_UpdateWindowSurface(display_window);
 }
+
+/* void GPU::get_bg() {
+    auto map_base_addr = 0x9800;
+
+    auto tile_map_base_addr = 0x8000;
+    auto tile_cols = 20;
+    auto tile_rows = 18;
+
+    for (int tile_y = 0; tile_y < tile_rows; tile_y++) {
+        for (auto y_offset = 0; y_offset < 8; y_offset++) {
+
+            for (int tile_x = 0; tile_x < tile_cols; tile_x++) {
+
+                auto tile_base_addr = map_base_addr + (tile_y * 32) + tile_x;
+                auto tile_num = mem_ptr->read(tile_base_addr);
+
+                auto fetch_addr = tile_map_base_addr + (tile_num * 16) + (y_offset * 2);
+
+                byte low_byte = mem_ptr->read(fetch_addr);
+                byte high_byte = mem_ptr->read(fetch_addr + 1);
+
+                for (auto x_offset = 0; x_offset < 8; x_offset++) {
+                    auto low_bit = (bool) (low_byte & (1 << (7 - x_offset)));
+                    auto high_bit = (bool) (high_byte & (1 << (7 - x_offset)));
+                    auto color_id = (high_bit << 1) | low_bit;
+                    pixels.at(8 * tile_y + y_offset).at(8 * tile_x + x_offset) = color_map.at(color_id);
+                }
+            }
+        }
+    }
+    draw_screen();
+}*/
+
 
 void GPU::resize() {
     SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);

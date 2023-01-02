@@ -36,8 +36,6 @@ private:
 
     void get_current_background_pixels();
 
-    [[nodiscard]] vector<vector<byte>> current_pixel_data_fetch_address(byte tile_id, byte tile_map_bit) const;
-
     hex_codes get_hex_from_pixel(Pixel_Info pixel_data);
 
     //TODO LCD_Control

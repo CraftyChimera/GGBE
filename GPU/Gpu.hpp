@@ -7,6 +7,7 @@
 
 #include "Pixel_Mapper.hpp"
 #include "SDL.h"
+#include <fstream>
 
 class MMU;
 
@@ -14,7 +15,6 @@ class GPU {
 
 private:
     std::array<std::array<hex_codes, screen_width>, screen_height> pixels;
-
     char *formatted_pixels;
     SDL_Surface *native_surface;
     SDL_Window *display_window;
@@ -33,6 +33,8 @@ public:
 
     void resize();
 
+    // void get_bg();
+
     ~GPU();
 
 private:
@@ -44,6 +46,8 @@ private:
     void draw_screen();
 
     void state_dispatch(int cycles);
+
+    void advance_scanline();
 };
 
 #endif //DMGB_GPU_HPP

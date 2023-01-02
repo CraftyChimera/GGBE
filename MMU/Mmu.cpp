@@ -3,13 +3,13 @@
 //
 
 #include "Mmu.hpp"
-#include "MBC0.hpp"
+#include "MBC1.hpp"
 
 MMU::MMU(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
 
-    memory_controller = new MBC0();
+    memory_controller = new MBC1();
     memory_controller->init_data(data);
 };
 

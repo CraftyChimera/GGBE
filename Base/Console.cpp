@@ -9,6 +9,7 @@ Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {}
 void Console::loop() {
     SDL_Event e;
     bool open = true;
+
     while (open) {
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -23,8 +24,7 @@ void Console::loop() {
                 }
             }
         }
-        
-        //Accidentally coded cpu cycles in terms of m-cycles while renderer code was in terms of t-cycles
+
         auto cycles = 4 * cpu.run_instruction_cycle();
         renderer.update(cycles);
     }
