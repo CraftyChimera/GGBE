@@ -80,7 +80,7 @@ void GPU::advance_scanline() {
     current_ppu_state = mapper.advance_scan_line();
 
     //Update LY value
-    mem_ptr->write(0xFF44, fetcher_y);
+    mem_ptr->write(ly_address, fetcher_y);
 
     if (fetcher_y == 0) {
         if (first_frame) {
@@ -88,7 +88,7 @@ void GPU::advance_scanline() {
             return;
         }
         draw_screen();
-        // SDL_Delay(17);
+        SDL_Delay(17);
     }
 }
 
