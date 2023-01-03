@@ -21,6 +21,8 @@ public:
 
     void run();
 
+    void run_boot_rom();
+
 private:
     void loop();
 };

@@ -9,6 +9,7 @@ Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {}
 void Console::loop() {
     SDL_Event e;
     bool open = true;
+
     while (open) {
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -23,13 +24,17 @@ void Console::loop() {
                 }
             }
         }
-        auto cycles = cpu.run_instruction_cycle();
+
+        auto cycles = 4 * cpu.run_instruction_cycle();
         renderer.update(cycles);
     }
 }
 
-void Console::run() {
-    //Boot::boot(&mmu);
+void Console::run_boot_rom() {
     cpu.run_boot_rom();
+}
+
+void Console::run() {
+    run_boot_rom();
     loop();
 }

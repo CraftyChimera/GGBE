@@ -7,29 +7,23 @@
 
 #include "Pixel_Mapper.hpp"
 #include "SDL.h"
+#include <fstream>
 
 class MMU;
-
-struct Sprite;
 
 class GPU {
 
 private:
-    static constexpr auto oam_start = 0xFE00;
-
-    bool sprites_fetched;
-
-    int cycles_accumulated, cycles_delayed;
-
-    State current_ppu_state;
-
     std::array<std::array<hex_codes, screen_width>, screen_height> pixels;
     char *formatted_pixels;
     SDL_Surface *native_surface;
+    SDL_Window *display_window;
 
     MMU *mem_ptr;
-    SDL_Window *display_window;
+    State current_ppu_state;
     Pixel_Mapper mapper;
+    bool first_frame;
+    int cycles_accumulated;
 
 public:
 
@@ -39,13 +33,21 @@ public:
 
     void resize();
 
+    // void get_bg();
+
     ~GPU();
 
 private:
 
-    void scan_sprites();
+    void init_sdl();
+
+    void init_screen();
 
     void draw_screen();
+
+    void state_dispatch(int cycles);
+
+    void advance_scanline();
 };
 
 #endif //DMGB_GPU_HPP

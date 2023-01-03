@@ -12,20 +12,17 @@
 #include "Jump_and_Stack.hpp"
 #include "Misc.hpp"
 #include "Mmu.hpp"
-#include <sstream>
 #include "../Base/Parser.hpp"
 
 CPU::CPU(MMU *mmu) {
-    reg_mapper = {};
-
     cycles_to_increment = 0;
     mem_ptr = mmu;
     flags.reserve(10);
     counter = 0;
+    reg_mapper = {};
     SP = 0x0000;
     PC = 0x0000;
     is_boot = true;
-    write_file.open("roms/Gameboy-logs/test.txt");
     boot_data = read_file("roms/boot.gb");
 }
 
@@ -34,63 +31,11 @@ CPU::CPU(MMU *mmu) {
 //}
 
 void CPU::run_boot_rom() {
-    while (PC < 0x1000) {
+    while (PC < 0x0100) {
         run_instruction_cycle();
     }
     is_boot = false;
     write(0xFF44, 0x90);
-}
-
-std::string byte_to_string(byte x) {
-    std::stringstream stream;
-    stream << std::hex << static_cast<int>(x);
-    std::string result(stream.str());
-    result = std::string(2 - result.size(), '0') + result;
-
-    for (auto &y: result) {
-        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
-            y -= 32;
-    }
-
-    return result;
-}
-
-std::string word_to_string(word x) {
-    std::stringstream stream;
-    stream << std::hex << static_cast<int>(x);
-    std::string result(stream.str());
-    result = std::string(4 - result.size(), '0') + result;
-
-    for (auto &y: result) {
-        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
-            y -= 32;
-    }
-
-    return result;
-}
-
-std::string string_write(CPU *cpu) {
-
-    std::string _8bit_to_write = "A: " + byte_to_string(cpu->get(Reg::a)) +
-                                 " F: " + byte_to_string(cpu->get(Reg::f)) +
-                                 " B: " + byte_to_string(cpu->get(Reg::b)) +
-                                 " C: " + byte_to_string(cpu->get(Reg::c)) +
-                                 " D: " + byte_to_string(cpu->get(Reg::d)) +
-                                 " E: " + byte_to_string(cpu->get(Reg::e)) +
-                                 " H: " + byte_to_string(cpu->get(Reg::h)) +
-                                 " L: " + byte_to_string(cpu->get(Reg::l));
-
-    std::string _16bit_to_write = " SP: " + word_to_string(cpu->get(DReg::sp)) +
-                                  " PC: 00:" + word_to_string(cpu->get(DReg::pc));
-
-    word PC = cpu->get(DReg::pc);
-    std::string mem_bits = " (" + byte_to_string(cpu->read(PC)) +
-                           " " + byte_to_string(cpu->read(PC + 1)) +
-                           " " + byte_to_string(cpu->read(PC + 2)) +
-                           " " + byte_to_string(cpu->read(PC + 3)) +
-                           ")";
-
-    return _8bit_to_write + _16bit_to_write + mem_bits;
 }
 
 int CPU::run_instruction_cycle() {
@@ -100,21 +45,6 @@ int CPU::run_instruction_cycle() {
     Instructions curr = Instruction_List[index];
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
-
-
-    std::string to_write = string_write(this);
-
-    static int max_c = 223892;
-    if (PC >= 0x0100) {
-        write_file << to_write << "\n";
-        counter++;
-
-        if (counter == max_c) {
-            std::cout << "Done";
-            write_file.close();
-            exit(1);
-        }
-    }
 
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
@@ -211,7 +141,6 @@ vector<byte> CPU::fetch(Instructions &instruction_data) {
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
     }
-
     byte flag_data = get(Reg::f);
 
     //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions. Problematic for Instructions that directly modify F register
