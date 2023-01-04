@@ -13,6 +13,7 @@
 #include "Misc.hpp"
 #include "Mmu.hpp"
 #include "../Base/Parser.hpp"
+#include <cassert>
 
 CPU::CPU(MMU *mmu) {
     cycles_to_increment = 0;
@@ -45,6 +46,17 @@ int CPU::run_instruction_cycle() {
     Instructions curr = Instruction_List[index];
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
+
+    /*if (index == 0x40) {
+        assert(get(Reg::b) == 3);
+        assert(get(Reg::c) == 5);
+        assert(get(Reg::d) == 8);
+        assert(get(Reg::e) == 13);
+        assert(get(Reg::h) == 21);
+        assert(get(Reg::l) == 34);
+        std::cout << "Test passed" << std::endl;
+        exit(1);
+    }*/
 
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);

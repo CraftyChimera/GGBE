@@ -35,6 +35,7 @@ GPU::GPU(MMU *mem) noexcept: pixels{}, formatted_pixels{}, native_surface{}, dis
 }
 
 void GPU::update(int cycles) {
+    cycles *= 4;
     state_dispatch(cycles);
 
     cycles_accumulated += cycles;
@@ -88,7 +89,7 @@ void GPU::advance_scanline() {
             return;
         }
         draw_screen();
-        SDL_Delay(17);
+        // SDL_Delay(17);
     }
 }
 

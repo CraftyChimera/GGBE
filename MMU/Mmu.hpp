@@ -43,11 +43,18 @@ class MMU {
     byte interrupt_enable;
 
 public:
+    bool reset_timer;
+
+    bool tima_write;
+
     explicit MMU(vector<byte> &data);
 
     void write(word address, byte value);
 
     byte read(word address);
+
+private:
+    void dma_transfer(byte high_address);
 };
 
 #endif //DMGB_MMU_HPP

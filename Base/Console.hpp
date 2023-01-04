@@ -10,11 +10,13 @@
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
 #include "../MMU/Mmu.hpp"
+#include "../Timer/Timer.hpp"
 
 class Console {
     MMU mmu;
     CPU cpu;
     GPU renderer;
+    Timer timer;
 
 public:
     explicit Console(vector<byte> &data);

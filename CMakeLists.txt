@@ -3,10 +3,7 @@ project(DMGB CXX)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Warray-bounds -Werror")
 
-add_executable(${PROJECT_NAME}
-        main.cpp
-        MMU/Mmu.cpp
-        )
+add_executable(${PROJECT_NAME} main.cpp Timer/Timer.cpp)
 
 find_package(SDL2 REQUIRED)
 include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})

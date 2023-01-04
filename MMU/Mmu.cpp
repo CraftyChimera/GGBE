@@ -9,12 +9,13 @@ MMU::MMU(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
 
+    reset_timer = false;
+    tima_write = false;
     memory_controller = new MBC1();
     memory_controller->init_data(data);
 };
 
 void MMU::write(word address, byte value) {
-
     if (address < 0x8000) {
         memory_controller->write_to_rom(address, value);
         return;
@@ -49,6 +50,15 @@ void MMU::write(word address, byte value) {
     if (address < 0xFF00) return;
 
     if (address < 0xFF80) {
+        if (address == div_address)
+            reset_timer = true;
+
+        if (address == timer_counter_address)
+            tima_write = true;
+
+        if (address == dma_address)
+            dma_transfer(value);
+
         io_regs.at(address - 0xFF00) = value;
         return;
     }
@@ -94,4 +104,12 @@ byte MMU::read(word address) {
         return high_ram_segment.at(address - 0xFF80);
 
     return interrupt_enable;
+}
+
+void MMU::dma_transfer(byte high_address) {
+    vector<byte> dma_code = {0x3E, 0x00, 0xE0, 0x46, 0x3E, 0x28, 0x3D, 0x20, 0xFD, 0xC9};
+    dma_code.at(1) = high_address;
+    for (size_t pos = 0; pos < dma_code.size(); pos++) {
+        high_ram_segment.at(pos) = dma_code.at(pos);
+    }
 }
