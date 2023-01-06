@@ -11,24 +11,26 @@
 using bit = bool;
 
 class Timer {
-    byte div_reg;
-    byte timer_counter;
-    byte timer_cutoff;
-    byte timer_control;
-    word system_clock;
-    bool overflow;
-    bool just_dispatched;
-    bit old_bit;
+    byte tma_reg;
+    byte tac_reg;
+    bit last_bit;
     MMU *mem_ptr;
+    int cycles_to_irq;
+    bool ignore_write;
 
 public:
+    word system_clock;
+    
+    byte tima_reg;
+
     explicit Timer(MMU *mem_ptr);
 
     void tick(int cycles);
 
+private:
     [[nodiscard]] bool select_input_bit() const;
 
-    void increment_timer_counter();
+    void detect_edge_and_increment_timer();
 
     byte timer_read(word address);
 
@@ -36,7 +38,7 @@ public:
 
     void set_registers();
 
-    void set_interrupt();
+    void raise_interrupt();
 };
 
 #endif //DMGB_TIMER_HPP

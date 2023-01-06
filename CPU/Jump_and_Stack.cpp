@@ -108,6 +108,7 @@ void Jump::RETC(CPU *cpu, Jump::op_args &args) {
 
 void Jump::RETI(CPU *cpu, Jump::op_args &args) {
     Jump::RET(cpu, args);
+    cpu->interrupt_buffer = 1;
 }
 
 Jump::op_args Jump::get_args(CPU *cpu, vector<byte> &bytes_fetched, jump_stack::addr_modes addressing_mode) {

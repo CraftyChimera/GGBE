@@ -7,7 +7,6 @@
 
 #include "../Base/Constants.hpp"
 #include "MBC.hpp"
-
 // ROM_BANK 00: 0x0000 - 0x3FFF
 // ROM_BANK 01-NN: 0x4000 - 0x7FFF
 // VRAM: 0x8000 - 0x9FFF
@@ -41,6 +40,8 @@ class MMU {
     IO_array io_regs;
     High_RAM high_ram_segment;
     byte interrupt_enable;
+
+    friend class Timer;
 
 public:
     bool reset_timer;

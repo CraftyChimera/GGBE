@@ -111,13 +111,18 @@ void Misc::SCF(vector<Flag_Status> &flags) {
     };
 }
 
-void Misc::HALT([[maybe_unused]] CPU *cpu) {}
+void Misc::HALT(CPU *cpu) {
+    cpu->halt_mode = true;
+}
 
 void Misc::STOP([[maybe_unused]] CPU *cpu) {}
 
-//TODO implement Interrupt instructions properly
-void Misc::DI([[maybe_unused]] CPU *cpu) {}
+void Misc::DI(CPU *cpu) {
+    cpu->interrupt_buffer = -1;
+}
 
-void Misc::EI([[maybe_unused]] CPU *cpu) {}
+void Misc::EI(CPU *cpu) {
+    cpu->interrupt_buffer = 2;
+}
 
 void Misc::NOP() {}

@@ -13,54 +13,67 @@
 #include "Misc.hpp"
 #include "Mmu.hpp"
 #include "../Base/Parser.hpp"
-#include <cassert>
+#include <sstream>
 
-CPU::CPU(MMU *mmu) {
+CPU::CPU(MMU *mmu) : timer(mmu) {
     cycles_to_increment = 0;
     mem_ptr = mmu;
     flags.reserve(10);
-    counter = 0;
     reg_mapper = {};
     SP = 0x0000;
     PC = 0x0000;
     is_boot = true;
     boot_data = read_file("roms/boot.gb");
+    //write_file.open("roms/Gameboy-logs/test.txt");
+    IME = false;
+    interrupt_buffer = 0;
+    halt_mode = false;
+    counter = 0;
 }
 
-//void CPU::halt(bool status) { //TODO implement correct halt logic
-//    Halt = status;
-//}
-
 void CPU::run_boot_rom() {
-    while (PC < 0x0100) {
+    while (PC < 0x0100)
         run_instruction_cycle();
-    }
+
     is_boot = false;
-    write(0xFF44, 0x90);
 }
 
 int CPU::run_instruction_cycle() {
     cycles_to_increment = 0;
     flags.clear();
+
+    byte interrupt_flags = read(if_address);
+    byte interrupt_enable = read(ie_address);
+
+    byte interrupt_data = interrupt_flags & interrupt_enable;
+
+    if (halt_mode) {
+        if (interrupt_data == 0)
+            timer.tick(1);
+
+        else {
+            halt_mode = false;
+        }
+        return 1;
+    }
+
+    if (interrupt_data != 0 && IME) {
+        handle_interrupts(interrupt_data);
+        return cycles_to_increment;
+    }
+
     byte index = read(PC);
     Instructions curr = Instruction_List[index];
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
 
-    /*if (index == 0x40) {
-        assert(get(Reg::b) == 3);
-        assert(get(Reg::c) == 5);
-        assert(get(Reg::d) == 8);
-        assert(get(Reg::e) == 13);
-        assert(get(Reg::h) == 21);
-        assert(get(Reg::l) == 34);
-        std::cout << "Test passed" << std::endl;
-        exit(1);
-    }*/
 
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
+    set_interrupt_master_flag();
+
+    timer.tick(cycles_to_increment);
     return cycles_to_increment;
 }
 
@@ -202,5 +215,40 @@ void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_dat
         }
         default:
             return;
+    }
+}
+
+void CPU::set_interrupt_master_flag() {
+    if (interrupt_buffer > 0) {
+        if (interrupt_buffer == 1)
+            IME = true;
+
+        interrupt_buffer--;
+    }
+
+    if (interrupt_buffer == -1) {
+        IME = false;
+        interrupt_buffer = 0;
+    }
+}
+
+void CPU::handle_interrupts(byte interrupt_data) {
+    const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x58, 0x60};
+
+    for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
+        if ((interrupt_data & (1 << bit_pos)) == 0)
+            continue;
+
+        IME = false;
+
+        interrupt_data -= (1 << bit_pos);
+        write(if_address, interrupt_data);
+
+        cycles_to_increment = 5;
+        auto jump_address = interrupt_vectors.at(bit_pos);
+        Jump::op_args args;
+        args.jump_address = jump_address;
+        Jump::CALL(this, args);
+        return;
     }
 }

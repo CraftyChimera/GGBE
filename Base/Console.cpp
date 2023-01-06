@@ -4,7 +4,7 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu), timer(&mmu) {}
+Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {}
 
 void Console::loop() {
     SDL_Event e;
@@ -26,7 +26,6 @@ void Console::loop() {
         }
 
         auto cycles = cpu.run_instruction_cycle();
-        timer.tick(cycles);
         renderer.update(cycles);
     }
 }

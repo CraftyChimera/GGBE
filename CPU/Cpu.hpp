@@ -6,6 +6,7 @@
 #define DMGB_CPU_HPP
 
 #include "Utility.hpp"
+#include "../Timer/Timer.hpp"
 #include <fstream>
 
 class Instructions;
@@ -20,16 +21,20 @@ class CPU {
     std::ofstream write_file;
     vector<byte> boot_data;
     bool is_boot;
+    bool IME;
+    Timer timer;
 
 public:
+    int counter;
+
+    bool halt_mode;
 
     int cycles_to_increment;
-    int counter;
+
+    int interrupt_buffer;
 
     explicit CPU(MMU *mmu);
 
-    //void halt(bool status);
-    
     void run_boot_rom();
 
     void push(byte to_push);
@@ -55,6 +60,11 @@ public:
     void decode_and_execute(vector<byte> fetched, Instructions &instruction_data);
 
     int run_instruction_cycle();
+
+private:
+    void set_interrupt_master_flag();
+
+    void handle_interrupts(byte interrupt_data);
 };
 
 

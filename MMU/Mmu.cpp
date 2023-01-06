@@ -3,6 +3,7 @@
 //
 
 #include "Mmu.hpp"
+#include "MBC0.hpp"
 #include "MBC1.hpp"
 
 MMU::MMU(vector<byte> &data)
@@ -50,10 +51,11 @@ void MMU::write(word address, byte value) {
     if (address < 0xFF00) return;
 
     if (address < 0xFF80) {
+
         if (address == div_address)
             reset_timer = true;
 
-        if (address == timer_counter_address)
+        if (address == tima_address)
             tima_write = true;
 
         if (address == dma_address)
