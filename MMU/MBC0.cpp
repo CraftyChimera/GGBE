@@ -12,14 +12,14 @@ byte MBC0::read_from_rom(word address) {
 }
 
 byte MBC0::read_from_ram(word address) {
-    std::cout << "Illegal ram_read" << address << "\n";
+    std::cout << "Illegal ram_read\t" << address << "\n";
     return 0xFF;
 }
 
 void MBC0::write_to_rom(word address, byte value) {
-    std::cout << std::hex << "Illegal rom write" << address << " " << (int) value << "\n";
+    std::cout << std::hex << "Illegal rom write\t" << address << " " << (int) value << "\n";
 }
 
 void MBC0::write_to_ram(word address, byte value) {
-    std::cout << std::hex << "Illegal ram write" << address << " " << (int) value << "\n";
+    std::cout << std::hex << "Illegal ram write\t" << address << " " << (int) value << "\n";
 }

@@ -22,13 +22,16 @@ constexpr word tma_address = 0xFF06;
 constexpr word tac_address = 0xFF07;
 
 constexpr word if_address = 0xFF0F;
-constexpr word lcd_control = 0xFF40;
+
+constexpr word lcd_control_address = 0xFF40;
+constexpr word lcd_stat_address = 0xFF41;
 constexpr word scy_address = 0xFF42;
 constexpr word scx_address = 0xFF43;
 constexpr word ly_address = 0xFF44;
+constexpr word lyc_address = 0xFF45;
 
 constexpr word dma_address = 0xFF46;
-constexpr word bgp_palette = 0xFF47;
+constexpr word bgp_palette_address = 0xFF47;
 
 constexpr word wy_address = 0xFF4A;
 constexpr word wx_address = 0xFF4B;

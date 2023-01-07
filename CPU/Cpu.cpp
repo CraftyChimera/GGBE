@@ -13,7 +13,6 @@
 #include "Misc.hpp"
 #include "Mmu.hpp"
 #include "../Base/Parser.hpp"
-#include <sstream>
 
 CPU::CPU(MMU *mmu) : timer(mmu) {
     cycles_to_increment = 0;
@@ -24,7 +23,6 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
     PC = 0x0000;
     is_boot = true;
     boot_data = read_file("roms/boot.gb");
-    //write_file.open("roms/Gameboy-logs/test.txt");
     IME = false;
     interrupt_buffer = 0;
     halt_mode = false;
@@ -48,16 +46,14 @@ int CPU::run_instruction_cycle() {
     byte interrupt_data = interrupt_flags & interrupt_enable;
 
     if (halt_mode) {
+        timer.tick(1);
         if (interrupt_data == 0)
-            timer.tick(1);
+            return 1;
 
-        else {
-            halt_mode = false;
-        }
-        return 1;
+        halt_mode = false;
     }
 
-    if (interrupt_data != 0 && IME) {
+    if (IME && (interrupt_data != 0)) {
         handle_interrupts(interrupt_data);
         return cycles_to_increment;
     }
@@ -233,7 +229,7 @@ void CPU::set_interrupt_master_flag() {
 }
 
 void CPU::handle_interrupts(byte interrupt_data) {
-    const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x58, 0x60};
+    const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
 
     for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
         if ((interrupt_data & (1 << bit_pos)) == 0)

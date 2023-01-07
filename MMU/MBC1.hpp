@@ -9,10 +9,10 @@
 #include "MBC.hpp"
 
 class MBC1 : public MBC {
-    bool external_ram_enabled;
-    byte mode_flag;
+    bool ram_enabled;
+    byte rom_mode;
     byte rom_bank_number;
-    byte external_ram_bank_number;
+    byte ram_bank_number;
 
 public:
     MBC1();

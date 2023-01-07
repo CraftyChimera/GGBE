@@ -48,6 +48,14 @@ private:
     void state_dispatch(int cycles);
 
     void advance_scanline();
+
+    void change_stat_state();
+
+    void change_stat_lyc();
+
+    void check_and_raise_stat_interrupts();
+
+    void raise_interrupts();
 };
 
 #endif //DMGB_GPU_HPP

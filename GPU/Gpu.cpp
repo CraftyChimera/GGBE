@@ -5,6 +5,45 @@
 #include "Gpu.hpp"
 #include "Console.hpp"
 
+void GPU::raise_interrupts() {
+    byte interrupt_flags = mem_ptr->read(if_address);
+    interrupt_flags = interrupt_flags | (1 << 1);
+    mem_ptr->write(if_address, interrupt_flags);
+}
+
+
+void GPU::change_stat_state() {
+    byte stat_reg = mem_ptr->read(lcd_stat_address);
+    stat_reg >>= 2;
+    stat_reg <<= 2;
+    stat_reg += current_ppu_state;
+    mem_ptr->write(lcd_stat_address, stat_reg);
+}
+
+void GPU::change_stat_lyc() {
+    byte value = mem_ptr->read(lyc_address);
+    int bitmask = 0xFF - (1 << 2);
+    value &= bitmask;
+    if (value == mapper.fetcher_y)
+        value += (1 << 2);
+    mem_ptr->write(lcd_stat_address, value);
+}
+
+void GPU::check_and_raise_stat_interrupts() {
+    byte lcd_reg = mem_ptr->read(lcd_stat_address);
+    bool lyc_eq = lcd_reg & (1 << 2);
+    bool hblank_bit = lcd_reg & (1 << 3);
+    bool vblank_bit = lcd_reg & (1 << 4);
+    bool oam_bit = lcd_reg & (1 << 5);
+    bool lyc_bit = lcd_reg & (1 << 6);
+
+    if ((current_ppu_state == H_BLANK && hblank_bit) ||
+        (current_ppu_state == V_BLANK && vblank_bit) ||
+        (current_ppu_state == OAM_SCAN && oam_bit) ||
+        (lyc_eq && lyc_bit))
+        raise_interrupts();
+}
+
 void GPU::init_sdl() {
     int flags = SDL_INIT_VIDEO;
     if (SDL_Init(flags) < 0) return;
@@ -12,7 +51,8 @@ void GPU::init_sdl() {
     display_window = SDL_CreateWindow("DMGB", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width,
                                       screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
-    if (display_window == nullptr) return;
+    if (display_window == nullptr)
+        return;
 }
 
 void GPU::init_screen() {
@@ -39,6 +79,7 @@ void GPU::update(int cycles) {
     state_dispatch(cycles);
 
     cycles_accumulated += cycles;
+
     if (cycles_accumulated < line_duration_in_t_cycles) return;
     cycles_accumulated -= line_duration_in_t_cycles;
 
@@ -51,6 +92,7 @@ void GPU::state_dispatch(int cycles) {
 
             if (cycles_accumulated >= oam_duration_in_t_cycles) {
                 current_ppu_state = State::DRAW_PIXELS;
+                change_stat_state();
                 mapper(cycles_accumulated - oam_duration_in_t_cycles);
             }
 
@@ -60,8 +102,12 @@ void GPU::state_dispatch(int cycles) {
         case State::DRAW_PIXELS: {
             mapper(cycles);
 
-            if (mapper.fetcher_x == screen_width)
+            if (mapper.fetcher_x == screen_width) {
                 current_ppu_state = State::H_BLANK;
+                change_stat_state();
+                check_and_raise_stat_interrupts();
+            }
+
             return;
         }
 
@@ -70,6 +116,7 @@ void GPU::state_dispatch(int cycles) {
         default:
             return;
     }
+
 }
 
 void GPU::advance_scanline() {
@@ -79,9 +126,12 @@ void GPU::advance_scanline() {
         pixels.at(fetcher_y) = mapper.current_scanline;
 
     current_ppu_state = mapper.advance_scan_line();
+    change_stat_state();
+    change_stat_lyc();
+    check_and_raise_stat_interrupts();
 
     //Update LY value
-    //mem_ptr->write(ly_address, fetcher_y);
+    // mem_ptr->write(ly_address, fetcher_y);
 
     if (fetcher_y == 0) {
         if (first_frame) {

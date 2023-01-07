@@ -29,6 +29,11 @@ State Pixel_Mapper::advance_scan_line() {
     if (fetcher_y >= screen_height) {
         window_line_counter = -1;
         window_encountered = false;
+
+        byte interrupt_flags = mem_ptr->read(if_address);
+        interrupt_flags = interrupt_flags | (1 << 0);
+        mem_ptr->write(if_address, interrupt_flags);
+
         return State::V_BLANK;
     }
 
@@ -66,7 +71,7 @@ void Pixel_Mapper::operator()(int cycles) {
 
 void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
     constexpr word tile_map_block_size = 0x0800;
-    byte lcd_reg = mem_ptr->read(lcd_control);
+    byte lcd_reg = mem_ptr->read(lcd_control_address);
 
     bool window_tile_map_area_bit = lcd_reg & (1 << 6);
     bool tile_data_area_bit = lcd_reg & (1 << 4);
@@ -122,7 +127,7 @@ void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
 }
 
 hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
-    word color_data = mem_ptr->read(bgp_palette);
+    word color_data = mem_ptr->read(bgp_palette_address);
 
     auto color_id = pixel_data.color_id;
     auto color_index = (color_data >> (2 * color_id)) & 0x3;
@@ -130,7 +135,7 @@ hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
 }
 
 void Pixel_Mapper::check_for_window() {
-    byte lcd_reg = mem_ptr->read(lcd_control);
+    byte lcd_reg = mem_ptr->read(lcd_control_address);
     bool windows_enable_bit = lcd_reg & (1 << 5);
 
     byte wy = mem_ptr->read(wy_address);

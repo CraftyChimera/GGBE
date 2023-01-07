@@ -19,10 +19,10 @@ static constexpr auto line_duration_in_t_cycles = 456;
 inline constexpr std::array<hex_codes, 4> color_map{0x0f380f, 0x306230, 0x8bac0f, 0x9bbc0f};
 
 enum State {
-    OAM_SCAN = 2,
-    DRAW_PIXELS = 3,
     H_BLANK = 0,
-    V_BLANK = 1
+    V_BLANK = 1,
+    OAM_SCAN = 2,
+    DRAW_PIXELS = 3
 };
 
 #endif //DMGB_UTILITY_GPU_HPP

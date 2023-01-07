@@ -82,7 +82,7 @@ byte MMU::read(word address) {
         return vram_segment.at(address - 0x8000);
 
     if (address < 0xC000)
-        return memory_controller->read_from_rom(address);
+        return memory_controller->read_from_ram(address);
 
     if (address < 0xD000)
         return work_ram_segment.at(0).at(address - 0xC000);
