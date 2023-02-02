@@ -120,6 +120,7 @@ Jump::op_args Jump::get_args(CPU *cpu, vector<byte> &bytes_fetched, jump_stack::
             result.condition = 2 * ((opc >> 4) & 0x3);
             break;
         }
+        case jump_stack::addr_modes::NOTHING :
         case jump_stack::addr_modes::MEM : //JP HL
         {
             byte opc = bytes_fetched[0];

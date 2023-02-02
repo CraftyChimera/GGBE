@@ -185,6 +185,7 @@ namespace jump_stack {
     };
 
     enum class addr_modes {
+        NOTHING,
         PUSH_POP,
         MEM,
         IMM,

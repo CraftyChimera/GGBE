@@ -28,6 +28,8 @@ public:
 
     byte window_line_counter;
 
+    byte lcd_reg;
+
     void operator()(int cycles);
 
     State advance_scan_line();
@@ -37,6 +39,10 @@ private:
     bool window_encountered;
     MMU *mem_ptr;
     std::deque<Pixel_Info> background_pixel_queue;
+
+    byte scroll_offset;
+
+    bool first_read;
 
     void get_current_background_pixels(bool fetch_window);
 

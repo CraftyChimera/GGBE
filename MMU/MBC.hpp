@@ -26,6 +26,8 @@ public:
 
     MBC() = default;
 
+    virtual ~MBC() = default;
+
     void init_data(vector<byte> &data);
 
     virtual byte read_from_rom(word address) = 0;

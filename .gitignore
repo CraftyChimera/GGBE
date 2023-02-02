@@ -2,3 +2,4 @@ cmake-build-dmgb/
 .idea/
 CMakeFiles/
 roms/
+ cmake-build-dmgb-coverage/

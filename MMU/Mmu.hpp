@@ -44,9 +44,15 @@ class MMU {
     friend class Timer;
 
 public:
+    ~MMU();
+
+    bool lyc_written;
+
     bool reset_timer;
 
     bool tima_write;
+
+    bool dma_started;
 
     explicit MMU(vector<byte> &data);
 

@@ -16,7 +16,7 @@ static constexpr auto screen_height_with_pseudo_scan_lines = 154;
 static constexpr auto oam_duration_in_t_cycles = 80;
 static constexpr auto line_duration_in_t_cycles = 456;
 
-inline constexpr std::array<hex_codes, 4> color_map{0x0f380f, 0x306230, 0x8bac0f, 0x9bbc0f};
+inline constexpr std::array<hex_codes, 4> color_map{0xe0f8d0, 0x88c070, 0x346856, 0x081820};
 
 enum State {
     H_BLANK = 0,

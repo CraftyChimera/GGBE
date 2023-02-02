@@ -5,12 +5,6 @@
 #include "Misc.hpp"
 #include "Cpu.hpp"
 
-
-/*const std::function<void(vector<Flag_Status> &, CPU *)> Misc::op_codes[9] = {Misc::CCF, Misc::CPL, Misc::DI, Misc::EI,
-                                                                             Misc::NOP, Misc::SCF,
-                                                                             Misc::HALT, Misc::STOP, Misc::DAA};
-                                                                             */
-
 void Misc::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id) {
     switch (op_id) {
         case misc::op::CCF:

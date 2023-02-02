@@ -10,11 +10,17 @@ MMU::MMU(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
 
+    lyc_written = false;
     reset_timer = false;
     tima_write = false;
     memory_controller = new MBC1();
     memory_controller->init_data(data);
+    dma_started = false;
 };
+
+MMU::~MMU() {
+    delete memory_controller;
+}
 
 void MMU::write(word address, byte value) {
     if (address < 0x8000) {
@@ -58,10 +64,16 @@ void MMU::write(word address, byte value) {
         if (address == tima_address)
             tima_write = true;
 
-        if (address == dma_address)
+        if (address == dma_address) {
+            dma_started = true;
             dma_transfer(value);
+        }
+
+        if (address == lcd_control_address)
+            lyc_written = true;
 
         io_regs.at(address - 0xFF00) = value;
+
         return;
     }
 
@@ -109,9 +121,7 @@ byte MMU::read(word address) {
 }
 
 void MMU::dma_transfer(byte high_address) {
-    vector<byte> dma_code = {0x3E, 0x00, 0xE0, 0x46, 0x3E, 0x28, 0x3D, 0x20, 0xFD, 0xC9};
-    dma_code.at(1) = high_address;
-    for (size_t pos = 0; pos < dma_code.size(); pos++) {
-        high_ram_segment.at(pos) = dma_code.at(pos);
-    }
+    word dma_high = high_address << 8;
+    for (size_t i = 0; i < 160; i++)
+        oam_segment.at(i) = read(dma_high + i);
 }

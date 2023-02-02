@@ -31,7 +31,11 @@ void Console::loop() {
 }
 
 void Console::run_boot_rom() {
-    cpu.run_boot_rom();
+    while (true) {
+        auto cycles = cpu.run_boot_rom();
+        if (cycles == -1)
+            return;
+    }
 }
 
 void Console::run() {

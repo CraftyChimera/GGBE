@@ -22,10 +22,11 @@ private:
     MMU *mem_ptr;
     State current_ppu_state;
     Pixel_Mapper mapper;
-    bool first_frame;
-    int cycles_accumulated;
+
+    int cycle_delay;
 
 public:
+    int cycles_accumulated;
 
     explicit GPU(MMU *mmu) noexcept;
 
@@ -33,7 +34,7 @@ public:
 
     void resize();
 
-    // void get_bg();
+    void get_bg();
 
     ~GPU();
 

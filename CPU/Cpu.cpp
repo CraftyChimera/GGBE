@@ -27,19 +27,30 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
     interrupt_buffer = 0;
     halt_mode = false;
     counter = 0;
+    dma_cycles = 0;
 }
 
-void CPU::run_boot_rom() {
-    while (PC < 0x0100)
-        run_instruction_cycle();
-
-    is_boot = false;
+int CPU::run_boot_rom() {
+    if (PC >= 0x0100) {
+        is_boot = false;
+        return -1;
+    }
+    return run_instruction_cycle();
 }
 
 int CPU::run_instruction_cycle() {
+    if (mem_ptr->dma_started) {
+        mem_ptr->dma_started = false;
+        dma_cycles = 160;
+    }
+
+    if (dma_cycles > 0) {
+        dma_cycles--;
+        return 1;
+    }
+
     cycles_to_increment = 0;
     flags.clear();
-
     byte interrupt_flags = read(if_address);
     byte interrupt_enable = read(ie_address);
 
@@ -62,7 +73,6 @@ int CPU::run_instruction_cycle() {
     Instructions curr = Instruction_List[index];
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
-
 
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
@@ -94,6 +104,9 @@ byte CPU::read(word address) {
 void CPU::write(word address, byte value) {
     if (address == 0xFF44) //Read-Only register for CPU
         return;
+
+    if (address == lyc_address)
+        mem_ptr->lyc_written = true;
 
     mem_ptr->write(address, value);
 }
@@ -230,13 +243,11 @@ void CPU::set_interrupt_master_flag() {
 
 void CPU::handle_interrupts(byte interrupt_data) {
     const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
-
     for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
         if ((interrupt_data & (1 << bit_pos)) == 0)
             continue;
 
         IME = false;
-
         interrupt_data -= (1 << bit_pos);
         write(if_address, interrupt_data);
 

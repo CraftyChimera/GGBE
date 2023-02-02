@@ -23,6 +23,7 @@ class CPU {
     bool is_boot;
     bool IME;
     Timer timer;
+    int dma_cycles;
 
 public:
     int counter;
@@ -35,7 +36,7 @@ public:
 
     explicit CPU(MMU *mmu);
 
-    void run_boot_rom();
+    int run_boot_rom();
 
     void push(byte to_push);
 
