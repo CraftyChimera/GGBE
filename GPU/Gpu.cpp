@@ -157,8 +157,8 @@ void GPU::advance_scanline() {
     current_ppu_state = mapper.advance_scan_line();
     if (fetcher_y == 0) {
         draw_screen();
-        //get_bg();
         //SDL_Delay(17);
+        //get_bg();
     }
     change_stat_state();
     change_stat_lyc();
@@ -224,12 +224,6 @@ void GPU::get_bg() {
         }
     }
     draw_screen();
-}
-
-
-void GPU::resize() {
-    SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
-    SDL_UpdateWindowSurface(display_window);
 }
 
 GPU::~GPU() {

@@ -4,29 +4,31 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {}
+Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {
+    open = true;
+}
 
-void Console::loop() {
+
+void Console::handle_event() {
     SDL_Event e;
-    bool open = true;
-
-    while (open) {
-        while (SDL_PollEvent(&e)) {
-            switch (e.type) {
-                case SDL_QUIT: {
-                    open = false;
-                    break;
-                }
-                case SDL_WINDOWEVENT: {
-                    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        renderer.resize();
-                    }
-                }
+    while (SDL_PollEvent(&e)) {
+        switch (e.type) {
+            case SDL_QUIT: {
+                open = false;
+                return;
             }
         }
+    }
+}
 
-        auto cycles = cpu.run_instruction_cycle();
-        renderer.update(cycles);
+void Console::loop() {
+    while (open) {
+        int cycles = 0;
+        for (int cycles_accumulated = 0; cycles_accumulated < 70224; cycles_accumulated += cycles) {
+            cycles = cpu.run_instruction_cycle();
+            renderer.update(cycles);
+        }
+        handle_event();
     }
 }
 

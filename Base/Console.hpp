@@ -15,6 +15,7 @@ class Console {
     MMU mmu;
     CPU cpu;
     GPU renderer;
+    bool open;
 
 public:
     explicit Console(vector<byte> &data);
@@ -24,6 +25,8 @@ public:
     void run_boot_rom();
 
 private:
+    void handle_event();
+
     void loop();
 };
 

@@ -24,21 +24,18 @@ private:
     Pixel_Mapper mapper;
 
     int cycle_delay;
-
-public:
     int cycles_accumulated;
 
+public:
     explicit GPU(MMU *mmu) noexcept;
 
     void update(int cycles);
 
-    void resize();
-
-    void get_bg();
-
     ~GPU();
 
 private:
+
+    void get_bg();
 
     void init_sdl();
 

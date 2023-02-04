@@ -44,23 +44,20 @@ State Pixel_Mapper::advance_scan_line() {
         window_encountered = false;
         return State::V_BLANK;
     }
-    scroll_offset = 0;
     first_read = false;
 
     return State::OAM_SCAN;
 }
 
 void Pixel_Mapper::operator()(int cycles) {
-    check_for_window();
+    // check_for_window();
     /*bool old_fetch_window = false;
     bool new_fetch_window = false;
     byte wx = mem_ptr->read(wx_address);
 */
     while (cycles > 0) {
-        if (!first_read) {
-            first_read = true;
+        if (fetcher_x == 0)
             scroll_offset = (mem_ptr->read(scx_address)) % 8;
-        }
 
         cycles--;
         if (fetcher_x == screen_width)
@@ -79,6 +76,11 @@ void Pixel_Mapper::operator()(int cycles) {
         if (background_pixel_queue.empty())
             get_current_background_pixels(false);
 
+        while (scroll_offset > 0) {
+            scroll_offset--;
+            background_pixel_queue.pop_front();
+        }
+
         current_scanline.at(fetcher_x++) = get_hex_from_pixel(background_pixel_queue.front());
         background_pixel_queue.pop_front();
     }
@@ -91,14 +93,13 @@ void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
     bool window_tile_map_area_bit = lcd_reg & (1 << 6);
     bool tile_data_area_bit = lcd_reg & (1 << 4);
     bool bg_tile_map_area_bit = lcd_reg & (1 << 3);
-    bool object_size_bit = lcd_reg & (1 << 2);
 
     word tile_map_base_addr = (bg_tile_map_area_bit) ? 0x9C00 : 0x9800;
     // if (fetch_window)
     //   tile_map_base_addr = (window_tile_map_area_bit) ? 0x9C00 : 0x9800;
 
     word tile_data_start_address = (tile_data_area_bit) ? 0x8000 : 0x8800;
-    word object_size = (object_size_bit) ? 16 : 8;
+    word object_size = 8;
 
     byte scx = mem_ptr->read(scx_address);
     byte scy = mem_ptr->read(scy_address);
@@ -130,8 +131,8 @@ void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
     for (int idx = 0; idx < 4; idx++)
         address_of_color_bytes[idx] = mem_ptr->read(address_of_low_byte + idx);
 
-    scroll_offset = 0;
-    for (int pixel_id = scroll_offset; pixel_id < scroll_offset + object_size; pixel_id++) {
+
+    for (int pixel_id = 0; pixel_id < object_size; pixel_id++) {
         Pixel_Info current_pixel{};
         auto byte_id = 2 * (pixel_id / 8);
         auto pixel_offset = pixel_id % 8;
