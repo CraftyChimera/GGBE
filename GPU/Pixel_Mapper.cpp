@@ -10,11 +10,16 @@
 Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
     windows_enabled = false;
     window_encountered = false;
+    window_incremented = false;
+    is_in_window = false;
+
     first_read = false;
 
     fetcher_x = 0x00;
-    window_line_counter = -1;
     fetcher_y = 0x90;
+
+    window_x = 0x00;
+    window_line_counter = -1;
     mem_ptr->write(ly_address, fetcher_y);
     lcd_reg = 0;
     scroll_offset = 0;
@@ -23,7 +28,9 @@ Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
 State Pixel_Mapper::advance_scan_line() {
     background_pixel_queue.clear();
     fetcher_x = 0;
+    window_x = 0;
     fetcher_y++;
+    is_in_window = false;
 
     //Update LY value
     mem_ptr->write(ly_address, fetcher_y % 154);
@@ -50,53 +57,59 @@ State Pixel_Mapper::advance_scan_line() {
 }
 
 void Pixel_Mapper::operator()(int cycles) {
-    // check_for_window();
-    /*bool old_fetch_window = false;
-    bool new_fetch_window = false;
-    byte wx = mem_ptr->read(wx_address);
-*/
-    while (cycles > 0) {
-        if (fetcher_x == 0)
-            scroll_offset = (mem_ptr->read(scx_address)) % 8;
+    if (fetcher_x == 0)
+        scroll_offset = (mem_ptr->read(scx_address)) % 8;
 
+    byte wx = mem_ptr->read(wx_address);
+
+    check_if_window_enabled();
+
+    while (cycles > 0) {
         cycles--;
-        if (fetcher_x == screen_width)
+
+        if (fetcher_x + window_x == screen_width)
             return;
 
-        /*if (!old_fetch_window)
-            new_fetch_window = windows_enabled && (fetcher_x >= (wx - 7));
-
-        if (new_fetch_window && !old_fetch_window) {
-            background_pixel_queue.clear();
-            old_fetch_window = true;
-            fetcher_x = 0;
-            window_line_counter++;
-        }*/
-
         if (background_pixel_queue.empty())
-            get_current_background_pixels(false);
+            get_current_background_pixels();
 
         while (scroll_offset > 0) {
             scroll_offset--;
             background_pixel_queue.pop_front();
         }
 
-        current_scanline.at(fetcher_x++) = get_hex_from_pixel(background_pixel_queue.front());
+        bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
+        if (!is_in_window && should_be_in_window) // Transition into window
+        {
+            window_line_counter++;
+            background_pixel_queue.clear();
+            is_in_window = true;
+            get_current_background_pixels();
+        }
+
+        current_scanline.at(fetcher_x + window_x) = get_hex_from_pixel(background_pixel_queue.front());
+
+        if (is_in_window)
+            window_x++;
+        else
+            fetcher_x++;
+
         background_pixel_queue.pop_front();
     }
 
     lcd_reg = mem_ptr->read(lcd_control_address);
 }
 
-void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
+void Pixel_Mapper::get_current_background_pixels() {
     constexpr word tile_map_block_size = 0x0800;
     bool window_tile_map_area_bit = lcd_reg & (1 << 6);
     bool tile_data_area_bit = lcd_reg & (1 << 4);
     bool bg_tile_map_area_bit = lcd_reg & (1 << 3);
 
     word tile_map_base_addr = (bg_tile_map_area_bit) ? 0x9C00 : 0x9800;
-    // if (fetch_window)
-    //   tile_map_base_addr = (window_tile_map_area_bit) ? 0x9C00 : 0x9800;
+
+    if (is_in_window)
+        tile_map_base_addr = (window_tile_map_area_bit) ? 0x9C00 : 0x9800;
 
     word tile_data_start_address = (tile_data_area_bit) ? 0x8000 : 0x8800;
     word object_size = 8;
@@ -107,8 +120,8 @@ void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
     byte tile_x = ((scx / 8) + (fetcher_x / 8)) & 0x1F;
     byte tile_y = ((scy + fetcher_y) & 0xFF) / 8;
 
-    if (fetch_window) {
-        tile_x = fetcher_x / 8;
+    if (is_in_window) {
+        tile_x = window_x / 8;
         tile_y = window_line_counter / 8;
     }
 
@@ -125,6 +138,10 @@ void Pixel_Mapper::get_current_background_pixels(bool fetch_window) {
                 tile_data_start_address + (1 - block_id) * tile_map_block_size + 2 * object_size * block_offset;
 
     auto y_offset = (scy + fetcher_y) % 8;
+
+    if (is_in_window)
+        y_offset = window_line_counter % 8;
+
     word address_of_low_byte = start_of_tile_address + 2 * y_offset;
 
     array<byte, 4> address_of_color_bytes{};
@@ -165,7 +182,7 @@ hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
     return color_map.at(color_index);
 }
 
-void Pixel_Mapper::check_for_window() {
+void Pixel_Mapper::check_if_window_enabled() {
     bool windows_enable_bit = lcd_reg & (1 << 5);
 
     byte wy = mem_ptr->read(wy_address);
