@@ -23,6 +23,8 @@ private:
     State current_ppu_state;
     Pixel_Mapper mapper;
 
+    bool sprite_fetched;
+
     int cycle_delay;
     int cycles_accumulated;
 
@@ -44,6 +46,8 @@ private:
     void draw_screen();
 
     void state_dispatch(int cycles);
+
+    void scan_sprites();
 
     void advance_scanline();
 

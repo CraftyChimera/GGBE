@@ -10,10 +10,7 @@
 Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
     windows_enabled = false;
     window_encountered = false;
-    window_incremented = false;
     is_in_window = false;
-
-    first_read = false;
 
     fetcher_x = 0x00;
     fetcher_y = 0x90;
@@ -27,6 +24,10 @@ Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
 
 State Pixel_Mapper::advance_scan_line() {
     background_pixel_queue.clear();
+    sprite_pixel_queue.clear();
+    sprites_loaded.clear();
+    sprite_position_map.clear();
+
     fetcher_x = 0;
     window_x = 0;
     fetcher_y++;
@@ -51,7 +52,6 @@ State Pixel_Mapper::advance_scan_line() {
         window_encountered = false;
         return State::V_BLANK;
     }
-    first_read = false;
 
     return State::OAM_SCAN;
 }
@@ -87,14 +87,30 @@ void Pixel_Mapper::operator()(int cycles) {
             get_current_background_pixels();
         }
 
-        current_scanline.at(fetcher_x + window_x) = get_hex_from_pixel(background_pixel_queue.front());
+
+        while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first) {
+
+            int sprite_position_end = sprite_position_map.front().first;
+            int sprite_position_beg = sprite_position_end - 8;
+
+            auto current_sprite_pixels = load_new_sprite_pixels();
+
+            for (auto sprite_position_iterator = sprite_position_beg;
+                 sprite_position_iterator != sprite_position_end; sprite_position_iterator++) {
+                if (sprite_position_iterator < 0)
+                    current_sprite_pixels.pop_front();
+            }
+
+            load_pixels_into_sprite_queue(std::move(current_sprite_pixels));
+            sprite_position_map.pop_front();
+        }
+
+        current_scanline.at(fetcher_x + window_x) = get_hex_from_pixel(get_mixed_pixel());
 
         if (is_in_window)
             window_x++;
         else
             fetcher_x++;
-
-        background_pixel_queue.pop_front();
     }
 
     lcd_reg = mem_ptr->read(lcd_control_address);
@@ -143,24 +159,16 @@ void Pixel_Mapper::get_current_background_pixels() {
         y_offset = window_line_counter % 8;
 
     word address_of_low_byte = start_of_tile_address + 2 * y_offset;
+    word address_of_high_byte = address_of_low_byte + 1;
 
-    array<byte, 4> address_of_color_bytes{};
-    for (int idx = 0; idx < 4; idx++)
-        address_of_color_bytes[idx] = mem_ptr->read(address_of_low_byte + idx);
-
-
-    for (int pixel_id = 0; pixel_id < object_size; pixel_id++) {
+    for (int pixel_id = 0; pixel_id < 8; pixel_id++) {
         Pixel_Info current_pixel{};
-        auto byte_id = 2 * (pixel_id / 8);
-        auto pixel_offset = pixel_id % 8;
 
-        byte low_byte = address_of_color_bytes.at(byte_id);
-        byte high_byte = address_of_color_bytes.at(byte_id + 1);
+        byte low_byte = mem_ptr->read(address_of_low_byte);
+        byte high_byte = mem_ptr->read(address_of_high_byte);
 
-        assert((pixel_offset < 8) && (pixel_offset > -1));
-
-        byte high_bit_at_pos = (bool) (high_byte & (1 << (7 - pixel_offset)));
-        byte low_bit_at_pos = (bool) (low_byte & (1 << (7 - pixel_offset)));
+        byte high_bit_at_pos = (bool) (high_byte & (1 << (7 - pixel_id)));
+        byte low_bit_at_pos = (bool) (low_byte & (1 << (7 - pixel_id)));
         byte current_pixel_color_number = (high_bit_at_pos << 1) | low_bit_at_pos;
 
         current_pixel.is_sprite = false;
@@ -170,15 +178,32 @@ void Pixel_Mapper::get_current_background_pixels() {
 }
 
 hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
-    word color_data = mem_ptr->read(bgp_palette_address);
+    word bgp_color_data = mem_ptr->read(bgp_palette_address);
+    word obp0_color_data = mem_ptr->read(obp0_palette_address);
+    word obp1_color_data = mem_ptr->read(obp1_palette_address);
+    int color_data_used = -1;
+
+    if (pixel_data.is_sprite) {
+        switch (pixel_data.palette) {
+            case 0:
+                color_data_used = obp0_color_data;
+                break;
+            case 1:
+                color_data_used = obp1_color_data;
+                break;
+            default:
+                break;
+        }
+    } else {
+        color_data_used = bgp_color_data;
+
+        if ((lcd_reg & (1 << 0)) == 0)
+            return color_map.at(0);
+    }
 
     auto color_id = pixel_data.color_id;
-    if ((lcd_reg & (1 << 0)) == 0)
-        return color_map.at(0);
-
     assert((color_id < 4) && (color_id > -1));
-
-    auto color_index = (color_data >> (2 * color_id)) & 0x3;
+    auto color_index = (color_data_used >> (2 * color_id)) & 0x3;
     return color_map.at(color_index);
 }
 
@@ -189,4 +214,83 @@ void Pixel_Mapper::check_if_window_enabled() {
 
     window_encountered = window_encountered || (wy == fetcher_y);
     windows_enabled = window_encountered && windows_enable_bit;
+}
+
+std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
+    std::deque<Pixel_Info> current_sprite_pixels;
+
+    if (sprite_position_map.empty() || !(lcd_reg & (1 << 1)))
+        return current_sprite_pixels;
+
+    auto sprite_id = sprite_position_map.front().second;
+    Sprite current = sprites_loaded.at(sprite_id);
+
+    auto tile_num = current.tile_id;
+    auto flag_data = current.flags;
+
+    byte scy = mem_ptr->read(scy_address);
+
+    constexpr word tile_data_start_address = 0x8000;
+    constexpr word tile_map_block_size = 0x0800;
+    auto block_id = tile_num / 128;
+    auto block_offset = tile_num % 128;
+
+    int object_size = 8;//(lcd_reg & (1 << 2)) ? 16 : 8;
+    auto start_of_tile_address =
+            tile_data_start_address + block_id * tile_map_block_size + 2 * object_size * block_offset;
+
+    auto y_offset = (fetcher_y + scy) % 8;
+
+    if (flag_data.y_flip)
+        y_offset = object_size - 1 - y_offset;
+
+    word address_of_low_byte = start_of_tile_address + 2 * y_offset;
+    word address_of_high_byte = address_of_low_byte + 1;
+
+    for (int pixel_id = 0; pixel_id < 8; pixel_id++) {
+        Pixel_Info current_pixel{};
+
+        byte low_byte = mem_ptr->read(address_of_low_byte);
+        byte high_byte = mem_ptr->read(address_of_high_byte);
+
+        auto pixel_bitmask = 7 - pixel_id;
+        if (current.flags.x_flip)
+            pixel_bitmask = pixel_id;
+
+        byte high_bit_at_pos = (bool) (high_byte & (1 << pixel_bitmask));
+        byte low_bit_at_pos = (bool) (low_byte & (1 << pixel_bitmask));
+        byte current_pixel_color_number = (high_bit_at_pos << 1) | low_bit_at_pos;
+
+        current_pixel.is_sprite = true;
+        current_pixel.color_id = current_pixel_color_number;
+        current_pixel.background_priority = current.flags.bg_window_over_obj;
+        current_pixel.palette = current.flags.palette_number;
+
+        current_sprite_pixels.push_back(current_pixel);
+    }
+    return current_sprite_pixels;
+}
+
+void Pixel_Mapper::load_pixels_into_sprite_queue(std::deque<Pixel_Info> pixels) {
+    for (std::size_t offset = 0; offset < pixels.size(); offset++) {
+        //TODO: This works for Non CGB. Need a different Logic for CGB
+        if (offset >= sprite_pixel_queue.size() || sprite_pixel_queue.at(offset).color_id == 0)
+            sprite_pixel_queue.push_back(pixels.at(offset));
+    }
+}
+
+Pixel_Info Pixel_Mapper::get_mixed_pixel() {
+    Pixel_Info current_background_pixel = background_pixel_queue.front();
+    background_pixel_queue.pop_front();
+
+    if (sprite_pixel_queue.empty())
+        return current_background_pixel;
+
+    Pixel_Info current_sprite_pixel = sprite_pixel_queue.front();
+
+    if (current_sprite_pixel.background_priority && current_background_pixel.color_id != 0)
+        return current_background_pixel;
+
+    sprite_pixel_queue.pop_front();
+    return current_sprite_pixel;
 }

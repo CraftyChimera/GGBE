@@ -33,6 +33,8 @@ constexpr word lyc_address = 0xFF45;
 
 constexpr word dma_address = 0xFF46;
 constexpr word bgp_palette_address = 0xFF47;
+constexpr word obp0_palette_address = 0xFF48;
+constexpr word obp1_palette_address = 0xFF49;
 
 constexpr word wy_address = 0xFF4A;
 constexpr word wx_address = 0xFF4B;

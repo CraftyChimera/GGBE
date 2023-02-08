@@ -32,24 +32,32 @@ public:
 
     byte lcd_reg;
 
+    std::deque<std::pair<byte, byte>> sprite_position_map;
+    std::vector<Sprite> sprites_loaded;
+
     void operator()(int cycles);
 
     State advance_scan_line();
 
 private:
-    bool window_incremented;
+
     bool windows_enabled;
     bool window_encountered;
     bool is_in_window;
 
     MMU *mem_ptr;
     std::deque<Pixel_Info> background_pixel_queue;
+    std::deque<Pixel_Info> sprite_pixel_queue;
 
     byte scroll_offset;
 
-    bool first_read;
-
     void get_current_background_pixels();
+
+    std::deque<Pixel_Info> load_new_sprite_pixels();
+
+    void load_pixels_into_sprite_queue(std::deque<Pixel_Info> sprite_data);
+
+    Pixel_Info get_mixed_pixel();
 
     hex_codes get_hex_from_pixel(Pixel_Info pixel_data);
 

@@ -25,4 +25,20 @@ enum State {
     DRAW_PIXELS = 3
 };
 
+struct PPU_flags {
+    using bit = bool;
+
+    bit bg_window_over_obj;
+    bit y_flip;
+    bit x_flip;
+    bit palette_number;
+
+    explicit PPU_flags(byte);
+};
+
+struct Sprite {
+    byte tile_id;
+    PPU_flags flags;
+};
+
 #endif //DMGB_UTILITY_GPU_HPP
