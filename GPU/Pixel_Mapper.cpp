@@ -88,7 +88,7 @@ void Pixel_Mapper::operator()(int cycles) {
         }
 
 
-        while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first) {
+        while (!sprite_position_map.empty() && fetcher_x + 8 > sprite_position_map.front().first) {
 
             int sprite_position_end = sprite_position_map.front().first;
             int sprite_position_beg = sprite_position_end - 8;
@@ -191,8 +191,6 @@ hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
             case 1:
                 color_data_used = obp1_color_data;
                 break;
-            default:
-                break;
         }
     } else {
         color_data_used = bgp_color_data;
@@ -202,6 +200,7 @@ hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
     }
 
     auto color_id = pixel_data.color_id;
+
     assert((color_id < 4) && (color_id > -1));
     auto color_index = (color_data_used >> (2 * color_id)) & 0x3;
     return color_map.at(color_index);
@@ -254,7 +253,7 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
         byte high_byte = mem_ptr->read(address_of_high_byte);
 
         auto pixel_bitmask = 7 - pixel_id;
-        if (current.flags.x_flip)
+        if (flag_data.x_flip)
             pixel_bitmask = pixel_id;
 
         byte high_bit_at_pos = (bool) (high_byte & (1 << pixel_bitmask));
@@ -274,8 +273,11 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
 void Pixel_Mapper::load_pixels_into_sprite_queue(std::deque<Pixel_Info> pixels) {
     for (std::size_t offset = 0; offset < pixels.size(); offset++) {
         //TODO: This works for Non CGB. Need a different Logic for CGB
-        if (offset >= sprite_pixel_queue.size() || sprite_pixel_queue.at(offset).color_id == 0)
+        if (offset >= sprite_pixel_queue.size())
             sprite_pixel_queue.push_back(pixels.at(offset));
+
+        else if (sprite_pixel_queue.at(offset).color_id == 0)
+            sprite_pixel_queue.at(offset) = pixels.at(offset);
     }
 }
 
@@ -287,10 +289,15 @@ Pixel_Info Pixel_Mapper::get_mixed_pixel() {
         return current_background_pixel;
 
     Pixel_Info current_sprite_pixel = sprite_pixel_queue.front();
+    sprite_pixel_queue.pop_front();
 
-    if (current_sprite_pixel.background_priority && current_background_pixel.color_id != 0)
+    if (current_sprite_pixel.color_id == 0)
         return current_background_pixel;
 
-    sprite_pixel_queue.pop_front();
+    if (current_sprite_pixel.background_priority) {
+        if (current_background_pixel.color_id != 0)
+            return current_background_pixel;
+    }
+
     return current_sprite_pixel;
 }

@@ -196,9 +196,9 @@ void GPU::draw_screen() {
 }
 
 void GPU::scan_sprites() {
-    byte lcd_control_reg = mem_ptr->read(lcd_control_address);
-    bool object_size_bit = lcd_control_reg & (1 << 2);
-    int object_size = object_size_bit ? 16 : 8;
+    // byte lcd_control_reg = mem_ptr->read(lcd_control_address);
+    // bool object_size_bit = lcd_control_reg & (1 << 2);
+    int object_size = 8;
 
     constexpr std::size_t max_sprites_per_scan_line = 10;
     constexpr auto sprite_count = 40;
@@ -219,9 +219,8 @@ void GPU::scan_sprites() {
 
         byte sprite_x = mem_ptr->read(sprite_data_start_address + 1);
         int sprite_y = mem_ptr->read(sprite_data_start_address + 0);
-        sprite_y -= 16;
 
-        if (sprite_y <= line_y && line_y < sprite_y + object_size) {
+        if (sprite_x > 0 && sprite_y <= line_y + 16 && line_y + 16 < sprite_y + object_size) {
             sprites_loaded_ref.push_back({tile_index, PPU_flags(flags)});
             sprite_position_map_ref.emplace_back(std::make_pair(sprite_x, index_in_loaded_sprites));
             index_in_loaded_sprites++;

@@ -4,8 +4,8 @@
 #include "GPU_Utility.hpp"
 
 PPU_flags::PPU_flags(byte flag_data) {
-    palette_number = (flag_data >> 4) & 1;
-    x_flip = (flag_data >> 5) & 1;
-    y_flip = (flag_data >> 6) & 1;
-    bg_window_over_obj = (flag_data >> 7) & 1;
+    palette_number = flag_data & (1 << 4);
+    x_flip = flag_data & (1 << 5);
+    y_flip = flag_data & (1 << 6);
+    bg_window_over_obj = flag_data & (1 << 7);
 }
