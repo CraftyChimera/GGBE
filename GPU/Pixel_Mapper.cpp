@@ -12,7 +12,7 @@ Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
     window_encountered = false;
     is_in_window = false;
 
-    fetcher_x = 0x00;
+    background_x = 0x00;
     fetcher_y = 0x90;
 
     window_x = 0x00;
@@ -28,7 +28,7 @@ State Pixel_Mapper::advance_scan_line() {
     sprites_loaded.clear();
     sprite_position_map.clear();
 
-    fetcher_x = 0;
+    background_x = 0;
     window_x = 0;
     fetcher_y++;
     is_in_window = false;
@@ -57,9 +57,10 @@ State Pixel_Mapper::advance_scan_line() {
 }
 
 void Pixel_Mapper::operator()(int cycles) {
-    if (fetcher_x == 0)
+    if (background_x == 0)
         scroll_offset = (mem_ptr->read(scx_address)) % 8;
 
+    byte fetcher_x = background_x + window_x;
     byte wx = mem_ptr->read(wx_address);
 
     check_if_window_enabled();
@@ -67,16 +68,16 @@ void Pixel_Mapper::operator()(int cycles) {
     while (cycles > 0) {
         cycles--;
 
-        if (fetcher_x + window_x == screen_width)
+        if (fetcher_x == screen_width)
             return;
 
         if (background_pixel_queue.empty())
             get_current_background_pixels();
 
-        while (scroll_offset > 0) {
-            scroll_offset--;
-            background_pixel_queue.pop_front();
-        }
+        //while (scroll_offset > 0) {
+        //    scroll_offset--;
+        //    background_pixel_queue.pop_front();
+        //}
 
         bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
         if (!is_in_window && should_be_in_window) // Transition into window
@@ -88,29 +89,28 @@ void Pixel_Mapper::operator()(int cycles) {
         }
 
 
-        while (!sprite_position_map.empty() && fetcher_x + 8 > sprite_position_map.front().first) {
+        while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first) {
 
             int sprite_position_end = sprite_position_map.front().first;
             int sprite_position_beg = sprite_position_end - 8;
 
             auto current_sprite_pixels = load_new_sprite_pixels();
 
-            for (auto sprite_position_iterator = sprite_position_beg;
-                 sprite_position_iterator != sprite_position_end; sprite_position_iterator++) {
-                if (sprite_position_iterator < 0)
-                    current_sprite_pixels.pop_front();
+            while (!current_sprite_pixels.empty() && sprite_position_beg < 0) {
+                current_sprite_pixels.pop_front();
+                sprite_position_beg++;
             }
 
-            load_pixels_into_sprite_queue(std::move(current_sprite_pixels));
+            load_pixels_into_sprite_queue(current_sprite_pixels);
             sprite_position_map.pop_front();
         }
 
-        current_scanline.at(fetcher_x + window_x) = get_hex_from_pixel(get_mixed_pixel());
+        current_scanline.at(fetcher_x++) = get_hex_from_pixel(get_mixed_pixel());
 
         if (is_in_window)
             window_x++;
         else
-            fetcher_x++;
+            background_x++;
     }
 
     lcd_reg = mem_ptr->read(lcd_control_address);
@@ -128,12 +128,11 @@ void Pixel_Mapper::get_current_background_pixels() {
         tile_map_base_addr = (window_tile_map_area_bit) ? 0x9C00 : 0x9800;
 
     word tile_data_start_address = (tile_data_area_bit) ? 0x8000 : 0x8800;
-    word object_size = 8;
 
     byte scx = mem_ptr->read(scx_address);
     byte scy = mem_ptr->read(scy_address);
 
-    byte tile_x = ((scx / 8) + (fetcher_x / 8)) & 0x1F;
+    byte tile_x = ((scx / 8) + (background_x / 8)) & 0x1F;
     byte tile_y = ((scy + fetcher_y) & 0xFF) / 8;
 
     if (is_in_window) {
@@ -147,11 +146,11 @@ void Pixel_Mapper::get_current_background_pixels() {
     auto block_id = tile_num / 128;
     auto block_offset = tile_num % 128;
     word start_of_tile_address =
-            tile_data_start_address + block_id * tile_map_block_size + 2 * object_size * block_offset;
+            tile_data_start_address + block_id * tile_map_block_size + 16 * block_offset;
 
     if (!tile_data_area_bit)
         start_of_tile_address =
-                tile_data_start_address + (1 - block_id) * tile_map_block_size + 2 * object_size * block_offset;
+                tile_data_start_address + (1 - block_id) * tile_map_block_size + 16 * block_offset;
 
     auto y_offset = (scy + fetcher_y) % 8;
 
@@ -216,32 +215,48 @@ void Pixel_Mapper::check_if_window_enabled() {
 }
 
 std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
+    constexpr word tile_data_start_address = 0x8000;
+    bool object_size_bit = lcd_reg & (1 << 2);
+    bool sprite_enable_bit = lcd_reg & (1 << 1);
+
     std::deque<Pixel_Info> current_sprite_pixels;
 
-    if (sprite_position_map.empty() || !(lcd_reg & (1 << 1)))
+    if (sprite_position_map.empty() || !sprite_enable_bit)
         return current_sprite_pixels;
 
     auto sprite_id = sprite_position_map.front().second;
     Sprite current = sprites_loaded.at(sprite_id);
+    int object_size = object_size_bit ? 16 : 8;
 
     auto tile_num = current.tile_id;
     auto flag_data = current.flags;
 
     byte scy = mem_ptr->read(scy_address);
 
-    constexpr word tile_data_start_address = 0x8000;
-    constexpr word tile_map_block_size = 0x0800;
-    auto block_id = tile_num / 128;
-    auto block_offset = tile_num % 128;
-
-    int object_size = 8;//(lcd_reg & (1 << 2)) ? 16 : 8;
-    auto start_of_tile_address =
-            tile_data_start_address + block_id * tile_map_block_size + 2 * object_size * block_offset;
-
     auto y_offset = (fetcher_y + scy) % 8;
 
-    if (flag_data.y_flip)
-        y_offset = object_size - 1 - y_offset;
+    if (flag_data.y_flip) {
+        y_offset = 7 - y_offset;
+        if (object_size_bit)
+            tile_num ^= 0x1;
+    }
+
+    auto start_of_tile_address = tile_data_start_address + tile_num * 16;
+    static int limit = 0;
+    static auto previous_line = 0;
+    auto line_y = fetcher_y;
+
+    auto fetcher_x = window_x + background_x;
+    if (line_y != previous_line && line_y == 88) {
+        limit++;
+    }
+
+    previous_line = line_y;
+
+    /*if (limit == 97)
+        if (line_y >= 88 && line_y <= 103)
+            std::cout << "\n" << std::dec << " " << (int) line_y << ": " << (int) fetcher_x << " " << (int) tile_num
+                      << " " << (int) y_offset;*/
 
     word address_of_low_byte = start_of_tile_address + 2 * y_offset;
     word address_of_high_byte = address_of_low_byte + 1;

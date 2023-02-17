@@ -24,7 +24,7 @@ public:
 
     std::array<hex_codes, screen_width> current_scanline;
 
-    byte fetcher_x;
+    byte background_x;
     byte fetcher_y;
 
     byte window_x;

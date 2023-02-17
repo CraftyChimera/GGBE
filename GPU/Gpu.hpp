@@ -37,8 +37,6 @@ public:
 
 private:
 
-    void get_bg();
-
     void init_sdl();
 
     void init_screen();

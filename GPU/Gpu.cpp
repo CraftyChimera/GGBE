@@ -4,6 +4,7 @@
 
 #include "Gpu.hpp"
 #include "Console.hpp"
+#include <set>
 
 void GPU::raise_interrupts() {
     byte interrupt_flags = mem_ptr->read(if_address);
@@ -119,12 +120,12 @@ void GPU::state_dispatch(int cycles) {
     switch (current_ppu_state) {
         case State::OAM_SCAN: {
 
-            if (!sprite_fetched) {
-                sprite_fetched = true;
-                scan_sprites();
-            }
-
             if (cycles_accumulated >= oam_duration_in_t_cycles) {
+                if (!sprite_fetched) {
+                    sprite_fetched = true;
+                    scan_sprites();
+                }
+                
                 current_ppu_state = State::DRAW_PIXELS;
                 change_stat_state();
                 cycle_delay = 12 + oam_duration_in_t_cycles - cycles_accumulated;
@@ -137,7 +138,7 @@ void GPU::state_dispatch(int cycles) {
         case State::DRAW_PIXELS: {
             mapper(cycles);
 
-            if (mapper.fetcher_x == screen_width) {
+            if (mapper.background_x == screen_width) {
                 current_ppu_state = State::H_BLANK;
                 change_stat_state();
                 check_and_raise_stat_interrupts();
@@ -166,7 +167,7 @@ void GPU::advance_scanline() {
 
     if (fetcher_y == 0) {
         draw_screen();
-        SDL_Delay(17);
+        //SDL_Delay(17);
         //get_bg();
     }
     change_stat_state();
@@ -196,9 +197,11 @@ void GPU::draw_screen() {
 }
 
 void GPU::scan_sprites() {
-    // byte lcd_control_reg = mem_ptr->read(lcd_control_address);
-    // bool object_size_bit = lcd_control_reg & (1 << 2);
-    int object_size = 8;
+    byte lcd_control_reg = mem_ptr->read(lcd_control_address);
+    bool object_size_bit = lcd_control_reg & (1 << 2);
+    int object_size = object_size_bit ? 16 : 8;
+
+    static int limit = 0;
 
     constexpr std::size_t max_sprites_per_scan_line = 10;
     constexpr auto sprite_count = 40;
@@ -208,22 +211,36 @@ void GPU::scan_sprites() {
     auto &sprites_loaded_ref = mapper.sprites_loaded;
     auto &sprite_position_map_ref = mapper.sprite_position_map;
     int line_y = mapper.fetcher_y;
+    if (line_y == 0)
+        limit++;
 
+    bool cond = (line_y >= 88 && line_y <= 104 && limit == 100);
+    if (cond)
+        std::cout << std::dec << "\n" << line_y << " " << " :" << std::hex << (int) lcd_control_reg << " ";
 
     for (int sprite_id = 0;
          sprite_id < sprite_count && sprites_loaded_ref.size() < max_sprites_per_scan_line; sprite_id++) {
         word sprite_data_start_address = oam_start + 4 * sprite_id;
 
         byte flags = mem_ptr->read(sprite_data_start_address + 3);
-        byte tile_index = mem_ptr->read(sprite_data_start_address + 2);
+
+        byte tile_id = mem_ptr->read(sprite_data_start_address + 2);
+        if (object_size_bit) { tile_id = tile_id & 0xFE; }
 
         byte sprite_x = mem_ptr->read(sprite_data_start_address + 1);
-        int sprite_y = mem_ptr->read(sprite_data_start_address + 0);
+        byte sprite_y = mem_ptr->read(sprite_data_start_address + 0);
 
-        if (sprite_x > 0 && sprite_y <= line_y + 16 && line_y + 16 < sprite_y + object_size) {
-            sprites_loaded_ref.push_back({tile_index, PPU_flags(flags)});
+        if (sprite_y <= line_y + 16 && line_y + 16 < sprite_y + object_size) {
+            if (line_y + 16 >= sprite_y + 8)
+                tile_id |= 0x1;
+            sprites_loaded_ref.push_back({tile_id, PPU_flags(flags)});
             sprite_position_map_ref.emplace_back(std::make_pair(sprite_x, index_in_loaded_sprites));
             index_in_loaded_sprites++;
+
+            if (cond)
+                std::cout << "(" << (int) flags << "," << (int) tile_id << "," << (int) sprite_x << ","
+                          << (int) sprite_y
+                          << ")\t";
         }
     }
 
