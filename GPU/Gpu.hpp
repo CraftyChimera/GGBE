@@ -23,8 +23,6 @@ private:
     State current_ppu_state;
     Pixel_Mapper mapper;
 
-    bool sprite_fetched;
-
     int cycle_delay;
     int cycles_accumulated;
 

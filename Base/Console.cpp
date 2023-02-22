@@ -4,9 +4,7 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu) {
-    open = true;
-}
+Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu), open(true) {}
 
 
 void Console::handle_event() {

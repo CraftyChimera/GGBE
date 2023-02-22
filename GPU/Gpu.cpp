@@ -83,7 +83,6 @@ void GPU::init_screen() {
 GPU::GPU(MMU *mem) noexcept: pixels{}, formatted_pixels{}, native_surface{}, display_window{}, mapper(mem) {
     cycles_accumulated = 0;
     mem_ptr = mem;
-    sprite_fetched = false;
 
     init_sdl();
     init_screen();
@@ -107,12 +106,15 @@ void GPU::update(int cycles) {
         cycle_delay -= time_delayed;
     }
 
+    if (cycles == 0)
+        return;
+
     state_dispatch(cycles);
 
     if (cycles_accumulated < line_duration_in_t_cycles)
         return;
 
-    cycles_accumulated -= line_duration_in_t_cycles;
+    cycles_accumulated = 0;
     advance_scanline();
 }
 
@@ -121,16 +123,13 @@ void GPU::state_dispatch(int cycles) {
         case State::OAM_SCAN: {
 
             if (cycles_accumulated >= oam_duration_in_t_cycles) {
-                if (!sprite_fetched) {
-                    sprite_fetched = true;
-                    scan_sprites();
-                }
-                
+                scan_sprites();
+
                 current_ppu_state = State::DRAW_PIXELS;
                 change_stat_state();
-                cycle_delay = 12 + oam_duration_in_t_cycles - cycles_accumulated;
-                if (cycle_delay < 0)
-                    mapper(-cycle_delay);
+                cycle_delay = 12;// + oam_duration_in_t_cycles - cycles_accumulated;
+                //if (cycle_delay < 0)
+                //   mapper(-cycle_delay);
             }
             return;
         }
@@ -138,7 +137,7 @@ void GPU::state_dispatch(int cycles) {
         case State::DRAW_PIXELS: {
             mapper(cycles);
 
-            if (mapper.background_x == screen_width) {
+            if (mapper.background_x + mapper.window_x == screen_width) {
                 current_ppu_state = State::H_BLANK;
                 change_stat_state();
                 check_and_raise_stat_interrupts();
@@ -163,11 +162,10 @@ void GPU::advance_scanline() {
     }
 
     current_ppu_state = mapper.advance_scan_line();
-    sprite_fetched = false;
 
     if (fetcher_y == 0) {
         draw_screen();
-        //SDL_Delay(17);
+        SDL_Delay(10);
         //get_bg();
     }
     change_stat_state();
@@ -214,10 +212,6 @@ void GPU::scan_sprites() {
     if (line_y == 0)
         limit++;
 
-    bool cond = (line_y >= 88 && line_y <= 104 && limit == 100);
-    if (cond)
-        std::cout << std::dec << "\n" << line_y << " " << " :" << std::hex << (int) lcd_control_reg << " ";
-
     for (int sprite_id = 0;
          sprite_id < sprite_count && sprites_loaded_ref.size() < max_sprites_per_scan_line; sprite_id++) {
         word sprite_data_start_address = oam_start + 4 * sprite_id;
@@ -236,11 +230,6 @@ void GPU::scan_sprites() {
             sprites_loaded_ref.push_back({tile_id, PPU_flags(flags)});
             sprite_position_map_ref.emplace_back(std::make_pair(sprite_x, index_in_loaded_sprites));
             index_in_loaded_sprites++;
-
-            if (cond)
-                std::cout << "(" << (int) flags << "," << (int) tile_id << "," << (int) sprite_x << ","
-                          << (int) sprite_y
-                          << ")\t";
         }
     }
 

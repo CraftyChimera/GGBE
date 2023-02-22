@@ -45,26 +45,27 @@ State Pixel_Mapper::advance_scan_line() {
         byte interrupt_flags = mem_ptr->read(if_address);
         interrupt_flags = interrupt_flags | (1 << 0);
         mem_ptr->write(if_address, interrupt_flags);
-    }
 
-    if (fetcher_y >= screen_height) {
         window_line_counter = -1;
         window_encountered = false;
-        return State::V_BLANK;
     }
+
+    if (fetcher_y >= screen_height)
+        return State::V_BLANK;
 
     return State::OAM_SCAN;
 }
 
 void Pixel_Mapper::operator()(int cycles) {
-    if (background_x == 0)
-        scroll_offset = (mem_ptr->read(scx_address)) % 8;
-
     byte fetcher_x = background_x + window_x;
+    if (fetcher_x == 0) {
+        auto scx = mem_ptr->read(scx_address);
+        scroll_offset = scx % 8;
+    }
+
     byte wx = mem_ptr->read(wx_address);
 
     check_if_window_enabled();
-
     while (cycles > 0) {
         cycles--;
 
@@ -74,17 +75,18 @@ void Pixel_Mapper::operator()(int cycles) {
         if (background_pixel_queue.empty())
             get_current_background_pixels();
 
-        //while (scroll_offset > 0) {
-        //    scroll_offset--;
-        //    background_pixel_queue.pop_front();
-        //}
+        while (scroll_offset > 0) {
+            scroll_offset--;
+            background_pixel_queue.pop_front();
+        }
 
-        bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
+        bool should_be_in_window = windows_enabled && (fetcher_x + 7 == wx);
         if (!is_in_window && should_be_in_window) // Transition into window
         {
             window_line_counter++;
-            background_pixel_queue.clear();
             is_in_window = true;
+
+            background_pixel_queue.clear();
             get_current_background_pixels();
         }
 
@@ -246,17 +248,11 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
     static auto previous_line = 0;
     auto line_y = fetcher_y;
 
-    auto fetcher_x = window_x + background_x;
     if (line_y != previous_line && line_y == 88) {
         limit++;
     }
 
     previous_line = line_y;
-
-    /*if (limit == 97)
-        if (line_y >= 88 && line_y <= 103)
-            std::cout << "\n" << std::dec << " " << (int) line_y << ": " << (int) fetcher_x << " " << (int) tile_num
-                      << " " << (int) y_offset;*/
 
     word address_of_low_byte = start_of_tile_address + 2 * y_offset;
     word address_of_high_byte = address_of_low_byte + 1;

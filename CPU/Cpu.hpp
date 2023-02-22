@@ -8,6 +8,7 @@
 #include "Utility.hpp"
 #include "../Timer/Timer.hpp"
 #include <fstream>
+#include <sstream>
 
 class Instructions;
 
@@ -24,6 +25,7 @@ class CPU {
     bool IME;
     Timer timer;
     int dma_cycles;
+    std::ofstream log_file;
 
 public:
     int counter;
@@ -63,6 +65,8 @@ public:
     int run_instruction_cycle();
 
 private:
+    void debug();
+
     void set_interrupt_master_flag();
 
     void handle_interrupts(byte interrupt_data);
