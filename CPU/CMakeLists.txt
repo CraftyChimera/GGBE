@@ -11,6 +11,7 @@ add_library(${PROJECT_NAME}
         Jump_and_Stack.cpp
         Misc.cpp
         Instructions.cpp
+        Timer.cpp
         )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "../Base" "../MMU")

@@ -16,7 +16,6 @@ class Console {
     CPU cpu;
     GPU renderer;
     bool open;
-
 public:
     explicit Console(vector<byte> &data);
 
@@ -25,6 +24,8 @@ public:
     void run_boot_rom();
 
 private:
+    std::unordered_map<int, int> keys_pressed_map;
+
     void handle_event();
 
     void loop();

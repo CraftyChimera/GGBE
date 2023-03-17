@@ -17,7 +17,7 @@ using byte = uint8_t;
 using s_byte = int8_t;
 using word = uint16_t;
 
-constexpr word joypad_reg = 0xFF00;
+constexpr word joypad_reg_address = 0xFF00;
 
 constexpr word div_address = 0xFF04;
 constexpr word tima_address = 0xFF05;

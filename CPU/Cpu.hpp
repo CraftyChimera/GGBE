@@ -6,7 +6,7 @@
 #define DMGB_CPU_HPP
 
 #include "Utility.hpp"
-#include "../Timer/Timer.hpp"
+#include "Timer.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -25,9 +25,10 @@ class CPU {
     bool IME;
     Timer timer;
     int dma_cycles;
-    std::ofstream log_file;
 
 public:
+    std::vector<bool> keys_pressed;
+
     int counter;
 
     bool halt_mode;

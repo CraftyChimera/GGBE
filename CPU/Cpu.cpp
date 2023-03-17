@@ -27,6 +27,8 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
     interrupt_buffer = 0;
     halt_mode = false;
     write_file.open("roms/logs.txt");
+
+    keys_pressed.assign(8, true);
     counter = 0;
     dma_cycles = 0;
 }
@@ -36,11 +38,11 @@ int CPU::run_boot_rom() {
         is_boot = false;
         return -1;
     }
+    mem_ptr->write(joypad_reg_address, 0xcf);
     return run_instruction_cycle();
 }
 
 int CPU::run_instruction_cycle() {
-    write(joypad_reg, 0xFF);
     if (mem_ptr->dma_started) {
         mem_ptr->dma_started = false;
         dma_cycles = 160;
@@ -48,15 +50,16 @@ int CPU::run_instruction_cycle() {
 
     if (dma_cycles > 0) {
         dma_cycles--;
+        timer.tick(1);
         return 1;
     }
 
     cycles_to_increment = 0;
     flags.clear();
-    byte interrupt_flags = read(if_address);
-    byte interrupt_enable = read(ie_address);
 
-    byte interrupt_data = interrupt_flags & interrupt_enable;
+    auto interrupt_flags = read(if_address);
+    auto interrupt_enable = read(ie_address);
+    auto interrupt_data = interrupt_flags & interrupt_enable;
 
     if (halt_mode) {
         timer.tick(1);
@@ -83,7 +86,6 @@ int CPU::run_instruction_cycle() {
     set_interrupt_master_flag();
 
     timer.tick(cycles_to_increment);
-    // debug();
     return cycles_to_increment;
 }
 
@@ -108,6 +110,18 @@ byte CPU::read(word address) {
 void CPU::write(word address, byte value) {
     if (address == 0xFF44) //Read-Only register for CPU
         return;
+
+    if (address == joypad_reg_address) {
+        if ((value & (1 << 5)) == 0) {
+            for (int i = 0; i < 4; i++) {
+                value = value | (keys_pressed[i + 4] << i);
+            }
+        }
+        if ((value & (1 << 4)) == 0) {
+            for (int i = 0; i < 4; i++)
+                value = value | (keys_pressed[i] << i);
+        }
+    }
 
     if (address == lyc_address)
         mem_ptr->lyc_written = true;
@@ -247,18 +261,9 @@ void CPU::set_interrupt_master_flag() {
 
 void CPU::handle_interrupts(byte interrupt_data) {
     const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
-    static int counter = 0;
     for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
         if ((interrupt_data & (1 << bit_pos)) == 0)
             continue;
-
-        if (bit_pos == 0)
-            (counter += 1) %= 7;
-
-        int scx = mem_ptr->read(scx_address);
-
-        if (scx != 0)
-            std::cout << std::dec << counter << " " << scx << "\n";
 
         IME = false;
         interrupt_data -= (1 << bit_pos);
@@ -321,12 +326,10 @@ std::string string_write(CPU *cpu) {
     auto if_reg = cpu->read(if_address);
     auto stat_reg = cpu->read(lcd_stat_address);
 
-    //std::string status = (cpu->IME) ? "T" : "F";
-    //std::string interrupt =
-    //        " INT: " + status
-    //        + " IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg) +
-    //        " STAT: " +
-    //        byte_to_string(stat_reg);
+    std::string interrupt =
+            +" IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg) +
+            " STAT: " +
+            byte_to_string(stat_reg);
 
     std::string gpu_status = " LY: " + byte_to_string(cpu->read(ly_address));
 
@@ -336,14 +339,16 @@ std::string string_write(CPU *cpu) {
                            " " + byte_to_string(cpu->read(PC + 3)) +
                            ")";
 
-    return gpu_status + _8bit_to_write + _16bit_to_write + mem_bits;
+    return interrupt + _8bit_to_write + _16bit_to_write + mem_bits;
 }
 
 void CPU::debug() {
 
+    if (counter > 20000)
+        return;
+
     if (counter == 200000) {
         std::cout << "Done\n";
-        exit(0);
     }
 
     std::string to_write = string_write(this);

@@ -81,6 +81,7 @@ void Pixel_Mapper::operator()(int cycles) {
         }
 
         bool should_be_in_window = windows_enabled && (fetcher_x + 7 == wx);
+
         if (!is_in_window && should_be_in_window) // Transition into window
         {
             window_line_counter++;
@@ -227,8 +228,8 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
         return current_sprite_pixels;
 
     auto sprite_id = sprite_position_map.front().second;
+
     Sprite current = sprites_loaded.at(sprite_id);
-    int object_size = object_size_bit ? 16 : 8;
 
     auto tile_num = current.tile_id;
     auto flag_data = current.flags;

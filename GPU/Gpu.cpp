@@ -61,7 +61,8 @@ void GPU::init_sdl() {
     int flags = SDL_INIT_VIDEO;
     if (SDL_Init(flags) < 0) return;
 
-    display_window = SDL_CreateWindow("DMGB", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width,
+    display_window = SDL_CreateWindow("Generic GB emu which will be named later", SDL_WINDOWPOS_UNDEFINED,
+                                      SDL_WINDOWPOS_UNDEFINED, screen_width,
                                       screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
     if (display_window == nullptr)
@@ -166,7 +167,6 @@ void GPU::advance_scanline() {
     if (fetcher_y == 0) {
         draw_screen();
         SDL_Delay(10);
-        //get_bg();
     }
     change_stat_state();
     change_stat_lyc();
@@ -199,8 +199,6 @@ void GPU::scan_sprites() {
     bool object_size_bit = lcd_control_reg & (1 << 2);
     int object_size = object_size_bit ? 16 : 8;
 
-    static int limit = 0;
-
     constexpr std::size_t max_sprites_per_scan_line = 10;
     constexpr auto sprite_count = 40;
     constexpr word oam_start = 0xFE00;
@@ -209,8 +207,6 @@ void GPU::scan_sprites() {
     auto &sprites_loaded_ref = mapper.sprites_loaded;
     auto &sprite_position_map_ref = mapper.sprite_position_map;
     int line_y = mapper.fetcher_y;
-    if (line_y == 0)
-        limit++;
 
     for (int sprite_id = 0;
          sprite_id < sprite_count && sprites_loaded_ref.size() < max_sprites_per_scan_line; sprite_id++) {
