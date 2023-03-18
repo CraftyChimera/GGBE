@@ -17,6 +17,11 @@ struct Pixel_Info {
     bool background_priority;
 };
 
+struct Sprite_data {
+    byte sprite_x;
+    byte sprite_y;
+};
+
 class Pixel_Mapper {
 
 public:
@@ -32,7 +37,7 @@ public:
 
     byte lcd_reg;
 
-    std::deque<std::pair<byte, byte>> sprite_position_map;
+    std::deque<std::pair<Sprite_data, byte>> sprite_position_map;
     std::vector<Sprite> sprites_loaded;
 
     void operator()(int cycles);

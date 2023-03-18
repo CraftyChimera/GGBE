@@ -80,21 +80,20 @@ void Pixel_Mapper::operator()(int cycles) {
             background_pixel_queue.pop_front();
         }
 
-        bool should_be_in_window = windows_enabled && (fetcher_x + 7 == wx);
+        bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
 
         if (!is_in_window && should_be_in_window) // Transition into window
         {
             window_line_counter++;
             is_in_window = true;
-
             background_pixel_queue.clear();
             get_current_background_pixels();
         }
 
 
-        while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first) {
+        while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first.sprite_x) {
 
-            int sprite_position_end = sprite_position_map.front().first;
+            int sprite_position_end = sprite_position_map.front().first.sprite_x;
             int sprite_position_beg = sprite_position_end - 8;
 
             auto current_sprite_pixels = load_new_sprite_pixels();
@@ -228,15 +227,14 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
         return current_sprite_pixels;
 
     auto sprite_id = sprite_position_map.front().second;
+    auto sprite_y = sprite_position_map.front().first.sprite_y;
 
     Sprite current = sprites_loaded.at(sprite_id);
 
     auto tile_num = current.tile_id;
     auto flag_data = current.flags;
 
-    byte scy = mem_ptr->read(scy_address);
-
-    auto y_offset = (fetcher_y + scy) % 8;
+    auto y_offset = (fetcher_y - (sprite_y - 16)) % 8;
 
     if (flag_data.y_flip) {
         y_offset = 7 - y_offset;
@@ -245,15 +243,6 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
     }
 
     auto start_of_tile_address = tile_data_start_address + tile_num * 16;
-    static int limit = 0;
-    static auto previous_line = 0;
-    auto line_y = fetcher_y;
-
-    if (line_y != previous_line && line_y == 88) {
-        limit++;
-    }
-
-    previous_line = line_y;
 
     word address_of_low_byte = start_of_tile_address + 2 * y_offset;
     word address_of_high_byte = address_of_low_byte + 1;

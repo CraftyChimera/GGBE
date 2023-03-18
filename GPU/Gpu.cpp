@@ -224,12 +224,18 @@ void GPU::scan_sprites() {
             if (line_y + 16 >= sprite_y + 8)
                 tile_id |= 0x1;
             sprites_loaded_ref.push_back({tile_id, PPU_flags(flags)});
-            sprite_position_map_ref.emplace_back(std::make_pair(sprite_x, index_in_loaded_sprites));
+
+            sprite_position_map_ref.emplace_back(
+                    std::make_pair(Sprite_data{sprite_x, sprite_y}, index_in_loaded_sprites));
+
             index_in_loaded_sprites++;
         }
     }
 
-    std::sort(sprite_position_map_ref.begin(), sprite_position_map_ref.end());
+    std::sort(sprite_position_map_ref.begin(), sprite_position_map_ref.end(), [&](
+            std::pair<Sprite_data, byte> &a, std::pair<Sprite_data, byte> &b) {
+        return a.first.sprite_x < b.first.sprite_x;
+    });
 }
 
 /* void GPU::get_bg() {
