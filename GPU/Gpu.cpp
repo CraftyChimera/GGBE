@@ -137,8 +137,7 @@ void GPU::state_dispatch(int cycles) {
 
         case State::DRAW_PIXELS: {
             mapper(cycles);
-
-            if (mapper.background_x + mapper.window_x == screen_width) {
+            if (mapper.fetcher_x == screen_width) {
                 current_ppu_state = State::H_BLANK;
                 change_stat_state();
                 check_and_raise_stat_interrupts();
@@ -174,11 +173,9 @@ void GPU::advance_scanline() {
 }
 
 void GPU::draw_screen() {
-
     for (auto y_co_ordinate = 0; y_co_ordinate < screen_height; y_co_ordinate++) {
         for (auto x_co_ordinate = 0; x_co_ordinate < screen_width; x_co_ordinate++) {
             auto current_index = (screen_width * y_co_ordinate + x_co_ordinate) * 3;
-
             auto color = pixels.at(y_co_ordinate).at(x_co_ordinate);
 
             formatted_pixels[current_index + 2] = static_cast<char>( color & 0xFF );
@@ -237,45 +234,6 @@ void GPU::scan_sprites() {
         return a.first.sprite_x < b.first.sprite_x;
     });
 }
-
-/* void GPU::get_bg() {
-    auto lcd_reg = mapper.lcd_reg;
-    bool window_tile_map_area_bit = lcd_reg & (1 << 6);
-    bool tile_data_area_bit = lcd_reg & (1 << 4);
-    bool bg_tile_map_area_bit = lcd_reg & (1 << 3);
-    bool object_size_bit = lcd_reg & (1 << 2);
-
-    auto map_base_addr = (bg_tile_map_area_bit) ? 0x9C00 : 0x9800;;
-
-    auto tile_map_base_addr = (tile_data_area_bit) ? 0x8000 : 0x8800;
-
-    auto tile_cols = 20;
-    auto tile_rows = 18;
-
-    for (int tile_y = 0; tile_y < tile_rows; tile_y++) {
-        for (auto y_offset = 0; y_offset < 8; y_offset++) {
-
-            for (int tile_x = 0; tile_x < tile_cols; tile_x++) {
-
-                auto tile_base_addr = map_base_addr + (tile_y * 32) + tile_x;
-                auto tile_num = mem_ptr->read(tile_base_addr);
-
-                auto fetch_addr = tile_map_base_addr + (tile_num * 16) + (y_offset * 2);
-
-                byte low_byte = mem_ptr->read(fetch_addr);
-                byte high_byte = mem_ptr->read(fetch_addr + 1);
-
-                for (auto x_offset = 0; x_offset < 8; x_offset++) {
-                    auto low_bit = (bool) (low_byte & (1 << (7 - x_offset)));
-                    auto high_bit = (bool) (high_byte & (1 << (7 - x_offset)));
-                    auto color_id = (high_bit << 1) | low_bit;
-                    pixels.at(8 * tile_y + y_offset).at(8 * tile_x + x_offset) = color_map.at(color_id);
-                }
-            }
-        }
-    }
-    draw_screen();
-} */
 
 GPU::~GPU() {
     SDL_FreeSurface(native_surface);

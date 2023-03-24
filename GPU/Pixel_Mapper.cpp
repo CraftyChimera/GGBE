@@ -13,6 +13,7 @@ Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
     is_in_window = false;
 
     background_x = 0x00;
+    fetcher_x = 0x00;
     fetcher_y = 0x90;
 
     window_x = 0x00;
@@ -30,6 +31,7 @@ State Pixel_Mapper::advance_scan_line() {
 
     background_x = 0;
     window_x = 0;
+    fetcher_x = 0;
     fetcher_y++;
     is_in_window = false;
 
@@ -57,13 +59,12 @@ State Pixel_Mapper::advance_scan_line() {
 }
 
 void Pixel_Mapper::operator()(int cycles) {
-    byte fetcher_x = background_x + window_x;
-    if (fetcher_x == 0) {
-        auto scx = mem_ptr->read(scx_address);
-        scroll_offset = scx % 8;
-    }
 
-    byte wx = mem_ptr->read(wx_address);
+    if (fetcher_x == 0) {
+        scroll_offset = mem_ptr->read(scx_address) % 8;
+        background_x = scroll_offset;
+        window_x = scroll_offset;
+    }
 
     check_if_window_enabled();
     while (cycles > 0) {
@@ -75,38 +76,13 @@ void Pixel_Mapper::operator()(int cycles) {
         if (background_pixel_queue.empty())
             get_current_background_pixels();
 
-        while (scroll_offset > 0) {
-            scroll_offset--;
-            background_pixel_queue.pop_front();
+        if (fetcher_x == 0) {
+            background_pixel_queue = std::deque<Pixel_Info>(background_pixel_queue.begin() + scroll_offset,
+                                                            background_pixel_queue.end());
         }
 
-        bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
-
-        if (!is_in_window && should_be_in_window) // Transition into window
-        {
-            window_line_counter++;
-            is_in_window = true;
-            background_pixel_queue.clear();
-            get_current_background_pixels();
-        }
-
-
-        while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first.sprite_x) {
-
-            int sprite_position_end = sprite_position_map.front().first.sprite_x;
-            int sprite_position_beg = sprite_position_end - 8;
-
-            auto current_sprite_pixels = load_new_sprite_pixels();
-
-            while (!current_sprite_pixels.empty() && sprite_position_beg < 0) {
-                current_sprite_pixels.pop_front();
-                sprite_position_beg++;
-            }
-
-            load_pixels_into_sprite_queue(current_sprite_pixels);
-            sprite_position_map.pop_front();
-        }
-
+        check_and_transition_into_window();
+        check_and_load_pixels();
         current_scanline.at(fetcher_x++) = get_hex_from_pixel(get_mixed_pixel());
 
         if (is_in_window)
@@ -114,7 +90,6 @@ void Pixel_Mapper::operator()(int cycles) {
         else
             background_x++;
     }
-
     lcd_reg = mem_ptr->read(lcd_control_address);
 }
 
@@ -134,7 +109,7 @@ void Pixel_Mapper::get_current_background_pixels() {
     byte scx = mem_ptr->read(scx_address);
     byte scy = mem_ptr->read(scy_address);
 
-    byte tile_x = ((scx / 8) + (background_x / 8)) & 0x1F;
+    byte tile_x = (scx / 8 + background_x / 8) & 0x1F;
     byte tile_y = ((scy + fetcher_y) & 0xFF) / 8;
 
     if (is_in_window) {
@@ -301,4 +276,36 @@ Pixel_Info Pixel_Mapper::get_mixed_pixel() {
     }
 
     return current_sprite_pixel;
+}
+
+void Pixel_Mapper::check_and_load_pixels() {
+    while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first.sprite_x) {
+
+        int sprite_position_end = sprite_position_map.front().first.sprite_x;
+        int sprite_position_beg = sprite_position_end - 8;
+
+        auto current_sprite_pixels = load_new_sprite_pixels();
+
+        while (!current_sprite_pixels.empty() && sprite_position_beg < 0) {
+            current_sprite_pixels.pop_front();
+            sprite_position_beg++;
+        }
+
+        load_pixels_into_sprite_queue(current_sprite_pixels);
+        sprite_position_map.pop_front();
+    }
+}
+
+void Pixel_Mapper::check_and_transition_into_window() {
+    auto wx = mem_ptr->read(wx_address);
+
+    bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
+
+    if (!is_in_window && should_be_in_window) // Transition into window
+    {
+        window_line_counter++;
+        is_in_window = true;
+        background_pixel_queue.clear();
+        get_current_background_pixels();
+    }
 }

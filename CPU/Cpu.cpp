@@ -28,7 +28,7 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
     halt_mode = false;
     write_file.open("roms/logs.txt");
 
-    keys_pressed.assign(8, true);
+    keys_pressed.assign(8, false);
     counter = 0;
     dma_cycles = 0;
 }
@@ -112,15 +112,20 @@ void CPU::write(word address, byte value) {
         return;
 
     if (address == joypad_reg_address) {
+        (value >>= 4) <<= 4;
+        value = value | 0xC0;
+        byte key_data = 0;
         if ((value & (1 << 5)) == 0) {
             for (int i = 0; i < 4; i++) {
-                value = value | (keys_pressed[i + 4] << i);
+                key_data = key_data | (keys_pressed[i + 4] << i);
             }
         }
         if ((value & (1 << 4)) == 0) {
             for (int i = 0; i < 4; i++)
-                value = value | (keys_pressed[i] << i);
+                key_data = key_data | (keys_pressed[i] << i);
         }
+        key_data ^= 0x0F;
+        value |= key_data;
     }
 
     if (address == lyc_address)

@@ -29,13 +29,8 @@ public:
 
     std::array<hex_codes, screen_width> current_scanline;
 
-    byte background_x;
+    byte fetcher_x;
     byte fetcher_y;
-
-    byte window_x;
-    byte window_line_counter;
-
-    byte lcd_reg;
 
     std::deque<std::pair<Sprite_data, byte>> sprite_position_map;
     std::vector<Sprite> sprites_loaded;
@@ -45,6 +40,12 @@ public:
     State advance_scan_line();
 
 private:
+    byte window_line_counter;
+
+    byte lcd_reg;
+    
+    byte background_x;
+    byte window_x;
 
     bool windows_enabled;
     bool window_encountered;
@@ -67,6 +68,10 @@ private:
     hex_codes get_hex_from_pixel(Pixel_Info pixel_data);
 
     void check_if_window_enabled();
+
+    void check_and_load_pixels();
+
+    void check_and_transition_into_window();
 };
 
 #endif //DMGB_PIXEL_MAPPER_HPP

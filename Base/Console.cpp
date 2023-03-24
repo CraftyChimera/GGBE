@@ -28,12 +28,12 @@ void Console::handle_event() {
             }
             case SDL_KEYDOWN: {
                 if (keys_pressed_map.count(key_code))
-                    cpu.keys_pressed[keys_pressed_map[key_code]] = false;
+                    cpu.keys_pressed[keys_pressed_map[key_code]] = true;
                 break;
             }
             case SDL_KEYUP: {
                 if (keys_pressed_map.count(key_code))
-                    cpu.keys_pressed[keys_pressed_map[key_code]] = true;
+                    cpu.keys_pressed[keys_pressed_map[key_code]] = false;
                 break;
             }
         }
