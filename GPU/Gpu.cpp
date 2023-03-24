@@ -61,12 +61,22 @@ void GPU::init_sdl() {
     int flags = SDL_INIT_VIDEO;
     if (SDL_Init(flags) < 0) return;
 
-    display_window = SDL_CreateWindow("Generic GB emu which will be named later", SDL_WINDOWPOS_UNDEFINED,
+    display_window = SDL_CreateWindow("GGBE", SDL_WINDOWPOS_UNDEFINED,
                                       SDL_WINDOWPOS_UNDEFINED, screen_width,
                                       screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
     if (display_window == nullptr)
         return;
+
+    renderer = SDL_CreateRenderer(display_window, -1, 0);
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");  // make the scaled rendering look smoother.
+    SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
+
+    texture = SDL_CreateTexture(renderer,
+                                SDL_PIXELFORMAT_RGB24,
+                                SDL_TEXTUREACCESS_STREAMING,
+                                screen_width, screen_height);
 }
 
 void GPU::init_screen() {
@@ -75,13 +85,10 @@ void GPU::init_screen() {
 
     formatted_pixels = new char[size];
     memset(formatted_pixels, 0x00, size);
-
-    native_surface = SDL_CreateRGBSurfaceFrom((void *) formatted_pixels, screen_width, screen_height,
-                                              channels * 8, screen_width * channels,
-                                              0x0000FF, 0x00FF00, 0xFF0000, 0);
 }
 
-GPU::GPU(MMU *mem) noexcept: pixels{}, formatted_pixels{}, native_surface{}, display_window{}, mapper(mem) {
+GPU::GPU(MMU *mem) noexcept
+        : pixels{}, formatted_pixels{}, texture{}, display_window{}, renderer{}, mapper(mem) {
     cycles_accumulated = 0;
     mem_ptr = mem;
 
@@ -186,9 +193,11 @@ void GPU::draw_screen() {
         }
     }
 
-    native_surface->pixels = formatted_pixels;
-    SDL_BlitScaled(native_surface, nullptr, SDL_GetWindowSurface(display_window), nullptr);
-    SDL_UpdateWindowSurface(display_window);
+
+    SDL_UpdateTexture(texture, nullptr, formatted_pixels, 160 * 3);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    SDL_RenderPresent(renderer);
 }
 
 void GPU::scan_sprites() {
@@ -236,8 +245,9 @@ void GPU::scan_sprites() {
 }
 
 GPU::~GPU() {
-    SDL_FreeSurface(native_surface);
     delete[] formatted_pixels;
+    SDL_DestroyTexture(texture);
     SDL_DestroyWindow(display_window);
+    SDL_DestroyRenderer(renderer);
     SDL_Quit();
 }

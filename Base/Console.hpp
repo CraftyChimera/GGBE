@@ -21,14 +21,10 @@ public:
 
     void run();
 
-    void run_boot_rom();
-
 private:
     std::unordered_map<int, int> keys_pressed_map;
 
     void handle_event();
-
-    void loop();
 };
 
 #endif //DMGB_CONSOLE_HPP

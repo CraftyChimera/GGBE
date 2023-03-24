@@ -36,9 +36,8 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
 int CPU::run_boot_rom() {
     if (PC >= 0x0100) {
         is_boot = false;
-        return -1;
+        return 0;
     }
-    mem_ptr->write(joypad_reg_address, 0xcf);
     return run_instruction_cycle();
 }
 

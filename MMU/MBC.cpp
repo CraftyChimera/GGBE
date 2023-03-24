@@ -20,4 +20,5 @@ void MBC::init_data(vector<byte> &data) {
     }
 
     std::cout << std::hex << "Rom:\t" << number_of_rom_banks << "\n";
+    std::cout << "MBC: \t" << (int) data.at(0x147) << "\n";
 }

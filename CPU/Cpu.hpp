@@ -21,12 +21,13 @@ class CPU {
     MMU *mem_ptr;
     std::ofstream write_file;
     vector<byte> boot_data;
-    bool is_boot;
     bool IME;
     Timer timer;
     int dma_cycles;
 
 public:
+    bool is_boot;
+
     std::vector<bool> keys_pressed;
 
     int counter;

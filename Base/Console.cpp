@@ -40,27 +40,16 @@ void Console::handle_event() {
     }
 }
 
-void Console::loop() {
+void Console::run() {
     while (open) {
         int cycles = 0;
         for (int cycles_accumulated = 0; cycles_accumulated < 456 * 154; cycles_accumulated += cycles) {
-            cycles = cpu.run_instruction_cycle();
+            if (cpu.is_boot)
+                cycles = cpu.run_boot_rom();
+            else
+                cycles = cpu.run_instruction_cycle();
             renderer.update(cycles);
         }
         handle_event();
     }
-}
-
-void Console::run_boot_rom() {
-    while (true) {
-        auto cycles = cpu.run_boot_rom();
-        if (cycles == -1) {
-            return;
-        }
-    }
-}
-
-void Console::run() {
-    run_boot_rom();
-    loop();
 }

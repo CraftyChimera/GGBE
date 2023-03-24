@@ -16,8 +16,9 @@ class GPU {
 private:
     std::array<std::array<hex_codes, screen_width>, screen_height> pixels;
     char *formatted_pixels;
-    SDL_Surface *native_surface;
+    SDL_Texture *texture;
     SDL_Window *display_window;
+    SDL_Renderer *renderer;
 
     MMU *mem_ptr;
     State current_ppu_state;
