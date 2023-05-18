@@ -26,8 +26,7 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
     IME = false;
     interrupt_buffer = 0;
     halt_mode = false;
-    write_file.open("roms/logs.txt");
-
+    write_file.open("roms/Logs.txt");
     keys_pressed.assign(8, false);
     counter = 0;
     dma_cycles = 0;
@@ -41,7 +40,9 @@ int CPU::run_boot_rom() {
     return run_instruction_cycle();
 }
 
+// Check for DMA -> Check for HALT mode -> Tick timer -> Check for Interrupts -> Run Fetch-Decode-Execute cycle
 int CPU::run_instruction_cycle() {
+    // Check for DMA
     if (mem_ptr->dma_started) {
         mem_ptr->dma_started = false;
         dma_cycles = 160;
@@ -53,9 +54,7 @@ int CPU::run_instruction_cycle() {
         return 1;
     }
 
-    cycles_to_increment = 0;
-    flags.clear();
-
+    // Check for HALT MODE
     auto interrupt_flags = read(if_address);
     auto interrupt_enable = read(ie_address);
     auto interrupt_data = interrupt_flags & interrupt_enable;
@@ -64,27 +63,36 @@ int CPU::run_instruction_cycle() {
         timer.tick(1);
         if (interrupt_data == 0)
             return 1;
-
         halt_mode = false;
     }
 
-    if (IME && (interrupt_data != 0)) {
-        // debug();
-        handle_interrupts(interrupt_data);
-        return cycles_to_increment;
-    }
-
+    // Fetch instruction data and tick the timer appropriately
     byte index = read(PC);
     Instructions curr = Instruction_List[index];
     if (index == 0xCB)
         curr = Prefix_List[read(PC + 1)];
 
+    cycles_to_increment = curr.cycles;
+    timer.tick(cycles_to_increment);
+
+    // Check for interrupts
+    interrupt_flags = read(if_address);
+    interrupt_data = interrupt_flags & interrupt_enable;
+
+    if (IME && (interrupt_data != 0)) {
+        handle_interrupts(interrupt_data);
+        write_file << " INT RAISED \n";
+        return cycles_to_increment;
+    }
+
+    //Run Fetch-Decode-Execute cycle
+    //debug();
+    flags.clear();
     vector<byte> fetched = fetch(curr);
     decode_and_execute(std::move(fetched), curr);
     set_flags(flags);
     set_interrupt_master_flag();
 
-    timer.tick(cycles_to_increment);
     return cycles_to_increment;
 }
 
@@ -126,9 +134,6 @@ void CPU::write(word address, byte value) {
         key_data ^= 0x0F;
         value |= key_data;
     }
-
-    if (address == lyc_address)
-        mem_ptr->lyc_written = true;
 
     mem_ptr->write(address, value);
 }
@@ -190,14 +195,12 @@ void CPU::set_flags(vector<Flag_Status> &flag_array) {
 
 vector<byte> CPU::fetch(Instructions &instruction_data) {
     vector<byte> fetched;
-
     auto bytes_to_fetch = instruction_data.bytes_to_fetch;
-    cycles_to_increment = instruction_data.cycles;
+    byte flag_data = get(Reg::f);
 
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
     }
-    byte flag_data = get(Reg::f);
 
     //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions. Problematic for Instructions that directly modify F register
     if (flag_data & (1 << Flag::c)) {
@@ -211,39 +214,47 @@ void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_dat
     auto op_id = instruction_data.op_id;
     auto addr_mode = instruction_data.addr_mode;
 
+    if (Type == Type::LOAD || Type == Type::STORE || Type == Type::JUMP)
+        flags.clear();
+
     switch (Type) {
         case Type::ARITHMETIC: {
             Arithmetic::dispatch(flags, this, op_id, fetched, std::get<arithmetic::addr_modes>(addr_mode));
             return;
         }
+
         case Type::UNARY: {
             Unary::dispatch(flags, this, op_id, fetched, std::get<unary::addr_modes>(addr_mode));
             return;
         }
+
         case Type::BIT_OP: {
             Bit_Operations::dispatch(flags, this, op_id, fetched, std::get<bit_op::addr_modes>(addr_mode));
             return;
         }
+
         case Type::MISC: {
             Misc::dispatch(flags, this, op_id);
             return;
         }
 
         case Type::LOAD: {
-            flags.clear();
             Load::dispatch(this, op_id, fetched, std::get<load::addr_modes>(addr_mode));
             return;
         }
+
         case Type::STORE: {
-            flags.clear();
             Store::dispatch(this, op_id, fetched, std::get<store::addr_modes>(addr_mode));
             return;
         }
+
         case Type::JUMP: {
-            flags.clear();
+            byte cycles_ticked_so_far = cycles_to_increment;
             Jump::dispatch(this, op_id, fetched, std::get<jump_stack::addr_modes>(addr_mode));
+            timer.tick(cycles_to_increment - cycles_ticked_so_far);
             return;
         }
+
         default:
             return;
     }
@@ -272,7 +283,6 @@ void CPU::handle_interrupts(byte interrupt_data) {
         IME = false;
         interrupt_data -= (1 << bit_pos);
         write(if_address, interrupt_data);
-
         cycles_to_increment = 5;
         auto jump_address = interrupt_vectors.at(bit_pos);
         Jump::op_args args;
@@ -310,55 +320,56 @@ std::string word_to_string(word x) {
     return result;
 }
 
-std::string string_write(CPU *cpu) {
+std::string CPU::string_write() {
 
-    std::string _8bit_to_write = " A: " + byte_to_string(cpu->get(Reg::a)) +
-                                 " F: " + byte_to_string(cpu->get(Reg::f)) +
-                                 " B: " + byte_to_string(cpu->get(Reg::b)) +
-                                 " C: " + byte_to_string(cpu->get(Reg::c)) +
-                                 " D: " + byte_to_string(cpu->get(Reg::d)) +
-                                 " E: " + byte_to_string(cpu->get(Reg::e)) +
-                                 " H: " + byte_to_string(cpu->get(Reg::h)) +
-                                 " L: " + byte_to_string(cpu->get(Reg::l));
+    std::string _8bit_to_write = " A: " + byte_to_string(get(Reg::a)) +
+                                 " F: " + byte_to_string(get(Reg::f)) +
+                                 " B: " + byte_to_string(get(Reg::b)) +
+                                 " C: " + byte_to_string(get(Reg::c)) +
+                                 " D: " + byte_to_string(get(Reg::d)) +
+                                 " E: " + byte_to_string(get(Reg::e)) +
+                                 " H: " + byte_to_string(get(Reg::h)) +
+                                 " L: " + byte_to_string(get(Reg::l));
 
-    std::string _16bit_to_write = " SP: " + word_to_string(cpu->get(DReg::sp)) +
-                                  " PC: 00:" + word_to_string(cpu->get(DReg::pc));
+    std::string _16bit_to_write = " SP: " + word_to_string(get(DReg::sp)) +
+                                  " PC: 00:" + word_to_string(get(DReg::pc));
 
-    word PC = cpu->get(DReg::pc);
-
-    auto ie_reg = cpu->read(ie_address);
-    auto if_reg = cpu->read(if_address);
-    auto stat_reg = cpu->read(lcd_stat_address);
+    auto ie_reg = read(ie_address);
+    auto if_reg = read(if_address);
+    auto stat_reg = read(lcd_stat_address);
 
     std::string interrupt =
-            +" IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg) +
+            " IME: " + byte_to_string(IME) + " IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg) +
             " STAT: " +
             byte_to_string(stat_reg);
 
-    std::string gpu_status = " LY: " + byte_to_string(cpu->read(ly_address));
+    auto tima_reg = read(tima_address);
+    auto div_reg = read(div_address);
+    auto tma_reg = read(tma_address);
+    auto tac_reg = read(tac_address);
 
-    std::string mem_bits = " (" + byte_to_string(cpu->read(PC)) +
-                           " " + byte_to_string(cpu->read(PC + 1)) +
-                           " " + byte_to_string(cpu->read(PC + 2)) +
-                           " " + byte_to_string(cpu->read(PC + 3)) +
+    std::string timer_internal = "RST: " + byte_to_string(timer.cycles_to_irq) +
+                                 " INC: " + word_to_string(cycles_to_increment);
+
+    std::string timer_stats = "TIMA: " + byte_to_string(tima_reg) +
+                              " TMA: " + byte_to_string(tma_reg) +
+                              " DIV: " + byte_to_string(div_reg) +
+                              " TAC: " + byte_to_string(tac_reg);
+
+    std::string gpu_status = " LY: " + byte_to_string(read(ly_address));
+    std::string mem_bits = " (" + byte_to_string(read(PC)) +
+                           " " + byte_to_string(read(PC + 1)) +
+                           " " + byte_to_string(read(PC + 2)) +
+                           " " + byte_to_string(read(PC + 3)) +
                            ")";
 
-    return interrupt + _8bit_to_write + _16bit_to_write + mem_bits;
+    return timer_internal + " " + timer_stats + _8bit_to_write + _16bit_to_write + mem_bits;
 }
 
 void CPU::debug() {
-
-    if (counter > 20000)
+    if (is_boot)
         return;
-
-    if (counter == 200000) {
-        std::cout << "Done\n";
-    }
-
-    std::string to_write = string_write(this);
-
-    if (!is_boot) {
-        write_file << to_write << "\n";
-        counter++;
-    }
+    std::string to_write = string_write();
+    write_file << counter << " " << to_write << "\n";
+    counter++;
 }

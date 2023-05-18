@@ -11,8 +11,10 @@ MMU::MMU(vector<byte> &data)
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
 
     lyc_written = false;
-    reset_timer = false;
+    div_write = false;
     tima_write = false;
+    tac_write = false;
+    tma_write = false;
     memory_controller = new MBC1();
     memory_controller->init_data(data);
     dma_started = false;
@@ -59,17 +61,23 @@ void MMU::write(word address, byte value) {
     if (address < 0xFF80) {
 
         if (address == div_address)
-            reset_timer = true;
+            div_write = true;
 
         if (address == tima_address)
             tima_write = true;
+
+        if (address == tma_address)
+            tma_write = true;
+
+        if (address == tac_address)
+            tac_write = true;
 
         if (address == dma_address) {
             dma_started = true;
             dma_transfer(value);
         }
 
-        if (address == lcd_control_address)
+        if (address == lyc_address)
             lyc_written = true;
 
         io_regs.at(address - 0xFF00) = value;

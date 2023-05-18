@@ -19,6 +19,6 @@ void MBC::init_data(vector<byte> &data) {
         rom_segment.at(address / rom_block_size).at(address % rom_block_size) = data.at(address);
     }
 
-    std::cout << std::hex << "Rom:\t" << number_of_rom_banks << "\n";
+    std::cout << std::dec << "Rom:\t" << number_of_rom_banks << "\n";
     std::cout << "MBC: \t" << (int) data.at(0x147) << "\n";
 }

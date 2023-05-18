@@ -48,9 +48,13 @@ public:
 
     bool lyc_written;
 
-    bool reset_timer;
+    bool div_write;
 
     bool tima_write;
+
+    bool tma_write;
+
+    bool tac_write;
 
     bool dma_started;
 

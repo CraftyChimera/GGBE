@@ -13,14 +13,14 @@ using bit = bool;
 class Timer {
     byte tma_reg;
     byte tac_reg;
-    bit last_bit;
+    bit old_bit;
     MMU *mem_ptr;
-    int cycles_to_irq;
-    bool ignore_write;
 
 public:
-    word system_clock;
-    
+    int cycles_to_irq;
+
+    uint16_t system_clock;
+
     byte tima_reg;
 
     explicit Timer(MMU *mem_ptr);
@@ -39,6 +39,10 @@ private:
     void set_registers();
 
     void raise_interrupt();
+
+    void check_and_get_registers();
+
+    void check_and_handle_irq();
 };
 
 #endif //DMGB_TIMER_HPP

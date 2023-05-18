@@ -135,12 +135,6 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
             if (op_id == load::op::HIGH_IMMEDIATE)
                 address += bytes_fetched.at(1);
 
-            static bool first = true;
-            if (first) {
-                std::cout << std::hex << address << " " << (int) bytes_fetched.at(1) << " " << (int) cpu->read(address)
-                          << "\n";
-                first = false;
-            }
             byte src_value = cpu->read(address);
             cpu->set(dest_reg, src_value);
             return;

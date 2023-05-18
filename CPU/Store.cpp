@@ -81,7 +81,6 @@ void Store::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, store::ad
                 dest_address += cpu->get(Reg::c);
             if (op_id == store::op::HIGH_IMMEDIATE)
                 dest_address += bytes_fetched[1];
-
             byte src_value = cpu->get(Reg::a);
             cpu->write(dest_address, src_value);
             return;

@@ -43,7 +43,6 @@ void MBC1::write_to_rom(word address, byte value) {
         rom_bank_number &= 0x60;
         rom_bank_number |= value;
         rom_bank_number %= number_of_rom_banks;
-
         return;
     }
 

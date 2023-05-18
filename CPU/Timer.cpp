@@ -10,24 +10,20 @@ Timer::Timer(MMU *mem_ptr) : mem_ptr(mem_ptr) {
     tac_reg = 0;
     system_clock = 0;
     cycles_to_irq = 0;
-    last_bit = false;
-    ignore_write = false;
+    old_bit = false;
 }
 
 void Timer::tick(int cycles) {
+    check_and_get_registers();
+
     while (cycles > 0) {
         cycles--;
-        ignore_write = false;
-        if (cycles_to_irq > 0) {
-            cycles_to_irq--;
-            if (cycles_to_irq == 0) {
-                tima_reg = tma_reg;
-                raise_interrupt();
-                ignore_write = true;
-            }
-        }
         system_clock += 4;
+        if (cycles_to_irq > 0)
+            cycles_to_irq--;
+
         detect_edge_and_increment_timer();
+        check_and_handle_irq();
     }
     set_registers();
 }
@@ -60,37 +56,51 @@ bool Timer::select_input_bit() const {
 
 void Timer::detect_edge_and_increment_timer() {
     bit new_bit = select_input_bit();
-
-    if (last_bit && !new_bit) {
+    auto tima_reg_old = tima_reg;
+    if (old_bit && !new_bit) {
         tima_reg++;
     }
 
-    last_bit = new_bit;
-
-    if (tima_reg == 0x00)
+    old_bit = new_bit;
+    if (tima_reg == 0x00 && tima_reg_old == 0xFF) {
         cycles_to_irq = 2;
+    }
 }
 
 void Timer::set_registers() {
+    mem_ptr->tac_write = false;
+    mem_ptr->div_write = false;
+    mem_ptr->tma_write = false;
+    mem_ptr->tima_write = false;
+
+    timer_write(div_address, system_clock >> 8);
+    timer_write(tima_address, tima_reg);
+}
+
+void Timer::check_and_get_registers() {
+    if (mem_ptr->div_write) {
+        system_clock = 0;
+        detect_edge_and_increment_timer();
+    }
+
     if (mem_ptr->tima_write) {
         mem_ptr->tima_write = false;
-        if (!ignore_write) {
+        if (cycles_to_irq != 1) {
             tima_reg = timer_read(tima_address);
             cycles_to_irq = 0;
         }
     }
 
-    if (mem_ptr->reset_timer) {
-        mem_ptr->reset_timer = false;
-        system_clock = 0;
+    if (mem_ptr->tma_write) {
+        mem_ptr->tma_write = false;
+        tma_reg = timer_read(tma_address);
+        if (cycles_to_irq == 1)
+            tima_reg = tma_reg;
     }
-
-    tac_reg = timer_read(tac_address);
-    tma_reg = timer_read(tma_address);
-
-    byte div_reg = system_clock >> 8;
-    timer_write(div_address, div_reg);
-    timer_write(tima_address, tima_reg);
+    if (mem_ptr->tac_write) {
+        tac_reg = timer_read(tac_address);
+        detect_edge_and_increment_timer();
+    }
 }
 
 byte Timer::timer_read(word address) {
@@ -99,4 +109,19 @@ byte Timer::timer_read(word address) {
 
 void Timer::timer_write(word address, byte value) {
     mem_ptr->io_regs.at(address - 0xFF00) = value;
+}
+
+void Timer::check_and_handle_irq() {
+    if (cycles_to_irq == 1) {
+        tima_reg = tma_reg;
+        raise_interrupt();
+    }
+
+    if (cycles_to_irq == 2) {
+        if (mem_ptr->tac_write || mem_ptr->div_write) {
+            tima_reg = tma_reg;
+            raise_interrupt();
+            cycles_to_irq = 0;
+        }
+    }
 }

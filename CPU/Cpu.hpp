@@ -72,6 +72,9 @@ private:
     void set_interrupt_master_flag();
 
     void handle_interrupts(byte interrupt_data);
+
+    std::string string_write();
+
 };
 
 
