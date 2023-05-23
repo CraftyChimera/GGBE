@@ -154,7 +154,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
                 Instructions(Type::MISC, misc::op::HALT, misc::addr_modes::NOTHING, 1, 1),
-                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 1),
+                Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::REG, 1, 2),
 
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::REG, 1, 1),
                 Instructions(Type::LOAD, load::op::NOTHING, load::addr_modes::REG, 1, 1),
@@ -290,7 +290,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::RST, 1, 4),
 
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADD, arithmetic::addr_modes::SP, 2, 4),
-                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::MEM, 1, 4),
+                Instructions(Type::JUMP, jump_stack::op::JP, jump_stack::addr_modes::MEM, 1, 1),
                 Instructions(Type::STORE, store::op::NOTHING, store::addr_modes::MEM_IMM, 3, 4),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
                 Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 1, 1),
@@ -401,7 +401,7 @@ const Instructions Prefix_List[256] = {
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
 
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
@@ -410,26 +410,7 @@ const Instructions Prefix_List[256] = {
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-
-
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
 
 
@@ -439,7 +420,7 @@ const Instructions Prefix_List[256] = {
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
 
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
@@ -448,7 +429,7 @@ const Instructions Prefix_List[256] = {
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
 
 
@@ -458,7 +439,7 @@ const Instructions Prefix_List[256] = {
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
 
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
@@ -467,7 +448,26 @@ const Instructions Prefix_List[256] = {
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
-        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 4),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+
+
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
+        Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::MEM, 2, 3),
         Instructions(Type::BIT_OP, bit_op::op::BIT, bit_op::addr_modes::REG, 2, 2),
 
 
