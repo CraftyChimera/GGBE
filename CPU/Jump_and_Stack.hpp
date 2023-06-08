@@ -13,7 +13,7 @@ namespace Jump {
     struct op_args {
         word jump_address;
         int condition;
-        
+
         op_args();
     };
 

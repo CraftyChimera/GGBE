@@ -15,6 +15,7 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
 
             word src_value = cpu->get(src_reg);
             cpu->set(dest_reg, src_value);
+            cpu->tick_components();
             return;
         }
 
@@ -36,6 +37,7 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
 
             cpu->set_flags(flags);
             cpu->set(dest_reg, src_value);
+            cpu->tick_components();
             return;
         }
 

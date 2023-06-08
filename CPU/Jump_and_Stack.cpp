@@ -16,6 +16,11 @@ Jump::op_args::op_args() {
 }
 
 void Jump::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, jump_stack::addr_modes addr_mode) {
+    if (bytes_fetched[0] == 0xE9) {
+        word address = cpu->get(DReg::hl);
+        cpu->set_pc(address, false);
+        return;
+    }
     auto args = Jump::get_args(cpu, bytes_fetched, addr_mode);
     Jump::op_codes[op_id](cpu, args);
 }
@@ -48,6 +53,7 @@ void Jump::PUSH(CPU *cpu, Jump::op_args &args) {
     byte hi = next >> 8, lo = next & 0xFF;
     cpu->push(hi);
     cpu->push(lo);
+    cpu->tick_components();
 }
 
 void Jump::POP(CPU *cpu, Jump::op_args &args) {
@@ -58,6 +64,7 @@ void Jump::POP(CPU *cpu, Jump::op_args &args) {
 
     byte lo = cpu->pop();
     byte hi = cpu->pop();
+
     word value = lo + (hi << 8);
 
     if (reg == DReg::af)
@@ -67,13 +74,12 @@ void Jump::POP(CPU *cpu, Jump::op_args &args) {
 }
 
 void Jump::JP(CPU *cpu, Jump::op_args &args) {
-    cpu->set(DReg::pc, args.jump_address);
+    cpu->set_pc(args.jump_address);
 }
 
 void Jump::JPC(CPU *cpu, Jump::op_args &args) {
     if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::JP(cpu, args);
-        cpu->cycles_to_increment += 1;
     }
 }
 
@@ -88,7 +94,6 @@ void Jump::CALL(CPU *cpu, Jump::op_args &args) { //RST
 void Jump::CALLC(CPU *cpu, Jump::op_args &args) {
     if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::CALL(cpu, args);
-        cpu->cycles_to_increment += 3;
     }
 }
 
@@ -96,13 +101,13 @@ void Jump::RET(CPU *cpu, [[maybe_unused]] Jump::op_args &args) {
     word lo, hi;
     lo = cpu->pop();
     hi = cpu->pop();
-    cpu->set(DReg::pc, lo + (hi << 8));
+    cpu->set_pc(lo + (hi << 8));
 }
 
 void Jump::RETC(CPU *cpu, Jump::op_args &args) {
+    cpu->tick_components();
     if (checkCondition(cpu->get(Reg::f), args.condition)) {
         Jump::RET(cpu, args);
-        cpu->cycles_to_increment += 3;
     }
 }
 

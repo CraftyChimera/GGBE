@@ -27,6 +27,12 @@ void Console::handle_event() {
                 return;
             }
             case SDL_KEYDOWN: {
+                if (key_code == SDLK_b) {
+                    cpu.start_logging = true;
+                    std::cout << "Started Logging\n";
+                }
+                if (key_code == SDLK_q)
+                    exit(0);
                 if (keys_pressed_map.count(key_code))
                     cpu.keys_pressed[keys_pressed_map[key_code]] = true;
                 break;

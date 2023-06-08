@@ -20,7 +20,7 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vecto
                           arithmetic::addr_modes addr_mode) {
 
     if (addr_mode == arithmetic::addr_modes::ADD_16) {
-
+        cpu->tick_components();
         word src = cpu->get(DReg::hl);
 
         // 0x09 - ADD HL,BC
@@ -42,6 +42,8 @@ void Arithmetic::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vecto
         auto offset = bytes_fetched[1];
 
         word result = ADD_TO_SP(flags, src, offset);
+        cpu->tick_components();
+        cpu->tick_components();
         cpu->set(DReg::sp, result);
         return;
     }

@@ -15,6 +15,7 @@ class Instructions;
 class MMU;
 
 class CPU {
+private:
     word SP, PC;
     std::array<byte, 9> reg_mapper{};
     vector<Flag_Status> flags;
@@ -26,7 +27,10 @@ class CPU {
     int dma_cycles;
 
 public:
+
     bool is_boot;
+
+    bool start_logging;
 
     std::vector<bool> keys_pressed;
 
@@ -38,34 +42,6 @@ public:
 
     int interrupt_buffer;
 
-    explicit CPU(MMU *mmu);
-
-    int run_boot_rom();
-
-    void push(byte to_push);
-
-    byte pop();
-
-    byte read(word address);
-
-    void write(word address, byte value);
-
-    byte get(Reg reg_index);
-
-    word get(DReg reg_index);
-
-    void set(Reg reg_index, byte value);
-
-    void set(DReg reg_index, word value);
-
-    void set_flags(vector<Flag_Status> &flag_array);
-
-    vector<byte> fetch(Instructions &instruction_data);
-
-    void decode_and_execute(vector<byte> fetched, Instructions &instruction_data);
-
-    int run_instruction_cycle();
-
 private:
     void debug();
 
@@ -75,6 +51,38 @@ private:
 
     std::string string_write();
 
+public:
+    explicit CPU(MMU *mmu);
+
+    int run_boot_rom();
+
+    void push(byte to_push);
+
+    byte pop();
+
+    byte read(word address, bool tick_components = true);
+
+    void write(word address, byte value, bool tick_components = true);
+
+    byte get(Reg reg_index);
+
+    word get(DReg reg_index);
+
+    void set(Reg reg_index, byte value);
+
+    void set(DReg reg_index, word value);
+
+    void set_pc(word address, bool flush = true);
+
+    void set_flags(vector<Flag_Status> &flag_array);
+
+    vector<byte> fetch(Instructions &instruction_data);
+
+    void decode_and_execute(vector<byte> fetched, Instructions &instruction_data);
+
+    int run_instruction_cycle();
+
+    void tick_components();
 };
 
 

@@ -25,6 +25,10 @@ void Bit_Operations::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, v
 
     word value = Bit_Operations::op_codes[op_id](flags, args);
 
+    // BIT instructions don't need to write to address/register
+    if (op_id == bit_op::op::BIT)
+        return;
+
     switch (args.location.index()) {
         case 0: {
             Reg reg_index = std::get<0>(args.location);

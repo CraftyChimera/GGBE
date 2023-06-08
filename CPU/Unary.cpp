@@ -25,6 +25,7 @@ void Unary::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byt
 
     if (addr_mode == unary::addr_modes::REG_16) {
         DI_r16(cpu, bytes_fetched, op_id);
+        cpu->tick_components();
         return;
     }
 
