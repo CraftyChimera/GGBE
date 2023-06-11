@@ -2,8 +2,8 @@
 // Created by drake on 23/10/22.
 //
 
-#ifndef DMGB_PIXEL_MAPPER_HPP
-#define DMGB_PIXEL_MAPPER_HPP
+#ifndef GGBE_PIXEL_MAPPER_HPP
+#define GGBE_PIXEL_MAPPER_HPP
 
 #include "GPU_Utility.hpp"
 
@@ -43,7 +43,7 @@ private:
     byte window_line_counter;
 
     byte lcd_reg;
-    
+
     byte background_x;
     byte window_x;
 
@@ -74,4 +74,4 @@ private:
     void check_and_transition_into_window();
 };
 
-#endif //DMGB_PIXEL_MAPPER_HPP
+#endif //GGBE_PIXEL_MAPPER_HPP

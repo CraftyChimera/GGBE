@@ -2,8 +2,8 @@
 // Created by drake on 24/9/22.
 //
 
-#ifndef DMGB_STORE_HPP
-#define DMGB_STORE_HPP
+#ifndef GGBE_STORE_HPP
+#define GGBE_STORE_HPP
 
 #include "Utility.hpp"
 
@@ -14,4 +14,4 @@ namespace Store {
 
 }
 
-#endif //DMGB_STORE_HPP
+#endif //GGBE_STORE_HPP

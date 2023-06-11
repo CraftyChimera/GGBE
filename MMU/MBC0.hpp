@@ -2,8 +2,8 @@
 // Created by drake on 27/12/22.
 //
 
-#ifndef DMGB_MBC0_HPP
-#define DMGB_MBC0_HPP
+#ifndef GGBE_MBC0_HPP
+#define GGBE_MBC0_HPP
 
 #include "MBC.hpp"
 
@@ -18,4 +18,4 @@ public:
     void write_to_ram(word address, byte value) override;
 };
 
-#endif //DMGB_MBC0_HPP
+#endif //GGBE_MBC0_HPP

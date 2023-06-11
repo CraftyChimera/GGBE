@@ -2,8 +2,8 @@
 // Created by drake on 27/12/22.
 //
 
-#ifndef DMGB_MBC_HPP
-#define DMGB_MBC_HPP
+#ifndef GGBE_MBC_HPP
+#define GGBE_MBC_HPP
 
 #include "../Base/Constants.hpp"
 #include <array>
@@ -39,4 +39,4 @@ public:
     virtual void write_to_ram(word address, byte value) = 0;
 };
 
-#endif //DMGB_MBC_HPP
+#endif //GGBE_MBC_HPP

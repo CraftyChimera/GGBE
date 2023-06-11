@@ -2,8 +2,8 @@
 // Created by drake on 24/10/22.
 //
 
-#ifndef DMGB_UTILITY_GPU_HPP
-#define DMGB_UTILITY_GPU_HPP
+#ifndef GGBE_UTILITY_GPU_HPP
+#define GGBE_UTILITY_GPU_HPP
 
 #include "../Base/Constants.hpp"
 #include <deque>
@@ -41,4 +41,4 @@ struct Sprite {
     PPU_flags flags;
 };
 
-#endif //DMGB_UTILITY_GPU_HPP
+#endif //GGBE_UTILITY_GPU_HPP

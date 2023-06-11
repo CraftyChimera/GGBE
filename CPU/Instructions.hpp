@@ -2,8 +2,8 @@
 // Created by drake on 25/9/22.
 //
 
-#ifndef DMGB_INSTRUCTIONS_HPP
-#define DMGB_INSTRUCTIONS_HPP
+#ifndef GGBE_INSTRUCTIONS_HPP
+#define GGBE_INSTRUCTIONS_HPP
 
 #include "Utility.hpp"
 
@@ -30,4 +30,4 @@ struct Instructions {
 extern const Instructions Instruction_List[256];
 extern const Instructions Prefix_List[256];
 
-#endif //DMGB_INSTRUCTIONS_HPP
+#endif //GGBE_INSTRUCTIONS_HPP

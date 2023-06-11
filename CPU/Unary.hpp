@@ -2,8 +2,8 @@
 // Created by drake on 4/9/22.
 //
 
-#ifndef DMGB_UNARY_HPP
-#define DMGB_UNARY_HPP
+#ifndef GGBE_UNARY_HPP
+#define GGBE_UNARY_HPP
 
 #include "Utility.hpp"
 
@@ -70,4 +70,4 @@ namespace Unary {
 
     extern const std::function<byte(vector<Flag_Status> &, Unary::op_args)> op_codes[14];
 }
-#endif //DMGB_UNARY_HPP
+#endif //GGBE_UNARY_HPP

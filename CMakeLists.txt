@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(DMGB CXX)
+project(GGBE CXX)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Warray-bounds -O2")
 

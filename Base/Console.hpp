@@ -2,8 +2,8 @@
 // Created by drake on 27/8/22.
 //
 
-#ifndef DMGB_CONSOLE_HPP
-#define DMGB_CONSOLE_HPP
+#ifndef GGBE_CONSOLE_HPP
+#define GGBE_CONSOLE_HPP
 
 #include "Constants.hpp"
 
@@ -17,7 +17,7 @@ class Console {
     GPU renderer;
 
     bool open;
-    
+
 public:
     MMU mmu;
 
@@ -35,4 +35,4 @@ private:
     void handle_event();
 };
 
-#endif //DMGB_CONSOLE_HPP
+#endif //GGBE_CONSOLE_HPP

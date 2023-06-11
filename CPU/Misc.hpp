@@ -2,8 +2,8 @@
 // Created by drake on 25/9/22.
 //
 
-#ifndef DMGB_MISC_HPP
-#define DMGB_MISC_HPP
+#ifndef GGBE_MISC_HPP
+#define GGBE_MISC_HPP
 
 #include "Utility.hpp"
 
@@ -32,4 +32,4 @@ namespace Misc {
     void NOP();
 }
 
-#endif //DMGB_MISC_HPP
+#endif //GGBE_MISC_HPP

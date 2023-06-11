@@ -2,8 +2,8 @@
 // Created by drake on 15/12/22.
 //
 
-#ifndef DMGB_MMU_HPP
-#define DMGB_MMU_HPP
+#ifndef GGBE_MMU_HPP
+#define GGBE_MMU_HPP
 
 #include "../Base/Constants.hpp"
 #include "MBC.hpp"
@@ -68,4 +68,4 @@ private:
     void dma_transfer(byte high_address);
 };
 
-#endif //DMGB_MMU_HPP
+#endif //GGBE_MMU_HPP

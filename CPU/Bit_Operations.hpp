@@ -2,8 +2,8 @@
 // Created by drake on 11/9/22.
 //
 
-#ifndef DMGB_BIT_OPERATIONS_HPP
-#define DMGB_BIT_OPERATIONS_HPP
+#ifndef GGBE_BIT_OPERATIONS_HPP
+#define GGBE_BIT_OPERATIONS_HPP
 
 #include "Utility.hpp"
 
@@ -36,4 +36,4 @@ namespace Bit_Operations {
     extern const std::function<byte(vector<Flag_Status> &, Bit_Operations::op_args)> op_codes[3];
 }
 
-#endif //DMGB_BIT_OPERATIONS_HPP
+#endif //GGBE_BIT_OPERATIONS_HPP

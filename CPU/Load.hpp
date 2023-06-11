@@ -2,8 +2,8 @@
 // Created by drake on 17/9/22.
 //
 
-#ifndef DMGB_LOAD_HPP
-#define DMGB_LOAD_HPP
+#ifndef GGBE_LOAD_HPP
+#define GGBE_LOAD_HPP
 
 #include "Utility.hpp"
 
@@ -12,4 +12,4 @@ namespace Load {
     void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr_modes addr_mode);
 }
 
-#endif //DMGB_LOAD_HPP
+#endif //GGBE_LOAD_HPP

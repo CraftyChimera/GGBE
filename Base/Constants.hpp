@@ -2,8 +2,8 @@
 // Created by drake on 24/8/22.
 //
 
-#ifndef DMGB_CONSTANTS_HPP
-#define DMGB_CONSTANTS_HPP
+#ifndef GGBE_CONSTANTS_HPP
+#define GGBE_CONSTANTS_HPP
 
 #include <array>
 #include <vector>
@@ -42,4 +42,4 @@ constexpr word wy_address = 0xFF4A;
 constexpr word wx_address = 0xFF4B;
 
 constexpr word ie_address = 0xFFFF;
-#endif //DMGB_CONSTANTS_HPP
+#endif //GGBE_CONSTANTS_HPP

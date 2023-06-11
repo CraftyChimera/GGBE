@@ -2,8 +2,8 @@
 // Created by drake on 14/9/22.
 //
 
-#ifndef DMGB_CPU_UTILITY_HPP
-#define DMGB_CPU_UTILITY_HPP
+#ifndef GGBE_CPU_UTILITY_HPP
+#define GGBE_CPU_UTILITY_HPP
 
 #include "../Base/Constants.hpp"
 #include <functional>
@@ -213,4 +213,4 @@ namespace misc {
 }
 
 
-#endif //DMGB_CPU_UTILITY_HPP
+#endif //GGBE_CPU_UTILITY_HPP

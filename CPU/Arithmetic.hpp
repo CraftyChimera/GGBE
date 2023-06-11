@@ -2,8 +2,8 @@
 // Created by drake on 2/9/22.
 //
 
-#ifndef DMGB_ARITHMETIC_HPP
-#define DMGB_ARITHMETIC_HPP
+#ifndef GGBE_ARITHMETIC_HPP
+#define GGBE_ARITHMETIC_HPP
 
 #include "Utility.hpp"
 
@@ -43,5 +43,5 @@ namespace Arithmetic {
 
     extern const std::function<byte(vector<Flag_Status> &, Arithmetic::op_args)> op_codes[8];
 }
-#endif //DMGB_ARITHMETIC_HPP
+#endif //GGBE_ARITHMETIC_HPP
 

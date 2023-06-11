@@ -2,8 +2,8 @@
 // Created by drake on 27/8/22.
 //
 
-#ifndef DMGB_CPU_HPP
-#define DMGB_CPU_HPP
+#ifndef GGBE_CPU_HPP
+#define GGBE_CPU_HPP
 
 #include "Utility.hpp"
 #include "Timer.hpp"
@@ -92,4 +92,4 @@ public:
 };
 
 
-#endif //DMGB_CPU_HPP
+#endif //GGBE_CPU_HPP

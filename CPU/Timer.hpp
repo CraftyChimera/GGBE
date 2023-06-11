@@ -2,8 +2,8 @@
 // Created by drake on 3/1/23.
 //
 
-#ifndef DMGB_TIMER_HPP
-#define DMGB_TIMER_HPP
+#ifndef GGBE_TIMER_HPP
+#define GGBE_TIMER_HPP
 
 #include "../MMU/Mmu.hpp"
 #include "../Base/Constants.hpp"
@@ -45,4 +45,4 @@ private:
     void check_and_handle_irq();
 };
 
-#endif //DMGB_TIMER_HPP
+#endif //GGBE_TIMER_HPP

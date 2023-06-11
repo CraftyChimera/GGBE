@@ -2,8 +2,8 @@
 // Created by drake on 1/10/22.
 //
 
-#ifndef DMGB_GPU_HPP
-#define DMGB_GPU_HPP
+#ifndef GGBE_GPU_HPP
+#define GGBE_GPU_HPP
 
 #include "Pixel_Mapper.hpp"
 #include "SDL.h"
@@ -57,4 +57,4 @@ private:
     void raise_interrupts();
 };
 
-#endif //DMGB_GPU_HPP
+#endif //GGBE_GPU_HPP

@@ -2,8 +2,8 @@
 // Created by drake on 24/9/22.
 //
 
-#ifndef DMGB_JUMP_AND_STACK_HPP
-#define DMGB_JUMP_AND_STACK_HPP
+#ifndef GGBE_JUMP_AND_STACK_HPP
+#define GGBE_JUMP_AND_STACK_HPP
 
 #include "Utility.hpp"
 
@@ -42,4 +42,4 @@ namespace Jump {
     extern const std::function<void(CPU *, Jump::op_args &)> op_codes[9];
 
 }
-#endif //DMGB_JUMP_AND_STACK_HPP
+#endif //GGBE_JUMP_AND_STACK_HPP
