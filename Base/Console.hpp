@@ -12,14 +12,22 @@
 #include "../MMU/Mmu.hpp"
 
 class Console {
-    MMU mmu;
     CPU cpu;
+
     GPU renderer;
+
     bool open;
+    
 public:
+    MMU mmu;
+
+    int cycles_left_till_end_of_frame;
+
     explicit Console(vector<byte> &data);
 
     void run();
+
+    void tick_components();
 
 private:
     std::unordered_map<int, int> keys_pressed_map;

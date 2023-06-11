@@ -35,7 +35,7 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
 
             src_value += signed_offset;
 
-            cpu->set_flags(flags);
+            cpu->set_flags();
             cpu->set(dest_reg, src_value);
             cpu->tick_components();
             return;

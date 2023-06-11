@@ -4,7 +4,8 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : mmu(data), cpu(&mmu), renderer(&mmu), open(true) {
+Console::Console(vector<byte> &data) : cpu(this), renderer(&mmu), open(true), mmu(data),
+                                       cycles_left_till_end_of_frame(0) {
     keys_pressed_map[SDLK_RIGHT] = 0;
     keys_pressed_map[SDLK_LEFT] = 1;
     keys_pressed_map[SDLK_UP] = 2;
@@ -48,14 +49,17 @@ void Console::handle_event() {
 
 void Console::run() {
     while (open) {
-        int cycles = 0;
-        for (int cycles_accumulated = 0; cycles_accumulated < 456 * 154; cycles_accumulated += cycles) {
+        cycles_left_till_end_of_frame = 456 * 154;
+        while (cycles_left_till_end_of_frame > 0) {
             if (cpu.is_boot)
-                cycles = cpu.run_boot_rom();
+                cpu.run_boot_rom();
             else
-                cycles = cpu.run_instruction_cycle();
-            renderer.update(cycles);
+                cpu.run_instruction_cycle();
         }
         handle_event();
     }
+}
+
+void Console::tick_components() {
+    renderer.update(1);
 }

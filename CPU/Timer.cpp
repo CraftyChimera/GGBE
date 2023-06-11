@@ -13,18 +13,15 @@ Timer::Timer(MMU *mem_ptr) : mem_ptr(mem_ptr) {
     old_bit = false;
 }
 
-void Timer::tick(int cycles) {
+void Timer::tick() {
     check_and_get_registers();
 
-    while (cycles > 0) {
-        cycles--;
-        system_clock += 4;
-        if (cycles_to_irq > 0)
-            cycles_to_irq--;
+    system_clock += 4;
+    if (cycles_to_irq > 0)
+        cycles_to_irq--;
 
-        detect_edge_and_increment_timer();
-        check_and_handle_irq();
-    }
+    detect_edge_and_increment_timer();
+    check_and_handle_irq();
     set_registers();
 }
 
@@ -84,7 +81,6 @@ void Timer::check_and_get_registers() {
     }
 
     if (mem_ptr->tima_write) {
-        mem_ptr->tima_write = false;
         if (cycles_to_irq != 1) {
             tima_reg = timer_read(tima_address);
             cycles_to_irq = 0;
@@ -92,7 +88,6 @@ void Timer::check_and_get_registers() {
     }
 
     if (mem_ptr->tma_write) {
-        mem_ptr->tma_write = false;
         tma_reg = timer_read(tma_address);
         if (cycles_to_irq == 1)
             tima_reg = tma_reg;

@@ -4,6 +4,13 @@
 
 #include "Instructions.hpp"
 
+Instructions::Instructions() noexcept {
+    this->instr_type = Type::MISC;
+    this->op_id = 0;
+    this->addr_mode = misc::addr_modes::NOTHING;
+    this->bytes_to_fetch = 0;
+}
+
 Instructions::Instructions(Type instr_type, int op_id, addr_type addr_mode, int bytes_to_fetch) noexcept {
     this->instr_type = instr_type;
     this->op_id = op_id;

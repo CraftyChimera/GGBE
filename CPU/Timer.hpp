@@ -25,7 +25,7 @@ public:
 
     explicit Timer(MMU *mem_ptr);
 
-    void tick(int cycles);
+    void tick();
 
 private:
     [[nodiscard]] bool select_input_bit() const;

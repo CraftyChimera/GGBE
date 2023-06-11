@@ -2,6 +2,7 @@
 // Created by drake on 27/8/22.
 //
 
+#include "../Base/Console.hpp"
 #include "Cpu.hpp"
 #include "Instructions.hpp"
 #include "Arithmetic.hpp"
@@ -11,12 +12,9 @@
 #include "Store.hpp"
 #include "Jump_and_Stack.hpp"
 #include "Misc.hpp"
-#include "Mmu.hpp"
 #include "../Base/Parser.hpp"
 
-CPU::CPU(MMU *mmu) : timer(mmu) {
-    cycles_to_increment = 0;
-    mem_ptr = mmu;
+CPU::CPU(Console *base) : console(base), mem_ptr(&console->mmu), timer(mem_ptr) {
     flags.reserve(10);
     reg_mapper = {};
     SP = 0x0000;
@@ -24,70 +22,56 @@ CPU::CPU(MMU *mmu) : timer(mmu) {
     is_boot = true;
     boot_data = read_file("roms/boot.gb");
     IME = false;
+    interrupt_data = 0;
     interrupt_buffer = 0;
     halt_mode = false;
     write_file.open("roms/Logs.txt");
     keys_pressed.assign(8, false);
     counter = 0;
-    dma_cycles = 0;
+    current_instruction = {};
     start_logging = false;
 }
 
-int CPU::run_boot_rom() {
-    if (PC >= 0x0100) {
+void CPU::run_boot_rom() {
+    run_instruction_cycle();
+    if (PC >= 0x0100)
         is_boot = false;
-        return 0;
-    }
-    return run_instruction_cycle();
 }
 
-int CPU::run_instruction_cycle() {
-    cycles_to_increment = 0;
+void CPU::run_instruction_cycle() {
+    if (halt_mode) {
+        while (!get_current_interrupt_status())
+            tick_components();
+
+        halt_mode = false;
+        if (IME)
+            handle_interrupts();
+    }
 
     if (mem_ptr->dma_started) {
         mem_ptr->dma_started = false;
-        dma_cycles = 160;
-    }
-
-    if (dma_cycles > 0) {
-        dma_cycles--;
-        tick_components();
-        return cycles_to_increment;
-    }
-
-    if (halt_mode) {
-        auto interrupt_flags = read(if_address, false);
-        auto interrupt_enable = read(ie_address, false);
-        auto interrupt_data = interrupt_flags & interrupt_enable;
-        tick_components();
-        if (interrupt_data == 0)
-            return 1;
-        halt_mode = false;
-    }
-
-    auto interrupt_flags = read(if_address, false);
-    auto interrupt_enable = read(ie_address, false);
-    auto interrupt_data = interrupt_flags & interrupt_enable;
-    if (IME && (interrupt_data != 0)) {
-        handle_interrupts(interrupt_data);
-        if (start_logging) {
-            write_file << std::dec << counter++ << " INT RAISED: " << std::hex << (int) (interrupt_flags) << " "
-                       << (int) (interrupt_enable) << " " << (interrupt_data) << "\n";
+        int dma_cycles = 160;
+        while (dma_cycles > 0) {
+            tick_components();
+            dma_cycles--;
         }
-        return cycles_to_increment;
     }
 
     byte index = read(PC, false);
-    Instructions curr = Instruction_List[index];
+    current_instruction = Instruction_List[index];
     if (index == 0xCB)
-        curr = Prefix_List[read(PC + 1, false)];
+        current_instruction = Prefix_List[read(PC + 1, false)];
+    vector<byte> fetched = fetch();
 
-    flags.clear();
-    vector<byte> fetched = fetch(curr);
-    decode_and_execute(std::move(fetched), curr);
-    set_flags(flags);
+    if (IME && get_current_interrupt_status()) {
+        PC -= current_instruction.bytes_to_fetch;
+        current_instruction = {};
+        handle_interrupts();
+    } else {
+        decode_and_execute(fetched);
+        set_flags();
+    }
     set_interrupt_master_flag();
-    return cycles_to_increment;
 }
 
 void CPU::push(byte to_push) {
@@ -179,14 +163,15 @@ void CPU::set(DReg reg_index, word val) {
 }
 
 void CPU::set_pc(word address, bool flush) {
-    if (flush)
+    if (flush) {
         tick_components();
+    }
     set(DReg::pc, address);
 }
 
-void CPU::set_flags(vector<Flag_Status> &flag_array) {
+void CPU::set_flags() {
     byte F = get(Reg::f);
-    for (auto flag_c: flag_array) {
+    for (auto flag_c: flags) {
         Flag bit = flag_c.bit;
         bool set = flag_c.status;
         auto bit_pos = static_cast<int>(bit);
@@ -199,9 +184,9 @@ void CPU::set_flags(vector<Flag_Status> &flag_array) {
     set(Reg::f, F);
 }
 
-vector<byte> CPU::fetch(Instructions &instruction_data) {
+vector<byte> CPU::fetch() {
     vector<byte> fetched;
-    auto bytes_to_fetch = instruction_data.bytes_to_fetch;
+    auto bytes_to_fetch = current_instruction.bytes_to_fetch;
     byte flag_data = get(Reg::f);
 
     for (int i = 0; i < bytes_to_fetch; i++) {
@@ -209,16 +194,17 @@ vector<byte> CPU::fetch(Instructions &instruction_data) {
     }
 
     //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions. Problematic for Instructions that directly modify F register
+    flags.clear();
     if (flag_data & (1 << Flag::c)) {
         flags.emplace_back(Flag_Status(Flag::c, true));
     }
     return fetched;
 }
 
-void CPU::decode_and_execute(vector<byte> fetched, Instructions &instruction_data) {
-    auto Type = instruction_data.instr_type;
-    auto op_id = instruction_data.op_id;
-    auto addr_mode = instruction_data.addr_mode;
+void CPU::decode_and_execute(vector<byte> &fetched) {
+    auto Type = current_instruction.instr_type;
+    auto op_id = current_instruction.op_id;
+    auto addr_mode = current_instruction.addr_mode;
 
     if (Type == Type::LOAD || Type == Type::STORE || Type == Type::JUMP)
         flags.clear();
@@ -278,14 +264,16 @@ void CPU::set_interrupt_master_flag() {
     }
 }
 
-void CPU::handle_interrupts(byte interrupt_data) {
+void CPU::handle_interrupts() {
     const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
     for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
         if ((interrupt_data & (1 << bit_pos)) == 0)
             continue;
 
-        if (start_logging)
+        if (start_logging) {
             std::cout << bit_pos << "\n";
+            write_file << std::dec << counter++ << " INT RAISED: " << (interrupt_data) << "\n";
+        }
 
         IME = false;
         interrupt_data -= (1 << bit_pos);
@@ -300,14 +288,15 @@ void CPU::handle_interrupts(byte interrupt_data) {
         push(lo);
 
         auto jump_address = interrupt_vectors.at(bit_pos);
-        set_pc(jump_address);
+        set_pc(jump_address, false);
         return;
     }
 }
 
 void CPU::tick_components() {
-    timer.tick(1);
-    cycles_to_increment++;
+    timer.tick();
+    console->tick_components();
+    console->cycles_left_till_end_of_frame--;
 }
 
 std::string byte_to_string(byte x) {
@@ -357,9 +346,8 @@ std::string CPU::string_write() {
     auto stat_reg = read(lcd_stat_address, false);
 
     std::string interrupt =
-            " IME: " + byte_to_string(IME) + " IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg) +
-            " STAT: " +
-            byte_to_string(stat_reg);
+            " IME: " + byte_to_string(IME) + " IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg);
+    //" STAT: " + byte_to_string(stat_reg);
 
     auto tima_reg = read(tima_address, false);
     auto div_reg = read(div_address, false);
@@ -367,7 +355,6 @@ std::string CPU::string_write() {
     auto tac_reg = read(tac_address, false);
 
     std::string timer_internal = " RST: " + byte_to_string(timer.cycles_to_irq) +
-                                 " INC: " + word_to_string(cycles_to_increment) +
                                  " SYS: " + word_to_string(timer.system_clock);
 
     std::string timer_stats = " TIMA: " + byte_to_string(tima_reg) +
@@ -384,7 +371,8 @@ std::string CPU::string_write() {
 
     std::string ppu =
             " LCD_C: " + byte_to_string(read(lcd_control_address, false)) + " STAT: " + byte_to_string(stat_reg);
-    return timer_internal + interrupt + _8bit_to_write + _16bit_to_write + mem_bits;
+
+    return timer_stats + interrupt + _8bit_to_write + _16bit_to_write + mem_bits;
 }
 
 void CPU::debug() {
@@ -394,4 +382,12 @@ void CPU::debug() {
     std::string to_write = string_write();
     write_file << std::dec << counter << " " << to_write << "\n";
     counter++;
+}
+
+bool CPU::get_current_interrupt_status() {
+    auto interrupt_flags = read(if_address, false);
+    auto interrupt_enable = read(ie_address, false);
+
+    interrupt_data = interrupt_flags & interrupt_enable;
+    return (interrupt_data != 0);
 }

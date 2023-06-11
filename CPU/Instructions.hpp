@@ -18,9 +18,11 @@ using addr_type = std::variant<
 
 struct Instructions {
     Type instr_type;
-    int op_id;
+    int op_id{};
     addr_type addr_mode;
-    int bytes_to_fetch;
+    int bytes_to_fetch{};
+
+    Instructions() noexcept;
 
     Instructions(Type type, int op_id, addr_type addr_mode, int bytes_to_fetch) noexcept;
 };
