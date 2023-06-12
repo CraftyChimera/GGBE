@@ -5,6 +5,7 @@
 #include "Mmu.hpp"
 #include "MBC0.hpp"
 #include "MBC1.hpp"
+#include "MBC2.hpp"
 
 MMU::MMU(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
