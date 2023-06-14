@@ -30,6 +30,7 @@ CPU::CPU(Console *base) : console(base), mem_ptr(&console->mmu), timer(mem_ptr) 
     counter = 0;
     current_instruction = {};
     start_logging = false;
+    halt_bug = false;
 }
 
 void CPU::run_boot_rom() {
@@ -191,6 +192,10 @@ vector<byte> CPU::fetch() {
 
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
+        if (halt_bug) {
+            halt_bug = false;
+            PC--;
+        }
     }
 
     //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions. Problematic for Instructions that directly modify F register
@@ -341,8 +346,8 @@ std::string CPU::string_write() {
     std::string _16bit_to_write = " SP: " + word_to_string(get(DReg::sp)) +
                                   " PC: 00:" + word_to_string(get(DReg::pc));
 
-    auto ie_reg = read(ie_address, false);
-    auto if_reg = read(if_address, false);
+    auto ie_reg = read(ie_address, false) & 0x1F;
+    auto if_reg = read(if_address, false) & 0x1F;
     auto stat_reg = read(lcd_stat_address, false);
 
     std::string interrupt =
@@ -385,8 +390,8 @@ void CPU::debug() {
 }
 
 bool CPU::get_current_interrupt_status() {
-    auto interrupt_flags = read(if_address, false);
-    auto interrupt_enable = read(ie_address, false);
+    auto interrupt_flags = read(if_address, false) & 0x1F;
+    auto interrupt_enable = read(ie_address, false) & 0x1F;
 
     interrupt_data = interrupt_flags & interrupt_enable;
     return (interrupt_data != 0);

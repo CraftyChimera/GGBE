@@ -107,6 +107,8 @@ void Misc::SCF(vector<Flag_Status> &flags) {
 
 void Misc::HALT(CPU *cpu) {
     cpu->halt_mode = true;
+    if (cpu->get_current_interrupt_status())
+        cpu->halt_bug = true;
 }
 
 void Misc::STOP([[maybe_unused]] CPU *cpu) {}

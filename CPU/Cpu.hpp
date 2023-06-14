@@ -34,6 +34,8 @@ private:
 
 public:
 
+    bool halt_bug;
+
     bool is_boot;
 
     bool start_logging;
@@ -48,8 +50,6 @@ public:
 
 private:
     void debug();
-
-    bool get_current_interrupt_status();
 
     void set_interrupt_master_flag();
 
@@ -89,6 +89,8 @@ public:
     void run_instruction_cycle();
 
     void tick_components();
+
+    bool get_current_interrupt_status();
 };
 
 

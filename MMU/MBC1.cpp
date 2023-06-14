@@ -69,7 +69,8 @@ void MBC1::write_to_rom(word address, byte value) {
 }
 
 void MBC1::write_to_ram(word address, byte value) {
-    if (!ram_enabled) return;
+    if (!ram_enabled || number_of_ram_banks == 0)
+        return;
 
     ram_segment.at(ram_bank_number).at(address - 0xA000) = value;
 }

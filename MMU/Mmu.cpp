@@ -10,7 +10,6 @@
 MMU::MMU(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
-
     lyc_written = false;
     div_write = false;
     tima_write = false;
@@ -72,6 +71,10 @@ void MMU::write(word address, byte value) {
 
         if (address == tac_address)
             tac_write = true;
+
+        if (address == if_address || address == ie_address) {
+            value |= 0xE0;
+        }
 
         if (address == dma_address) {
             dma_started = true;
