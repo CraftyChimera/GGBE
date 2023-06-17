@@ -9,7 +9,8 @@
 
 class CPU;
 namespace Load {
-    void dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr_modes addr_mode);
+    void dispatch(std::vector<Flag_Status> &, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
+                  load::addr_modes addr_mode);
 }
 
 #endif //GGBE_LOAD_HPP

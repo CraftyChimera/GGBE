@@ -236,7 +236,7 @@ void CPU::decode_and_execute(vector<byte> &fetched) {
         }
 
         case Type::LOAD: {
-            Load::dispatch(this, op_id, fetched, std::get<load::addr_modes>(addr_mode));
+            Load::dispatch(flags, this, op_id, fetched, std::get<load::addr_modes>(addr_mode));
             return;
         }
 

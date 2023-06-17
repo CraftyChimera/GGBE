@@ -5,7 +5,8 @@
 #include "Load.hpp"
 #include "Cpu.hpp"
 
-void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr_modes addr_mode) {
+void Load::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
+                    load::addr_modes addr_mode) {
     switch (addr_mode) {
 
         case load::addr_modes::SP: //LD SP,HL
@@ -31,11 +32,10 @@ void Load::dispatch(CPU *cpu, int op_id, vector<byte> &bytes_fetched, load::addr
             bool h_bit = (src_value & 0xF) + (signed_offset & 0xF) > 0xF;
             bool c_bit = (src_value & 0xFF) + (signed_offset & 0xFF) > 0xFF;
 
-            auto flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
+            flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
 
             src_value += signed_offset;
-
-            cpu->set_flags();
+            
             cpu->set(dest_reg, src_value);
             cpu->tick_components();
             return;
