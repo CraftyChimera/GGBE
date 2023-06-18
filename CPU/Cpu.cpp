@@ -276,7 +276,6 @@ void CPU::handle_interrupts() {
             continue;
 
         if (start_logging) {
-            std::cout << bit_pos << "\n";
             write_file << std::dec << counter++ << " INT RAISED: " << (interrupt_data) << "\n";
         }
 
