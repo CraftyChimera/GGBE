@@ -10,9 +10,10 @@
 
 class MBC1 : public MBC {
     bool ram_enabled;
-    byte rom_mode;
+    bool banking_mode;
     byte rom_bank_number;
     byte ram_bank_number;
+    byte zero_bank_number;
 
 public:
     MBC1();
