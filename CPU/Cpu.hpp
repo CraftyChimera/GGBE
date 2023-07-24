@@ -31,7 +31,7 @@ private:
 
     Timer timer;
     Instructions current_instruction;
-
+    int dma_cycles;
 public:
 
     bool halt_bug;

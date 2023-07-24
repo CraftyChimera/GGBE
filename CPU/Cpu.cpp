@@ -31,6 +31,7 @@ CPU::CPU(Console *base) : console(base), mem_ptr(&console->mmu), timer(mem_ptr) 
     current_instruction = {};
     start_logging = false;
     halt_bug = false;
+    dma_cycles = 0;
 }
 
 void CPU::run_boot_rom() {
@@ -49,13 +50,8 @@ void CPU::run_instruction_cycle() {
             handle_interrupts();
     }
 
-    if (mem_ptr->dma_started) {
-        mem_ptr->dma_started = false;
-        int dma_cycles = 160;
-        while (dma_cycles > 0) {
-            tick_components();
-            dma_cycles--;
-        }
+    if (mem_ptr->dma_started && dma_cycles == 0) {
+        dma_cycles = 160;
     }
 
     byte index = read(PC, false);
@@ -301,6 +297,11 @@ void CPU::tick_components() {
     timer.tick();
     console->tick_components();
     console->cycles_left_till_end_of_frame--;
+    if (dma_cycles > 0) {
+        dma_cycles--;
+        if (dma_cycles == 0)
+            mem_ptr->dma_started = false;
+    }
 }
 
 std::string byte_to_string(byte x) {
