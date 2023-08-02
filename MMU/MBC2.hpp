@@ -14,7 +14,7 @@ using internal_ram_block = array<byte, internal_ram_size>;
 class MBC2 : public MBC {
     bool ram_enabled;
     byte rom_bank_number;
-    internal_ram_block built_in_ram_segment{};
+    internal_ram_block built_in_ram_segment;
 
 public:
     MBC2();

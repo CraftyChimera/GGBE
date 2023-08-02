@@ -4,8 +4,10 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : cpu(this), renderer(&mmu), open(true), mmu(data),
+Console::Console(vector<byte> &data) : cpu(this), gpu(&mmu), open(true), mmu(data),
                                        cycles_left_till_end_of_frame(0) {
+    init_sdl();
+
     keys_pressed_map[SDLK_RIGHT] = 0;
     keys_pressed_map[SDLK_LEFT] = 1;
     keys_pressed_map[SDLK_UP] = 2;
@@ -61,5 +63,31 @@ void Console::run() {
 }
 
 void Console::tick_components() {
-    renderer.update(1);
+    gpu.update(1);
+}
+
+void Console::init_sdl() {
+    int flags = SDL_INIT_VIDEO;
+    if (SDL_Init(flags) < 0) return;
+
+    auto &window_ref = gpu.window;
+    auto &renderer_ref = gpu.renderer;
+    auto &texture_ref = gpu.texture;
+
+    window_ref = SDL_CreateWindow("GGBE", SDL_WINDOWPOS_UNDEFINED,
+                                  SDL_WINDOWPOS_UNDEFINED, screen_width,
+                                  screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+
+    if (window_ref == nullptr)
+        return;
+
+    renderer_ref = SDL_CreateRenderer(window_ref, -1, 0);
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");  // make the scaled rendering look smoother.
+    SDL_RenderSetLogicalSize(renderer_ref, screen_width, screen_height);
+
+    texture_ref = SDL_CreateTexture(renderer_ref,
+                                    SDL_PIXELFORMAT_RGB24,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    screen_width, screen_height);
 }

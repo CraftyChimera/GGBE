@@ -2,55 +2,54 @@
 // Created by drake on 25/9/22.
 //
 
-#include "Misc.hpp"
 #include "Cpu.hpp"
 
-void Misc::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id) {
+void CPU::misc_dispatch(int op_id, [[maybe_unused]] misc::addr_modes &addr_mode) {
     switch (op_id) {
         case misc::op::CCF:
-            Misc::CCF(flags);
+            CCF();
             return;
         case misc::op::CPL:
-            Misc::CPL(flags, cpu);
+            CPL();
             return;
         case misc::op::DI:
-            Misc::DI(cpu);
+            DI();
             return;
         case misc::op::EI:
-            Misc::EI(cpu);
+            EI();
             return;
         case misc::op::NOP:
-            Misc::NOP();
+            NOP();
             return;
         case misc::op::SCF:
-            Misc::SCF(flags);
+            SCF();
             return;
         case misc::op::HALT:
-            Misc::HALT(cpu);
+            HALT();
             return;
         case misc::op::STOP:
-            Misc::STOP(cpu);
+            STOP();
             return;
         case misc::op::DAA:
-            Misc::DAA(flags, cpu);
+            DAA();
             return;
         default:
             return;
     }
 }
 
-void Misc::DAA(vector<Flag_Status> &flags, CPU *cpu) {
-    byte flag = cpu->get(Reg::f);
-    byte a_reg = cpu->get(Reg::a);
+void CPU::DAA() {
+    byte flag = get(Reg::f);
+    byte a_reg = get(Reg::a);
 
     byte n_flag = flag & (1 << Flag::n);
     byte c_flag = flag & (1 << Flag::c);
     byte h_flag = flag & (1 << Flag::h);
-
+    vector<FlagStatus> new_flags;
     if (!n_flag) {
         if (c_flag || a_reg > 0x99) {
             a_reg += 0x60;
-            flags.emplace_back(set(Flag::c, true));
+            new_flags.emplace_back(add_flag_status_change(Flag::c, true));
         }
         if (h_flag || (a_reg & 0x0f) > 0x09) {
             a_reg += 0x6;
@@ -60,65 +59,73 @@ void Misc::DAA(vector<Flag_Status> &flags, CPU *cpu) {
         if (h_flag) { a_reg -= 0x6; }
     }
     a_reg &= 0xFF;
-    flags.emplace_back(set(Flag::z, (a_reg == 0)));
-    flags.emplace_back(set(Flag::h, false));
-    cpu->set(Reg::a, a_reg);
+    new_flags.emplace_back(add_flag_status_change(Flag::z, (a_reg == 0)));
+    new_flags.emplace_back(add_flag_status_change(Flag::h, false));
+
+    set_flags(new_flags);
+    set(Reg::a, a_reg);
 }
 
-void Misc::CPL(vector<Flag_Status> &flags, CPU *cpu) {
-    byte A = cpu->get(Reg::a);
+void CPU::CPL() {
+    byte A = get(Reg::a);
 
     bool n_bit = true;
     bool h_bit = true;
 
-    flags = {
-            set(Flag::n, n_bit),
-            set(Flag::h, h_bit)
-    };
+    auto new_flags = vector<FlagStatus>(
+            {
+                    add_flag_status_change(Flag::n, n_bit),
+                    add_flag_status_change(Flag::h, h_bit)
+            });
+    set_flags(new_flags);
 
     A = ~A;
-    cpu->set(Reg::a, A);
+    set(Reg::a, A);
 }
 
-void Misc::CCF(vector<Flag_Status> &flags) {
+void CPU::CCF() {
     bool n_bit = false;
     bool h_bit = false;
-    bool c_bit = flags.empty();
+    bool c_bit = !get_carry();
 
-    flags = {
-            set(Flag::n, n_bit),
-            set(Flag::h, h_bit),
-            set(Flag::c, c_bit)
-    };
+    auto new_flags = vector<FlagStatus>(
+            {
+                    add_flag_status_change(Flag::n, n_bit),
+                    add_flag_status_change(Flag::h, h_bit),
+                    add_flag_status_change(Flag::c, c_bit)
+            });
+    set_flags(new_flags);
 }
 
-void Misc::SCF(vector<Flag_Status> &flags) {
+void CPU::SCF() {
 
     bool n_bit = false;
     bool h_bit = false;
     bool c_bit = true;
 
-    flags = {
-            set(Flag::n, n_bit),
-            set(Flag::h, h_bit),
-            set(Flag::c, c_bit)
-    };
+    auto new_flags = vector<FlagStatus>(
+            {
+                    add_flag_status_change(Flag::n, n_bit),
+                    add_flag_status_change(Flag::h, h_bit),
+                    add_flag_status_change(Flag::c, c_bit)
+            });
+    set_flags(new_flags);
 }
 
-void Misc::HALT(CPU *cpu) {
-    cpu->halt_mode = true;
-    if (cpu->get_current_interrupt_status())
-        cpu->halt_bug = true;
+void CPU::HALT() {
+    halt_mode = true;
+    if (get_current_interrupt_status())
+        halt_bug = true;
 }
 
-void Misc::STOP([[maybe_unused]] CPU *cpu) {}
+void CPU::STOP() {}
 
-void Misc::DI(CPU *cpu) {
-    cpu->interrupt_buffer = -1;
+void CPU::DI() {
+    interrupt_buffer = -1;
 }
 
-void Misc::EI(CPU *cpu) {
-    cpu->interrupt_buffer = 2;
+void CPU::EI() {
+    interrupt_buffer = 2;
 }
 
-void Misc::NOP() {}
+void CPU::NOP() {}

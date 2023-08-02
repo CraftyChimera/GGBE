@@ -3,22 +3,14 @@
 //
 
 #include "../Base/Console.hpp"
+#include "../Base/Parser.hpp"
 #include "Cpu.hpp"
 #include "Instructions.hpp"
-#include "Arithmetic.hpp"
-#include "Unary.hpp"
-#include "Bit_Operations.hpp"
-#include "Load.hpp"
-#include "Store.hpp"
-#include "Jump_and_Stack.hpp"
-#include "Misc.hpp"
-#include "../Base/Parser.hpp"
 
-CPU::CPU(Console *base) : console(base), mem_ptr(&console->mmu), timer(mem_ptr) {
-    flags.reserve(10);
-    reg_mapper = {};
+CPU::CPU(Console *base) : reg_mapper{}, console(base), mem_ptr(&console->mmu), timer(mem_ptr) {
     SP = 0x0000;
     PC = 0x0000;
+    fetched = {};
     is_boot = true;
     boot_data = read_file("roms/boot.gb");
     IME = false;
@@ -58,15 +50,14 @@ void CPU::run_instruction_cycle() {
     current_instruction = Instruction_List[index];
     if (index == 0xCB)
         current_instruction = Prefix_List[read(PC + 1, false)];
-    vector<byte> fetched = fetch();
 
+    fetch();
     if (IME && get_current_interrupt_status()) {
         PC -= current_instruction.bytes_to_fetch;
         current_instruction = {};
         handle_interrupts();
     } else {
-        decode_and_execute(fetched);
-        set_flags();
+        decode_and_execute();
     }
     set_interrupt_master_flag();
 }
@@ -166,9 +157,9 @@ void CPU::set_pc(word address, bool flush) {
     set(DReg::pc, address);
 }
 
-void CPU::set_flags() {
+void CPU::set_flags(vector<FlagStatus> &new_flags) {
     byte F = get(Reg::f);
-    for (auto flag_c: flags) {
+    for (auto flag_c: new_flags) {
         Flag bit = flag_c.bit;
         bool set = flag_c.status;
         auto bit_pos = static_cast<int>(bit);
@@ -181,10 +172,9 @@ void CPU::set_flags() {
     set(Reg::f, F);
 }
 
-vector<byte> CPU::fetch() {
-    vector<byte> fetched;
+void CPU::fetch() {
     auto bytes_to_fetch = current_instruction.bytes_to_fetch;
-    byte flag_data = get(Reg::f);
+    fetched = {};
 
     for (int i = 0; i < bytes_to_fetch; i++) {
         fetched.push_back(read(PC++));
@@ -193,56 +183,46 @@ vector<byte> CPU::fetch() {
             PC--;
         }
     }
-
-    //Hack: If carry flag is set,push it onto Flag Status for usage by XXC instructions. Problematic for Instructions that directly modify F register
-    flags.clear();
-    if (flag_data & (1 << Flag::c)) {
-        flags.emplace_back(Flag_Status(Flag::c, true));
-    }
-    return fetched;
 }
 
-void CPU::decode_and_execute(vector<byte> &fetched) {
+void CPU::decode_and_execute() {
     auto Type = current_instruction.instr_type;
     auto op_id = current_instruction.op_id;
     auto addr_mode = current_instruction.addr_mode;
 
-    if (Type == Type::LOAD || Type == Type::STORE || Type == Type::JUMP)
-        flags.clear();
-
     switch (Type) {
         case Type::ARITHMETIC: {
-            Arithmetic::dispatch(flags, this, op_id, fetched, std::get<arithmetic::addr_modes>(addr_mode));
+            arithmetic_dispatch(op_id, std::get<arithmetic::addr_modes>(addr_mode));
             return;
         }
 
         case Type::UNARY: {
-            Unary::dispatch(flags, this, op_id, fetched, std::get<unary::addr_modes>(addr_mode));
+            unary_dispatch(op_id, std::get<unary::addr_modes>(addr_mode));
             return;
         }
 
         case Type::BIT_OP: {
-            Bit_Operations::dispatch(flags, this, op_id, fetched, std::get<bit_op::addr_modes>(addr_mode));
-            return;
-        }
-
-        case Type::MISC: {
-            Misc::dispatch(flags, this, op_id);
+            bit_operations_dispatch(op_id, std::get<bit_op::addr_modes>(addr_mode));
             return;
         }
 
         case Type::LOAD: {
-            Load::dispatch(flags, this, op_id, fetched, std::get<load::addr_modes>(addr_mode));
+            load_dispatch(op_id, std::get<load::addr_modes>(addr_mode));
             return;
         }
 
         case Type::STORE: {
-            Store::dispatch(this, op_id, fetched, std::get<store::addr_modes>(addr_mode));
+            store_dispatch(op_id, std::get<store::addr_modes>(addr_mode));
             return;
         }
 
         case Type::JUMP: {
-            Jump::dispatch(this, op_id, fetched, std::get<jump_stack::addr_modes>(addr_mode));
+            jump_stack_dispatch(op_id, std::get<jump_stack::addr_modes>(addr_mode));
+            return;
+        }
+
+        case Type::MISC: {
+            misc_dispatch(op_id, std::get<misc::addr_modes>(addr_mode));
             return;
         }
 
@@ -395,4 +375,8 @@ bool CPU::get_current_interrupt_status() {
 
     interrupt_data = interrupt_flags & interrupt_enable;
     return (interrupt_data != 0);
+}
+
+bool CPU::get_carry() {
+    return get(Reg::f) & (1 << Flag::c);
 }

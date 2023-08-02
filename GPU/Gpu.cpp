@@ -57,28 +57,6 @@ void GPU::check_and_raise_stat_interrupts() {
     old_stat = new_stat;
 }
 
-void GPU::init_sdl() {
-    int flags = SDL_INIT_VIDEO;
-    if (SDL_Init(flags) < 0) return;
-
-    display_window = SDL_CreateWindow("GGBE", SDL_WINDOWPOS_UNDEFINED,
-                                      SDL_WINDOWPOS_UNDEFINED, screen_width,
-                                      screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-
-    if (display_window == nullptr)
-        return;
-
-    renderer = SDL_CreateRenderer(display_window, -1, 0);
-
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");  // make the scaled rendering look smoother.
-    SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
-
-    texture = SDL_CreateTexture(renderer,
-                                SDL_PIXELFORMAT_RGB24,
-                                SDL_TEXTUREACCESS_STREAMING,
-                                screen_width, screen_height);
-}
-
 void GPU::init_screen() {
     int channels = 3;
     int size = screen_height * screen_width * channels;
@@ -87,12 +65,10 @@ void GPU::init_screen() {
     memset(formatted_pixels, 0x00, size);
 }
 
-GPU::GPU(MMU *mem) noexcept
-        : pixels{}, formatted_pixels{}, texture{}, display_window{}, renderer{}, mapper(mem) {
+GPU::GPU(MMU *mmu)
+        : texture{}, window{}, renderer{}, pixels{}, formatted_pixels{}, mapper(mmu) {
     cycles_accumulated = 0;
-    mem_ptr = mem;
-
-    init_sdl();
+    mem_ptr = mmu;
     init_screen();
 
     current_ppu_state = State::V_BLANK;
@@ -172,7 +148,7 @@ void GPU::advance_scanline() {
 
     if (fetcher_y == 0) {
         draw_screen();
-        SDL_Delay(10);
+        SDL_Delay(12);
     }
     change_stat_state();
     change_stat_lyc();
@@ -229,17 +205,17 @@ void GPU::scan_sprites() {
         if (sprite_y <= line_y + 16 && line_y + 16 < sprite_y + object_size) {
             if (line_y + 16 >= sprite_y + 8)
                 tile_id |= 0x1;
-            sprites_loaded_ref.push_back({tile_id, PPU_flags(flags)});
+            sprites_loaded_ref.push_back({tile_id, PpuFlags(flags)});
 
             sprite_position_map_ref.emplace_back(
-                    std::make_pair(Sprite_data{sprite_x, sprite_y}, index_in_loaded_sprites));
+                    std::make_pair(SpriteData{sprite_x, sprite_y}, index_in_loaded_sprites));
 
             index_in_loaded_sprites++;
         }
     }
 
     std::sort(sprite_position_map_ref.begin(), sprite_position_map_ref.end(), [&](
-            std::pair<Sprite_data, byte> &a, std::pair<Sprite_data, byte> &b) {
+            std::pair<SpriteData, byte> &a, std::pair<SpriteData, byte> &b) {
         return a.first.sprite_x < b.first.sprite_x;
     });
 }
@@ -247,7 +223,7 @@ void GPU::scan_sprites() {
 GPU::~GPU() {
     delete[] formatted_pixels;
     SDL_DestroyTexture(texture);
-    SDL_DestroyWindow(display_window);
+    SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
 }

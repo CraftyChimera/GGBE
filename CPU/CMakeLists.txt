@@ -1,17 +1,17 @@
 project(CPU)
 
 add_library(${PROJECT_NAME}
-        Cpu.cpp
         Arithmetic.cpp
         Unary.cpp
-        Bit_Operations.cpp
-        Utility.cpp
+        BitOperations.cpp
+        CpuUtility.cpp
         Load.cpp
         Store.cpp
-        Jump_and_Stack.cpp
+        JumpAndStack.cpp
         Misc.cpp
         Instructions.cpp
         Timer.cpp
+        Cpu.cpp
         )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "../Base" "../MMU")

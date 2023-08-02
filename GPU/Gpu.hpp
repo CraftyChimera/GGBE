@@ -5,7 +5,7 @@
 #ifndef GGBE_GPU_HPP
 #define GGBE_GPU_HPP
 
-#include "Pixel_Mapper.hpp"
+#include "PixelMapper.hpp"
 #include "SDL.h"
 #include <fstream>
 
@@ -13,30 +13,30 @@ class MMU;
 
 class GPU {
 
+public:
+    SDL_Texture *texture;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+
 private:
     std::array<std::array<hex_codes, screen_width>, screen_height> pixels;
     char *formatted_pixels;
-    SDL_Texture *texture;
-    SDL_Window *display_window;
-    SDL_Renderer *renderer;
 
     MMU *mem_ptr;
     State current_ppu_state;
-    Pixel_Mapper mapper;
+    PixelMapper mapper;
 
     int cycle_delay;
     int cycles_accumulated;
 
 public:
-    explicit GPU(MMU *mmu) noexcept;
+    explicit GPU(MMU *mmu);
 
     void update(int cycles);
 
     ~GPU();
 
 private:
-
-    void init_sdl();
 
     void init_screen();
 

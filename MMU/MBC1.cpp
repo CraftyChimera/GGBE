@@ -4,13 +4,7 @@
 
 #include "MBC1.hpp"
 
-MBC1::MBC1() {
-    ram_enabled = false;
-    banking_mode = false;
-    rom_bank_number = 1;
-    ram_bank_number = 0;
-    zero_bank_number = 0;
-}
+MBC1::MBC1() : ram_enabled(false), banking_mode(false), rom_bank_number(1), ram_bank_number(0), zero_bank_number(0) {}
 
 byte MBC1::read_from_rom(word address) {
     if (address < 0x4000)

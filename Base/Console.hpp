@@ -6,7 +6,7 @@
 #define GGBE_CONSOLE_HPP
 
 #include "Constants.hpp"
-
+#include "SDL.h"
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
 #include "../MMU/Mmu.hpp"
@@ -14,7 +14,7 @@
 class Console {
     CPU cpu;
 
-    GPU renderer;
+    GPU gpu;
 
     bool open;
 
@@ -30,6 +30,8 @@ public:
     void tick_components();
 
 private:
+    void init_sdl();
+
     std::unordered_map<int, int> keys_pressed_map;
 
     void handle_event();

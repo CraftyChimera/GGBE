@@ -18,13 +18,13 @@ using external_ram_block = array<byte, external_ram_size>;
 
 class MBC {
 public:
-    size_t number_of_rom_banks{};
-    size_t number_of_ram_banks{};
+    size_t number_of_rom_banks;
+    size_t number_of_ram_banks;
 
     vector<rom_block> rom_segment;
     vector<external_ram_block> ram_segment;
 
-    MBC() = default;
+    MBC();
 
     virtual ~MBC() = default;
 

@@ -2,77 +2,71 @@
 // Created by drake on 4/9/22.
 //
 
-#include "Unary.hpp"
 #include "Cpu.hpp"
 
-const std::function<byte(vector<Flag_Status> &, Unary::op_args)> Unary::op_codes[14] = {Unary::INC, Unary::DEC,
-                                                                                        Unary::SWAP,
-                                                                                        Unary::RL, Unary::RLA,
-                                                                                        Unary::RLC, Unary::RLCA,
-                                                                                        Unary::RR, Unary::RRA,
-                                                                                        Unary::RRC,
-                                                                                        Unary::RRCA, Unary::SLA,
-                                                                                        Unary::SRL, Unary::SRA};
+CPU::unary_op_args::unary_op_args(Reg reg, byte value, bool carry) : location(reg), value(value), carry(carry) {}
 
-Unary::op_args::op_args() : location(Reg::a), value(0) {}
+CPU::unary_op_args::unary_op_args(word address, byte value, bool carry) : location(address), value(value),
+                                                                          carry(carry) {}
 
-Unary::op_args::op_args(Reg reg, byte value) : location(reg), value(value) {}
-
-Unary::op_args::op_args(word address, byte value) : location(address), value(value) {}
-
-void Unary::dispatch(vector<Flag_Status> &flags, CPU *cpu, int op_id, vector<byte> &bytes_fetched,
-                     unary::addr_modes addr_mode) {
+void CPU::unary_dispatch(int op_id, unary::addr_modes addr_mode) {
 
     if (addr_mode == unary::addr_modes::REG_16) {
-        DI_r16(cpu, bytes_fetched, op_id);
-        cpu->tick_components();
+        DI_r16(op_id);
+        tick_components();
         return;
     }
 
-    auto args = Unary::get_args(cpu, op_id, bytes_fetched, addr_mode);
-    byte value = Unary::op_codes[op_id](flags, args);
+    auto args = get_unary_args(op_id, addr_mode);
+    auto result = unary_op_codes[op_id](args);
+    auto value = result.result_byte;
+    auto new_flags = result.new_flag_status;
+    set_flags(new_flags);
+
 
     switch (args.location.index()) {
         case 0: {
             Reg reg_index = std::get<0>(args.location);
-            cpu->set(reg_index, value);
+            set(reg_index, value);
             break;
         }
         case 1: {
             word address = std::get<1>(args.location);
-            cpu->write(address, value);
+            write(address, value);
             break;
         }
     }
 }
 
-Unary::op_args Unary::get_args(CPU *cpu, int op_id, vector<byte> &bytes_fetched, unary::addr_modes addr_mode) {
+CPU::unary_op_args CPU::get_unary_args(int op_id, unary::addr_modes addr_mode) {
+    bool carry = get_carry();
     switch (op_id) {
         case unary::op::INC:
         case unary::op::DEC:
-            return Unary::get_args_non_cb(cpu, bytes_fetched);
+            return CPU::get_unary_args_non_cb();
 
         case unary::op::RRA:
         case unary::op::RRCA:
         case unary::op::RLA:
         case unary::op::RLCA:
-            return {Reg::a, cpu->get(Reg::a)};
+            return {Reg::a, get(Reg::a), carry};
 
         default:
-            return Unary::get_args_cb(cpu, bytes_fetched, addr_mode);
+            return CPU::get_unary_args_cb(addr_mode);
     }
 
 }
 
-Unary::op_args Unary::get_args_non_cb(CPU *cpu, vector<byte> &bytes_fetched) {
+CPU::unary_op_args CPU::get_unary_args_non_cb() {
+    
     // INC/DEC B[0] - 0x04/0x05, INC/DEC C[1] - 0x0C/0x0D
     // INC/DEC D[2] - 0x14/0x15, INC/DEC E[3] - 0x1C/0x1D
     // INC/DEC H[4] - 0x24/0x25, INC/DEC L[5] - 0x2C/0x2D
     // INC/DEC(HL)[6]-0x34/0x35, INC/DEC A[7] - 0x3C/0x3D
-    auto row = bytes_fetched[0] >> 4;
-
+    bool carry = get_carry();
+    auto row = fetched[0] >> 4;
     int column = -1;
-    auto reg_mask = bytes_fetched[0] & 0xF;
+    auto reg_mask = fetched[0] & 0xF;
 
     if (reg_mask == 0x4 || reg_mask == 0x5)
         column = 0;
@@ -82,41 +76,42 @@ Unary::op_args Unary::get_args_non_cb(CPU *cpu, vector<byte> &bytes_fetched) {
     byte reg_calc = 2 * row + column;
 
     if (reg_calc == 6) {
-        word address = cpu->get(DReg::hl);
-        return {address, cpu->read(address)};
+        word address = get(DReg::hl);
+        return {address, read(address), carry};
     }
 
     Reg reg = static_cast<Reg>(reg_calc);
-    return {reg, cpu->get(reg)};
+    return {reg, get(reg), carry};
 }
 
-Unary::op_args Unary::get_args_cb(CPU *cpu, vector<byte> &bytes_fetched, unary::addr_modes addressing_mode) {
+CPU::unary_op_args CPU::get_unary_args_cb(unary::addr_modes addressing_mode) {
+    bool carry = get_carry();
     switch (addressing_mode) {
         case unary::addr_modes::REG: // INC r8
         {
-            Reg reg_index = static_cast<Reg>(bytes_fetched[1] & 0x7);
-            return {reg_index, cpu->get(reg_index)};
+            Reg reg_index = static_cast<Reg>(fetched[1] & 0x7);
+            return {reg_index, get(reg_index), carry};
         }
         case unary::addr_modes::MEM : //INC [HL]
         {
-            word address = cpu->get(DReg::hl);
-            return {address, cpu->read(address)};
+            word address = get(DReg::hl);
+            return {address, read(address), carry};
         }
         default: {
             std::cout << " Fall Through Unary\n";
-            return {1, 1};
+            return {1, 1, false};
         }
     }
 }
 
-void Unary::DI_r16(CPU *cpu, vector<byte> &bytes_fetched, int op_id) {
+void CPU::DI_r16(int op_id) {
     //INC BC - 0x03
     //INC DE - 0x13
     //INC HL - 0x23
     //INC SP - 0x33
-    int bitmask = (bytes_fetched[0] >> 4);
+    int bitmask = (fetched[0] >> 4);
     DReg reg_index = static_cast<DReg>(2 * bitmask);
-    word value = cpu->get(reg_index);
+    word value = get(reg_index);
 
     if (op_id == unary::op::INC)
         value++;
@@ -124,10 +119,10 @@ void Unary::DI_r16(CPU *cpu, vector<byte> &bytes_fetched, int op_id) {
     if (op_id == unary::op::DEC)
         value--;
 
-    cpu->set(reg_index, value);
+    set(reg_index, value);
 }
 
-byte Unary::INC(vector<Flag_Status> &flags, Unary::op_args arg) {
+FlagStatusResponseWrapper CPU::INC(unary_op_args &arg) {
     byte value = arg.value;
     value++;
 
@@ -135,16 +130,15 @@ byte Unary::INC(vector<Flag_Status> &flags, Unary::op_args arg) {
     bool n_bit = false;
     bool h_bit = (value & 0xF) == 0;
 
-    flags = {
-            {Flag::z, z_bit},
-            {Flag::n, n_bit},
-            {Flag::h, h_bit}
-    };
+    return {{
+                    {Flag::z, z_bit},
+                    {Flag::n, n_bit},
+                    {Flag::h, h_bit}
+            }, value};
 
-    return value;
 }
 
-byte Unary::DEC(vector<Flag_Status> &flags, Unary::op_args arg) {
+FlagStatusResponseWrapper CPU::DEC(unary_op_args &arg) {
     byte value = arg.value;
     value--;
 
@@ -152,16 +146,14 @@ byte Unary::DEC(vector<Flag_Status> &flags, Unary::op_args arg) {
     bool n_bit = true;
     bool h_bit = (value & 0xF) == 0xF;
 
-    flags = {
-            {Flag::z, z_bit},
-            {Flag::n, n_bit},
-            {Flag::h, h_bit}
-    };
-
-    return value;
+    return {{
+                    {Flag::z, z_bit},
+                    {Flag::n, n_bit},
+                    {Flag::h, h_bit}
+            }, value};
 }
 
-byte Unary::SWAP(vector<Flag_Status> &flags, Unary::op_args arg) {
+FlagStatusResponseWrapper CPU::SWAP(unary_op_args &arg) {
     byte value = arg.value, lo, hi;
     lo = value & 0xF;
     hi = (value >> 4) & 0xF;
@@ -172,12 +164,10 @@ byte Unary::SWAP(vector<Flag_Status> &flags, Unary::op_args arg) {
     bool h_bit = false;
     bool c_bit = false;
 
-    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
-
-    return value;
+    return {batch_fill({z_bit, n_bit, h_bit, c_bit}), value};
 }
 
-byte RL_helper(vector<Flag_Status> &flags, Unary::op_args arg, byte lsb) {
+FlagStatusResponseWrapper CPU::RL_helper(unary_op_args &arg, byte lsb) {
     auto value = arg.value;
 
     // b_7 b_6 b_5 b_4 b_3 b_2 b_1 b_0 -> b_6 b_5 b_4 b_3 b_2 b_1 b_0 lsb
@@ -191,11 +181,10 @@ byte RL_helper(vector<Flag_Status> &flags, Unary::op_args arg, byte lsb) {
     bool h_bit = false;
     bool c_bit = (temp >> 8) == 1;
 
-    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
-    return value;
+    return {batch_fill({z_bit, n_bit, h_bit, c_bit}), value};
 }
 
-byte RR_helper(vector<Flag_Status> &flags, Unary::op_args arg, byte msb) {
+FlagStatusResponseWrapper CPU::RR_helper(unary_op_args &arg, byte msb) {
     auto value = arg.value;
     byte carry = value & 1;
 
@@ -210,79 +199,65 @@ byte RR_helper(vector<Flag_Status> &flags, Unary::op_args arg, byte msb) {
     bool h_bit = false;
     bool c_bit = carry == 1;
 
-    flags = batch_fill({z_bit, n_bit, h_bit, c_bit});
-    return value;
+    return {batch_fill({z_bit, n_bit, h_bit, c_bit}), value};
 }
 
 // msb/lsb is 0
-byte Unary::SLA(vector<Flag_Status> &flags, Unary::op_args arg) {
-    return RL_helper(flags, arg, 0);
+FlagStatusResponseWrapper CPU::SLA(unary_op_args &arg) {
+    return RL_helper(arg, 0);
 }
 
-byte Unary::SRL(vector<Flag_Status> &flags, Unary::op_args arg) {
-    return RR_helper(flags, arg, 0);
+FlagStatusResponseWrapper CPU::SRL(unary_op_args &arg) {
+    return RR_helper(arg, 0);
 }
 
 // msb/lsb is carry bit
-byte Unary::RL(vector<Flag_Status> &flags, Unary::op_args arg) {
-    byte carry = flags.size();
-    flags.clear();
-
-    return RL_helper(flags, arg, carry);
+FlagStatusResponseWrapper CPU::RL(unary_op_args &arg) {
+    return RL_helper(arg, arg.carry);
 }
 
-byte Unary::RR(vector<Flag_Status> &flags, Unary::op_args arg) {
-    byte carry = flags.size();
-    flags.clear();
-
-    return RR_helper(flags, arg, carry);
+FlagStatusResponseWrapper CPU::RR(unary_op_args &arg) {
+    return RR_helper(arg, arg.carry);
 }
 
 // lsb/msb is bit-7/bit-0 - Rotate bits
 // RLC: b_7 b_6 b_5 b_4 b_3 b_2 b_1 b_0 -> b_6 b_5 b_4 b_3 b_2 b_1 b_0 b_7
 // RRC: b_7 b_6 b_5 b_4 b_3 b_2 b_1 b_0 -> b_0 b_7 b_6 b_5 b_4 b_3 b_2 b_1
-byte Unary::RLC(vector<Flag_Status> &flags, Unary::op_args arg) {
-    byte lsb = arg.value >> 7;
-    return RL_helper(flags, arg, lsb);
+FlagStatusResponseWrapper CPU::RLC(unary_op_args &arg) {
+    return RL_helper(arg, arg.value >> 7);
 }
 
-byte Unary::RRC(vector<Flag_Status> &flags, Unary::op_args arg) {
-    auto value = arg.value;
-    byte msb = value & 0x1;
-    return RR_helper(flags, arg, msb);
+FlagStatusResponseWrapper CPU::RRC(unary_op_args &arg) {
+    return RR_helper(arg, arg.value & 0x1);
 }
 
 //  b_7 b_6 b_5 b_4 b_3 b_2 b_1 b_0 -> b_7 b_7 b_6 b_5 b_4 b_3 b_2 b_1
-byte Unary::SRA(vector<Flag_Status> &flags, Unary::op_args arg) {
-    byte msb = arg.value >> 7;
-    return RR_helper(flags, arg, msb);
+FlagStatusResponseWrapper CPU::SRA(unary_op_args &arg) {
+    return RR_helper(arg, arg.value >> 7);
 }
 
 // special variant of RL/RR for register A
-byte Unary::RLA(vector<Flag_Status> &flags, Unary::op_args arg) {
-    auto value = RL(flags, arg);
-
-    flags.emplace_back(set(Flag::z, false));
-    return value;
+FlagStatusResponseWrapper CPU::RLA(unary_op_args &arg) {
+    auto temp_result = RL(arg);
+    temp_result.new_flag_status.emplace_back(add_flag_status_change(Flag::z, false));
+    return temp_result;
 }
 
-byte Unary::RRA(vector<Flag_Status> &flags, Unary::op_args arg) {
-    auto value = RR(flags, arg);
-
-    flags.emplace_back(set(Flag::z, false));
-    return value;
+FlagStatusResponseWrapper CPU::RRA(unary_op_args &arg) {
+    auto temp_result = RR(arg);
+    temp_result.new_flag_status.emplace_back(add_flag_status_change(Flag::z, false));
+    return temp_result;
 }
 
 // special variant of RLC/RRC for register A
-byte Unary::RLCA(vector<Flag_Status> &flags, Unary::op_args arg) {
-    auto value = RLC(flags, arg);
-
-    flags.emplace_back(set(Flag::z, false));
-    return value;
+FlagStatusResponseWrapper CPU::RLCA(unary_op_args &arg) {
+    auto temp_result = RLC(arg);
+    temp_result.new_flag_status.emplace_back(add_flag_status_change(Flag::z, false));
+    return temp_result;
 }
 
-byte Unary::RRCA(vector<Flag_Status> &flags, Unary::op_args arg) {
-    auto value = RRC(flags, arg);
-    flags.emplace_back(set(Flag::z, false));
-    return value;
+FlagStatusResponseWrapper CPU::RRCA(unary_op_args &arg) {
+    auto temp_result = RRC(arg);
+    temp_result.new_flag_status.emplace_back(add_flag_status_change(Flag::z, false));
+    return temp_result;
 }

@@ -25,7 +25,7 @@ enum State {
     DRAW_PIXELS = 3
 };
 
-struct PPU_flags {
+struct PpuFlags {
     using bit = bool;
 
     bit bg_window_over_obj;
@@ -33,12 +33,12 @@ struct PPU_flags {
     bit x_flip;
     bit palette_number;
 
-    explicit PPU_flags(byte);
+    explicit PpuFlags(byte);
 };
 
 struct Sprite {
     byte tile_id;
-    PPU_flags flags;
+    PpuFlags flags;
 };
 
 #endif //GGBE_UTILITY_GPU_HPP

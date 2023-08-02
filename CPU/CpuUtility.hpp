@@ -39,16 +39,21 @@ enum Flag {
     c = 4
 };
 
-struct Flag_Status {
+struct FlagStatus {
     Flag bit;
     bool status;
 
-    Flag_Status(Flag x, bool stat) : bit(x), status(stat) {};
+    FlagStatus(Flag x, bool stat) : bit(x), status(stat) {};
 };
 
-Flag_Status set(Flag bit, bool status);
+struct FlagStatusResponseWrapper {
+    vector<FlagStatus> new_flag_status;
+    byte result_byte;
+};
 
-vector<Flag_Status> batch_fill(std::array<bool, 4> statuses);
+FlagStatus add_flag_status_change(Flag bit, bool status);
+
+vector<FlagStatus> batch_fill(std::array<bool, 4> statuses);
 
 word get_signed_offset(byte unsigned_offset);
 

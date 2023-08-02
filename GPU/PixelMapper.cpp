@@ -4,10 +4,10 @@
 
 #include <cassert>
 #include <algorithm>
-#include "Pixel_Mapper.hpp"
+#include "PixelMapper.hpp"
 #include "../MMU/Mmu.hpp"
 
-Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
+PixelMapper::PixelMapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
     windows_enabled = false;
     window_encountered = false;
     is_in_window = false;
@@ -23,7 +23,7 @@ Pixel_Mapper::Pixel_Mapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
     scroll_offset = 0;
 }
 
-State Pixel_Mapper::advance_scan_line() {
+State PixelMapper::advance_scan_line() {
     background_pixel_queue.clear();
     sprite_pixel_queue.clear();
     sprites_loaded.clear();
@@ -58,7 +58,7 @@ State Pixel_Mapper::advance_scan_line() {
     return State::OAM_SCAN;
 }
 
-void Pixel_Mapper::operator()(int cycles) {
+void PixelMapper::operator()(int cycles) {
 
     if (fetcher_x == 0) {
         scroll_offset = mem_ptr->read(scx_address) % 8;
@@ -77,8 +77,8 @@ void Pixel_Mapper::operator()(int cycles) {
             get_current_background_pixels();
 
         if (fetcher_x == 0) {
-            background_pixel_queue = std::deque<Pixel_Info>(background_pixel_queue.begin() + scroll_offset,
-                                                            background_pixel_queue.end());
+            background_pixel_queue = std::deque<PixelInfo>(background_pixel_queue.begin() + scroll_offset,
+                                                           background_pixel_queue.end());
         }
 
         check_and_transition_into_window();
@@ -93,7 +93,7 @@ void Pixel_Mapper::operator()(int cycles) {
     lcd_reg = mem_ptr->read(lcd_control_address);
 }
 
-void Pixel_Mapper::get_current_background_pixels() {
+void PixelMapper::get_current_background_pixels() {
     constexpr word tile_map_block_size = 0x0800;
     bool window_tile_map_area_bit = lcd_reg & (1 << 6);
     bool tile_data_area_bit = lcd_reg & (1 << 4);
@@ -138,7 +138,7 @@ void Pixel_Mapper::get_current_background_pixels() {
     word address_of_high_byte = address_of_low_byte + 1;
 
     for (int pixel_id = 0; pixel_id < 8; pixel_id++) {
-        Pixel_Info current_pixel{};
+        PixelInfo current_pixel{};
 
         byte low_byte = mem_ptr->read(address_of_low_byte);
         byte high_byte = mem_ptr->read(address_of_high_byte);
@@ -153,7 +153,7 @@ void Pixel_Mapper::get_current_background_pixels() {
     }
 }
 
-hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
+hex_codes PixelMapper::get_hex_from_pixel(PixelInfo pixel_data) {
     word bgp_color_data = mem_ptr->read(bgp_palette_address);
     word obp0_color_data = mem_ptr->read(obp0_palette_address);
     word obp1_color_data = mem_ptr->read(obp1_palette_address);
@@ -182,7 +182,7 @@ hex_codes Pixel_Mapper::get_hex_from_pixel(Pixel_Info pixel_data) {
     return color_map.at(color_index);
 }
 
-void Pixel_Mapper::check_if_window_enabled() {
+void PixelMapper::check_if_window_enabled() {
     bool windows_enable_bit = lcd_reg & (1 << 5);
 
     byte wy = mem_ptr->read(wy_address);
@@ -191,12 +191,12 @@ void Pixel_Mapper::check_if_window_enabled() {
     windows_enabled = window_encountered && windows_enable_bit;
 }
 
-std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
+std::deque<PixelInfo> PixelMapper::load_new_sprite_pixels() {
     constexpr word tile_data_start_address = 0x8000;
     bool object_size_bit = lcd_reg & (1 << 2);
     bool sprite_enable_bit = lcd_reg & (1 << 1);
 
-    std::deque<Pixel_Info> current_sprite_pixels;
+    std::deque<PixelInfo> current_sprite_pixels;
 
     if (sprite_position_map.empty() || !sprite_enable_bit)
         return current_sprite_pixels;
@@ -223,7 +223,7 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
     word address_of_high_byte = address_of_low_byte + 1;
 
     for (int pixel_id = 0; pixel_id < 8; pixel_id++) {
-        Pixel_Info current_pixel{};
+        PixelInfo current_pixel{};
 
         byte low_byte = mem_ptr->read(address_of_low_byte);
         byte high_byte = mem_ptr->read(address_of_high_byte);
@@ -246,7 +246,7 @@ std::deque<Pixel_Info> Pixel_Mapper::load_new_sprite_pixels() {
     return current_sprite_pixels;
 }
 
-void Pixel_Mapper::load_pixels_into_sprite_queue(std::deque<Pixel_Info> pixels) {
+void PixelMapper::load_pixels_into_sprite_queue(std::deque<PixelInfo> pixels) {
     for (std::size_t offset = 0; offset < pixels.size(); offset++) {
         //TODO: This works for Non CGB. Need a different Logic for CGB
         if (offset >= sprite_pixel_queue.size())
@@ -257,14 +257,14 @@ void Pixel_Mapper::load_pixels_into_sprite_queue(std::deque<Pixel_Info> pixels) 
     }
 }
 
-Pixel_Info Pixel_Mapper::get_mixed_pixel() {
-    Pixel_Info current_background_pixel = background_pixel_queue.front();
+PixelInfo PixelMapper::get_mixed_pixel() {
+    PixelInfo current_background_pixel = background_pixel_queue.front();
     background_pixel_queue.pop_front();
 
     if (sprite_pixel_queue.empty())
         return current_background_pixel;
 
-    Pixel_Info current_sprite_pixel = sprite_pixel_queue.front();
+    PixelInfo current_sprite_pixel = sprite_pixel_queue.front();
     sprite_pixel_queue.pop_front();
 
     if (current_sprite_pixel.color_id == 0)
@@ -278,7 +278,7 @@ Pixel_Info Pixel_Mapper::get_mixed_pixel() {
     return current_sprite_pixel;
 }
 
-void Pixel_Mapper::check_and_load_pixels() {
+void PixelMapper::check_and_load_pixels() {
     while (!sprite_position_map.empty() && fetcher_x + 8 >= sprite_position_map.front().first.sprite_x) {
 
         int sprite_position_end = sprite_position_map.front().first.sprite_x;
@@ -296,7 +296,7 @@ void Pixel_Mapper::check_and_load_pixels() {
     }
 }
 
-void Pixel_Mapper::check_and_transition_into_window() {
+void PixelMapper::check_and_transition_into_window() {
     auto wx = mem_ptr->read(wx_address);
 
     bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);

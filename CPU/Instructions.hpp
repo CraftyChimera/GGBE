@@ -5,7 +5,7 @@
 #ifndef GGBE_INSTRUCTIONS_HPP
 #define GGBE_INSTRUCTIONS_HPP
 
-#include "Utility.hpp"
+#include "CpuUtility.hpp"
 
 using addr_type = std::variant<
         arithmetic::addr_modes,

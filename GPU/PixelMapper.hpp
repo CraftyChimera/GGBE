@@ -2,37 +2,37 @@
 // Created by drake on 23/10/22.
 //
 
-#ifndef GGBE_PIXEL_MAPPER_HPP
-#define GGBE_PIXEL_MAPPER_HPP
+#ifndef GGBE_PIXELMAPPER_HPP
+#define GGBE_PIXELMAPPER_HPP
 
-#include "GPU_Utility.hpp"
+#include "GpuUtility.hpp"
 
 class MMU;
 
-//TODO:(CGB)sprite priority
-struct Pixel_Info {
+// TODO : (CGB)sprite priority
+struct PixelInfo {
     bool is_sprite;
     int color_id;
     int palette;
     bool background_priority;
 };
 
-struct Sprite_data {
+struct SpriteData {
     byte sprite_x;
     byte sprite_y;
 };
 
-class Pixel_Mapper {
+class PixelMapper {
 
 public:
-    explicit Pixel_Mapper(MMU *mmu);
+    explicit PixelMapper(MMU *mmu);
 
     std::array<hex_codes, screen_width> current_scanline;
 
     byte fetcher_x;
     byte fetcher_y;
 
-    std::deque<std::pair<Sprite_data, byte>> sprite_position_map;
+    std::deque<std::pair<SpriteData, byte>> sprite_position_map;
     std::vector<Sprite> sprites_loaded;
 
     void operator()(int cycles);
@@ -52,20 +52,20 @@ private:
     bool is_in_window;
 
     MMU *mem_ptr;
-    std::deque<Pixel_Info> background_pixel_queue;
-    std::deque<Pixel_Info> sprite_pixel_queue;
+    std::deque<PixelInfo> background_pixel_queue;
+    std::deque<PixelInfo> sprite_pixel_queue;
 
     byte scroll_offset;
 
     void get_current_background_pixels();
 
-    std::deque<Pixel_Info> load_new_sprite_pixels();
+    std::deque<PixelInfo> load_new_sprite_pixels();
 
-    void load_pixels_into_sprite_queue(std::deque<Pixel_Info> sprite_data);
+    void load_pixels_into_sprite_queue(std::deque<PixelInfo> sprite_data);
 
-    Pixel_Info get_mixed_pixel();
+    PixelInfo get_mixed_pixel();
 
-    hex_codes get_hex_from_pixel(Pixel_Info pixel_data);
+    hex_codes get_hex_from_pixel(PixelInfo pixel_data);
 
     void check_if_window_enabled();
 
@@ -74,4 +74,4 @@ private:
     void check_and_transition_into_window();
 };
 
-#endif //GGBE_PIXEL_MAPPER_HPP
+#endif //GGBE_PIXELMAPPER_HPP

@@ -4,11 +4,7 @@
 
 #include "MBC2.hpp"
 
-MBC2::MBC2() {
-    ram_enabled = false;
-    rom_bank_number = 1;
-    built_in_ram_segment = {};
-}
+MBC2::MBC2() : ram_enabled(false), rom_bank_number(1), built_in_ram_segment{} {}
 
 byte MBC2::read_from_rom(word address) {
     if (address < 0x4000) {

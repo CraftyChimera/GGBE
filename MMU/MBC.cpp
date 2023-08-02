@@ -4,6 +4,8 @@
 
 #include "MBC.hpp"
 
+MBC::MBC() : number_of_rom_banks{}, number_of_ram_banks{}, rom_segment{}, ram_segment{} {}
+
 void MBC::init_data(vector<byte> &data) {
     byte ram_identifier = data.at(0x149);
     constexpr int number_of_ram_banks_map[6] = {0, -1, 1, 4, 16, 8};

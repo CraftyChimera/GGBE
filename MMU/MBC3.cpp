@@ -4,11 +4,7 @@
 
 #include "MBC3.hpp"
 
-MBC3::MBC3() {
-    ram_enabled = false;
-    rom_bank_number = 1;
-    ram_bank_number = 0;
-}
+MBC3::MBC3() : ram_enabled(false), rom_bank_number(1), ram_bank_number(0) {}
 
 byte MBC3::read_from_rom(word address) {
     if (address < 0x4000)
