@@ -7,12 +7,23 @@
 CPU::jump_stack_op_args::jump_stack_op_args() : jump_address(0), condition(-1) {}
 
 void CPU::jump_stack_dispatch(int op_id, jump_stack::addr_modes addr_mode) {
-    if (fetched[0] == 0xE9) {
+    if (jump_stack_check_and_deal_with_edge_cases(op_id))
+        return;
+
+    auto args = jump_stack_get_args(addr_mode);
+    jump_execute_stack_set_result(op_id, args);
+}
+
+bool CPU::jump_stack_check_and_deal_with_edge_cases(int op_id) {
+    if (op_id == 0xE9) {
         word address = get(DReg::hl);
         set_pc(address, false);
-        return;
+        return true;
     }
-    auto args = jump_stack_get_args(addr_mode);
+    return false;
+}
+
+void CPU::jump_execute_stack_set_result(int op_id, jump_stack_op_args &args) {
     switch (op_id) {
         case jump_stack::op::JP:
             JP(args);
@@ -46,11 +57,10 @@ void CPU::jump_stack_dispatch(int op_id, jump_stack::addr_modes addr_mode) {
     }
 }
 
-
-bool checkCondition(byte F, int cond_id) {
+bool checkCondition(byte F, int condition_id) {
     bool C = F & (1 << Flag::c);
     bool Z = F & (1 << Flag::z);
-    switch (cond_id) {
+    switch (condition_id) {
         case 0:
             return !Z;
         case 1:

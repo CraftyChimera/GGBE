@@ -64,8 +64,7 @@ enum class Type {
     LOAD,
     STORE,
     JUMP,
-    MISC,
-    NONE
+    MISC
 };
 
 namespace arithmetic {

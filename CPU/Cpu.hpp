@@ -58,13 +58,13 @@ public:
     void run_instruction_cycle();
 
 private:
-    void debug();
+    [[maybe_unused]] void debug();
 
     void set_interrupt_master_flag();
 
     void handle_interrupts();
 
-    std::string string_write();
+    std::string get_string_to_write();
 
     void push(byte to_push);
 
@@ -90,7 +90,7 @@ private:
 
     void decode_and_execute();
 
-    bool get_current_interrupt_status();
+    bool is_interrupt_pending();
 
     void tick_components();
 
@@ -107,9 +107,13 @@ private:
         arithmetic_op_args(byte src_value, byte value, bool carry);
     };
 
-    arithmetic_op_args arithmetic_get_args(arithmetic::addr_modes addressing_mode);
+    arithmetic_op_args arithmetic_get_args(arithmetic::addr_modes &addr_mode);
 
-    void arithmetic_dispatch(int op_id, arithmetic::addr_modes addressing_mode);
+    void arithmetic_dispatch(int op_id, arithmetic::addr_modes &addr_mode);
+
+    bool arithmetic_check_and_deal_with_edge_cases(arithmetic::addr_modes &addr_mode);
+
+    void arithmetic_set_result(FlagStatusResponseWrapper &result);
 
     word ADD_16(word src, word addend);
 
@@ -148,13 +152,17 @@ private:
 
     };
 
-    unary_op_args get_unary_args_cb(unary::addr_modes addressing_mode);
+    unary_op_args get_unary_args_cb(unary::addr_modes &addr_mode);
 
     unary_op_args get_unary_args_non_cb();
 
-    unary_op_args get_unary_args(int op_id, unary::addr_modes addr_mode);
+    unary_op_args get_unary_args(int op_id, unary::addr_modes &addr_mode);
 
-    void unary_dispatch(int op_id, unary::addr_modes addressing_mode);
+    void unary_dispatch(int op_id, unary::addr_modes &addr_mode);
+
+    bool unary_check_and_deal_with_edge_cases(int op_id, unary::addr_modes &addr_mode);
+
+    void unary_set_result(FlagStatusResponseWrapper &result, unary_op_args &args);
 
     void DI_r16(int op_id);
 
@@ -217,6 +225,8 @@ private:
 
     void bit_operations_dispatch(int op_id, bit_op::addr_modes addr_mode);
 
+    void bit_operations_set_result(int op_id, FlagStatusResponseWrapper &result, bit_operations_op_args &args);
+
     static FlagStatusResponseWrapper BIT(bit_operations_op_args &);
 
     static FlagStatusResponseWrapper RES(bit_operations_op_args &);
@@ -249,6 +259,10 @@ private:
     jump_stack_op_args jump_stack_get_args(jump_stack::addr_modes addressing_mode);
 
     void jump_stack_dispatch(int op_id, jump_stack::addr_modes addr_mode);
+
+    bool jump_stack_check_and_deal_with_edge_cases(int op_id);
+
+    void jump_execute_stack_set_result(int op_id, jump_stack_op_args &args);
 
     void JP(jump_stack_op_args &args);
 

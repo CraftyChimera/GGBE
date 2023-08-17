@@ -32,7 +32,7 @@ private:
 public:
     explicit GPU(MMU *mmu);
 
-    void update(int cycles);
+    void tick(int cycles);
 
     ~GPU();
 

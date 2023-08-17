@@ -75,7 +75,7 @@ GPU::GPU(MMU *mmu)
     cycle_delay = 0;
 }
 
-void GPU::update(int cycles) {
+void GPU::tick(int cycles) {
     if (mem_ptr->lyc_written) {
         change_stat_lyc();
         check_and_raise_stat_interrupts();

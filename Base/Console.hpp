@@ -27,7 +27,7 @@ public:
 
     void run();
 
-    void tick_components();
+    void tick();
 
 private:
     void init_sdl();

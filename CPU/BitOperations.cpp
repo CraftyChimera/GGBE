@@ -15,27 +15,7 @@ CPU::bit_operations_op_args::bit_operations_op_args(byte test_bit, byte value, w
 void CPU::bit_operations_dispatch(int op_id, bit_op::addr_modes addr_mode) {
     auto args = bit_operations_get_args(addr_mode);
     auto result = bit_operations_op_codes[op_id](args);
-    auto value = result.result_byte;
-    auto new_flags = result.new_flag_status;
-    set_flags(new_flags);
-
-    // BIT instructions don't need to write to address/register
-    if (op_id == bit_op::op::BIT)
-        return;
-
-    switch (args.location.index()) {
-        case 0: {
-            Reg reg_index = std::get<0>(args.location);
-            set(reg_index, value);
-            break;
-        }
-
-        case 1: {
-            word address = std::get<1>(args.location);
-            write(address, value);
-            break;
-        }
-    }
+    bit_operations_set_result(op_id, result, args);
 }
 
 CPU::bit_operations_op_args CPU::bit_operations_get_args(bit_op::addr_modes addressing_mode) {
@@ -55,9 +35,31 @@ CPU::bit_operations_op_args CPU::bit_operations_get_args(bit_op::addr_modes addr
             word address = get(DReg::hl);
             return {test_bit, read(address), address};
         }
-        default: {
-            std::cout << "Fall-through bit-op\n";
-            return {1, 1, 1};
+        default:
+            return {false, 1, 1};
+    }
+}
+
+void CPU::bit_operations_set_result(int op_id, FlagStatusResponseWrapper &result, bit_operations_op_args &args) {
+    auto value = result.result_byte;
+    auto new_flags = result.new_flag_status;
+    set_flags(new_flags);
+
+    // BIT instructions don't need to write to address/register
+    if (op_id == bit_op::op::BIT)
+        return;
+
+    switch (args.location.index()) {
+        case 0: {
+            Reg reg_index = std::get<0>(args.location);
+            set(reg_index, value);
+            break;
+        }
+
+        case 1: {
+            word address = std::get<1>(args.location);
+            write(address, value);
+            break;
         }
     }
 }

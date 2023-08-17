@@ -7,52 +7,21 @@
 CPU::arithmetic_op_args::arithmetic_op_args(byte src_value, byte value, bool carry) : src_value(src_value),
                                                                                       value(value), carry(carry) {}
 
-void CPU::arithmetic_dispatch(int op_id, arithmetic::addr_modes addr_mode) {
-
-    if (addr_mode == arithmetic::addr_modes::ADD_16) {
-        tick_components();
-        word src = get(DReg::hl);
-
-        // 0x09 - ADD HL,BC
-        // 0x19 - ADD HL,DE
-        // 0x29 - ADD HL,HL
-        // 0x39 - ADD HL,SP
-        int bitmask = (fetched[0] >> 4);
-        DReg reg_index = static_cast<DReg>(2 * bitmask);
-        word addend = get(reg_index);
-
-        word result = ADD_16(src, addend);
-        set(DReg::hl, result);
-
+void CPU::arithmetic_dispatch(int op_id, arithmetic::addr_modes &addr_mode) {
+    if (arithmetic_check_and_deal_with_edge_cases(addr_mode))
         return;
-    }
-
-    if (addr_mode == arithmetic::addr_modes::SP) { // ADD SP,e8
-        word src = get(DReg::sp);
-        auto offset = fetched[1];
-
-        word result = ADD_TO_SP(src, offset);
-        tick_components();
-        tick_components();
-        set(DReg::sp, result);
-        return;
-    }
 
     auto args = arithmetic_get_args(addr_mode);
     auto result = arithmetic_op_codes[op_id](args);
-    byte value = result.result_byte;
-    auto new_flags = result.new_flag_status;
-
-    set_flags(new_flags);
-    set(Reg::a, value);
+    arithmetic_set_result(result);
 }
 
-CPU::arithmetic_op_args CPU::arithmetic_get_args(arithmetic::addr_modes addressing_mode) {
+CPU::arithmetic_op_args CPU::arithmetic_get_args(arithmetic::addr_modes &addr_mode) {
     byte src_value = get(Reg::a);
     bool carry = get_carry();
     byte value = 0;
 
-    switch (addressing_mode) {
+    switch (addr_mode) {
         case arithmetic::addr_modes::IMM : //ADC A,u8
         {
             value = fetched[1];
@@ -74,6 +43,42 @@ CPU::arithmetic_op_args CPU::arithmetic_get_args(arithmetic::addr_modes addressi
     }
 
     return {src_value, value, carry};
+}
+
+bool CPU::arithmetic_check_and_deal_with_edge_cases(arithmetic::addr_modes &addr_mode) {
+    if (addr_mode == arithmetic::addr_modes::ADD_16) {
+        tick_components();
+        word src = get(DReg::hl);
+
+        // 0x09 - ADD HL,BC; 0x19 - ADD HL,DE; 0x29 - ADD HL,HL; 0x39 - ADD HL,SP
+        int bitmask = (fetched[0] >> 4);
+        DReg reg_index = static_cast<DReg>(2 * bitmask);
+        word addend = get(reg_index);
+
+        word result = ADD_16(src, addend);
+        set(DReg::hl, result);
+        return true;
+    }
+
+    if (addr_mode == arithmetic::addr_modes::SP) { // ADD SP,e8
+        word src = get(DReg::sp);
+        auto offset = fetched[1];
+
+        word result = ADD_TO_SP(src, offset);
+        tick_components();
+        tick_components();
+        set(DReg::sp, result);
+        return true;
+    }
+    return false;
+}
+
+void CPU::arithmetic_set_result(FlagStatusResponseWrapper &result) {
+    byte value = result.result_byte;
+    auto new_flags = result.new_flag_status;
+
+    set_flags(new_flags);
+    set(Reg::a, value);
 }
 
 
@@ -210,3 +215,4 @@ FlagStatusResponseWrapper CPU::XOR(arithmetic_op_args &arg) {
 
     return {batch_fill({z_bit, n_bit, h_bit, c_bit}), value};
 }
+

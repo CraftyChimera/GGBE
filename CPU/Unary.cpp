@@ -9,36 +9,16 @@ CPU::unary_op_args::unary_op_args(Reg reg, byte value, bool carry) : location(re
 CPU::unary_op_args::unary_op_args(word address, byte value, bool carry) : location(address), value(value),
                                                                           carry(carry) {}
 
-void CPU::unary_dispatch(int op_id, unary::addr_modes addr_mode) {
-
-    if (addr_mode == unary::addr_modes::REG_16) {
-        DI_r16(op_id);
-        tick_components();
+void CPU::unary_dispatch(int op_id, unary::addr_modes &addr_mode) {
+    if (unary_check_and_deal_with_edge_cases(op_id, addr_mode))
         return;
-    }
 
     auto args = get_unary_args(op_id, addr_mode);
     auto result = unary_op_codes[op_id](args);
-    auto value = result.result_byte;
-    auto new_flags = result.new_flag_status;
-    set_flags(new_flags);
-
-
-    switch (args.location.index()) {
-        case 0: {
-            Reg reg_index = std::get<0>(args.location);
-            set(reg_index, value);
-            break;
-        }
-        case 1: {
-            word address = std::get<1>(args.location);
-            write(address, value);
-            break;
-        }
-    }
+    unary_set_result(result, args);
 }
 
-CPU::unary_op_args CPU::get_unary_args(int op_id, unary::addr_modes addr_mode) {
+CPU::unary_op_args CPU::get_unary_args(int op_id, unary::addr_modes &addr_mode) {
     bool carry = get_carry();
     switch (op_id) {
         case unary::op::INC:
@@ -58,7 +38,7 @@ CPU::unary_op_args CPU::get_unary_args(int op_id, unary::addr_modes addr_mode) {
 }
 
 CPU::unary_op_args CPU::get_unary_args_non_cb() {
-    
+
     // INC/DEC B[0] - 0x04/0x05, INC/DEC C[1] - 0x0C/0x0D
     // INC/DEC D[2] - 0x14/0x15, INC/DEC E[3] - 0x1C/0x1D
     // INC/DEC H[4] - 0x24/0x25, INC/DEC L[5] - 0x2C/0x2D
@@ -84,9 +64,9 @@ CPU::unary_op_args CPU::get_unary_args_non_cb() {
     return {reg, get(reg), carry};
 }
 
-CPU::unary_op_args CPU::get_unary_args_cb(unary::addr_modes addressing_mode) {
+CPU::unary_op_args CPU::get_unary_args_cb(unary::addr_modes &addr_mode) {
     bool carry = get_carry();
-    switch (addressing_mode) {
+    switch (addr_mode) {
         case unary::addr_modes::REG: // INC r8
         {
             Reg reg_index = static_cast<Reg>(fetched[1] & 0x7);
@@ -103,6 +83,35 @@ CPU::unary_op_args CPU::get_unary_args_cb(unary::addr_modes addressing_mode) {
         }
     }
 }
+
+bool CPU::unary_check_and_deal_with_edge_cases(int op_id, unary::addr_modes &addr_mode) {
+    if (addr_mode == unary::addr_modes::REG_16) {
+        DI_r16(op_id);
+        tick_components();
+        return true;
+    }
+    return false;
+}
+
+void CPU::unary_set_result(FlagStatusResponseWrapper &result, unary_op_args &args) {
+    auto new_flags = result.new_flag_status;
+    set_flags(new_flags);
+    auto value = result.result_byte;
+
+    switch (args.location.index()) {
+        case 0: {
+            Reg reg_index = std::get<0>(args.location);
+            set(reg_index, value);
+            break;
+        }
+        case 1: {
+            word address = std::get<1>(args.location);
+            write(address, value);
+            break;
+        }
+    }
+}
+
 
 void CPU::DI_r16(int op_id) {
     //INC BC - 0x03

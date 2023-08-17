@@ -114,7 +114,7 @@ void CPU::SCF() {
 
 void CPU::HALT() {
     halt_mode = true;
-    if (get_current_interrupt_status())
+    if (is_interrupt_pending())
         halt_bug = true;
 }
 

@@ -53,15 +53,14 @@ bool Timer::select_input_bit() const {
 
 void Timer::detect_edge_and_increment_timer() {
     bit new_bit = select_input_bit();
-    auto tima_reg_old = tima_reg;
+
     if (old_bit && !new_bit) {
         tima_reg++;
+        if (tima_reg == 0x00)
+            cycles_to_irq = 2;
     }
 
     old_bit = new_bit;
-    if (tima_reg == 0x00 && tima_reg_old == 0xFF) {
-        cycles_to_irq = 2;
-    }
 }
 
 void Timer::set_registers() {
@@ -107,6 +106,9 @@ void Timer::timer_write(word address, byte value) {
 }
 
 void Timer::check_and_handle_irq() {
+    if (cycles_to_irq == 0)
+        return;
+    
     if (cycles_to_irq == 1) {
         tima_reg = tma_reg;
         raise_interrupt();

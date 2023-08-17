@@ -62,8 +62,9 @@ void Console::run() {
     }
 }
 
-void Console::tick_components() {
-    gpu.update(1);
+void Console::tick() {
+    gpu.tick(1);
+    cycles_left_till_end_of_frame--;
 }
 
 void Console::init_sdl() {

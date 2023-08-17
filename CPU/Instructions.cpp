@@ -261,7 +261,7 @@ const Instructions Instruction_List[256] =
                 Instructions(Type::JUMP, jump_stack::op::RETC, jump_stack::addr_modes::NOTHING, 1),
                 Instructions(Type::JUMP, jump_stack::op::RET, jump_stack::addr_modes::NOTHING, 1),
                 Instructions(Type::JUMP, jump_stack::op::JPC, jump_stack::addr_modes::IMM, 3),
-                Instructions(Type::NONE, misc::op::NOP, misc::addr_modes::NOTHING, 2),
+                Instructions(Type::MISC, misc::op::NOP, misc::addr_modes::NOTHING, 2),
                 Instructions(Type::JUMP, jump_stack::op::CALLC, jump_stack::addr_modes::IMM, 3),
                 Instructions(Type::JUMP, jump_stack::op::CALL, jump_stack::addr_modes::IMM, 3),
                 Instructions(Type::ARITHMETIC, arithmetic::op::ADC, arithmetic::addr_modes::IMM, 2),

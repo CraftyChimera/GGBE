@@ -34,7 +34,7 @@ void CPU::run_boot_rom() {
 
 void CPU::run_instruction_cycle() {
     if (halt_mode) {
-        while (!get_current_interrupt_status())
+        while (!is_interrupt_pending())
             tick_components();
 
         halt_mode = false;
@@ -42,17 +42,12 @@ void CPU::run_instruction_cycle() {
             handle_interrupts();
     }
 
-    if (mem_ptr->dma_started && dma_cycles == 0) {
-        dma_cycles = 160;
-    }
-
-    byte index = read(PC, false);
-    current_instruction = Instruction_List[index];
-    if (index == 0xCB)
-        current_instruction = Prefix_List[read(PC + 1, false)];
+    byte opcode = read(PC, false);
+    current_instruction = (opcode == 0xCB) ? Prefix_List[read(PC + 1, false)]
+                                           : Instruction_List[opcode];
 
     fetch();
-    if (IME && get_current_interrupt_status()) {
+    if (IME && is_interrupt_pending()) {
         PC -= current_instruction.bytes_to_fetch;
         current_instruction = {};
         handle_interrupts();
@@ -90,14 +85,16 @@ void CPU::write(word address, byte value, bool tick) {
     if (address == 0xFF44) //Read-Only register for CPU
         return;
 
+    if (address == dma_address)
+        dma_cycles = 160;
+
     if (address == joypad_reg_address) {
         (value >>= 4) <<= 4;
         value = value | 0xC0;
         byte key_data = 0;
         if ((value & (1 << 5)) == 0) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 4; i++)
                 key_data = key_data | (keys_pressed[i + 4] << i);
-            }
         }
         if ((value & (1 << 4)) == 0) {
             for (int i = 0; i < 4; i++)
@@ -151,9 +148,9 @@ void CPU::set(DReg reg_index, word val) {
 }
 
 void CPU::set_pc(word address, bool flush) {
-    if (flush) {
+    if (flush)
         tick_components();
-    }
+
     set(DReg::pc, address);
 }
 
@@ -191,42 +188,32 @@ void CPU::decode_and_execute() {
     auto addr_mode = current_instruction.addr_mode;
 
     switch (Type) {
-        case Type::ARITHMETIC: {
+        case Type::ARITHMETIC:
             arithmetic_dispatch(op_id, std::get<arithmetic::addr_modes>(addr_mode));
             return;
-        }
 
-        case Type::UNARY: {
+        case Type::UNARY:
             unary_dispatch(op_id, std::get<unary::addr_modes>(addr_mode));
             return;
-        }
 
-        case Type::BIT_OP: {
+        case Type::BIT_OP:
             bit_operations_dispatch(op_id, std::get<bit_op::addr_modes>(addr_mode));
             return;
-        }
 
-        case Type::LOAD: {
+        case Type::LOAD:
             load_dispatch(op_id, std::get<load::addr_modes>(addr_mode));
             return;
-        }
 
-        case Type::STORE: {
+        case Type::STORE:
             store_dispatch(op_id, std::get<store::addr_modes>(addr_mode));
             return;
-        }
 
-        case Type::JUMP: {
+        case Type::JUMP:
             jump_stack_dispatch(op_id, std::get<jump_stack::addr_modes>(addr_mode));
             return;
-        }
 
-        case Type::MISC: {
+        case Type::MISC:
             misc_dispatch(op_id, std::get<misc::addr_modes>(addr_mode));
-            return;
-        }
-
-        default:
             return;
     }
 }
@@ -251,9 +238,8 @@ void CPU::handle_interrupts() {
         if ((interrupt_data & (1 << bit_pos)) == 0)
             continue;
 
-        if (start_logging) {
+        if (start_logging)
             write_file << std::dec << counter++ << " INT RAISED: " << (interrupt_data) << "\n";
-        }
 
         IME = false;
         interrupt_data -= (1 << bit_pos);
@@ -275,13 +261,10 @@ void CPU::handle_interrupts() {
 
 void CPU::tick_components() {
     timer.tick();
-    console->tick_components();
-    console->cycles_left_till_end_of_frame--;
-    if (dma_cycles > 0) {
-        dma_cycles--;
-        if (dma_cycles == 0)
-            mem_ptr->dma_started = false;
-    }
+    console->tick();
+
+    if (dma_cycles > 0 && --dma_cycles == 0)
+        mem_ptr->dma_started = false;
 }
 
 std::string byte_to_string(byte x) {
@@ -290,10 +273,9 @@ std::string byte_to_string(byte x) {
     std::string result(stream.str());
     result = std::string(2 - result.size(), '0') + result;
 
-    for (auto &y: result) {
+    for (auto &y: result)
         if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
             y -= 32;
-    }
 
     return result;
 }
@@ -304,15 +286,14 @@ std::string word_to_string(word x) {
     std::string result(stream.str());
     result = std::string(4 - result.size(), '0') + result;
 
-    for (auto &y: result) {
+    for (auto &y: result)
         if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
             y -= 32;
-    }
 
     return result;
 }
 
-std::string CPU::string_write() {
+std::string CPU::get_string_to_write() {
 
     std::string _8bit_to_write = " A: " + byte_to_string(get(Reg::a)) +
                                  " F: " + byte_to_string(get(Reg::f)) +
@@ -332,15 +313,11 @@ std::string CPU::string_write() {
 
     std::string interrupt =
             " IME: " + byte_to_string(IME) + " IE: " + byte_to_string(ie_reg) + " IF: " + byte_to_string(if_reg);
-    //" STAT: " + byte_to_string(stat_reg);
 
     auto tima_reg = read(tima_address, false);
     auto div_reg = read(div_address, false);
     auto tma_reg = read(tma_address, false);
     auto tac_reg = read(tac_address, false);
-
-    std::string timer_internal = " RST: " + byte_to_string(timer.cycles_to_irq) +
-                                 " SYS: " + word_to_string(timer.system_clock);
 
     std::string timer_stats = " TIMA: " + byte_to_string(tima_reg) +
                               " TMA: " + byte_to_string(tma_reg) +
@@ -360,16 +337,16 @@ std::string CPU::string_write() {
     return timer_stats + interrupt + _8bit_to_write + _16bit_to_write + mem_bits;
 }
 
-void CPU::debug() {
+[[maybe_unused]] void CPU::debug() {
     if (is_boot)
         return;
 
-    std::string to_write = string_write();
+    std::string to_write = get_string_to_write();
     write_file << std::dec << counter << " " << to_write << "\n";
     counter++;
 }
 
-bool CPU::get_current_interrupt_status() {
+bool CPU::is_interrupt_pending() {
     auto interrupt_flags = read(if_address, false) & 0x1F;
     auto interrupt_enable = read(ie_address, false) & 0x1F;
 
