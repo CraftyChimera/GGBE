@@ -4,8 +4,8 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : cpu(this), gpu(&mmu), open(true), mmu(data),
-                                       cycles_left_till_end_of_frame(0) {
+Console::Console(vector <byte> &data) : cpu(this), gpu(&mmu), open(true), mmu(data),
+                                        cycles_left_till_end_of_frame(0) {
     init_sdl();
 
     keys_pressed_map[SDLK_RIGHT] = 0;
@@ -15,8 +15,8 @@ Console::Console(vector<byte> &data) : cpu(this), gpu(&mmu), open(true), mmu(dat
 
     keys_pressed_map[SDLK_z] = 4;
     keys_pressed_map[SDLK_x] = 5;
-    keys_pressed_map[SDLK_c] = 6;
-    keys_pressed_map[SDLK_v] = 7;
+    keys_pressed_map[SDLK_a] = 6;
+    keys_pressed_map[SDLK_s] = 7;
 }
 
 void Console::handle_event() {
@@ -31,8 +31,8 @@ void Console::handle_event() {
             }
             case SDL_KEYDOWN: {
                 if (key_code == SDLK_b) {
-                    cpu.start_logging = true;
-                    std::cout << "Started Logging\n";
+                    // cpu.start_logging = true;
+                    // std::cout << "Started Logging\n";
                 }
                 if (key_code == SDLK_q)
                     exit(0);

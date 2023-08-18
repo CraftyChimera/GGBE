@@ -17,7 +17,7 @@ CPU::CPU(Console *base) : reg_mapper{}, console(base), mem_ptr(&console->mmu), t
     interrupt_data = 0;
     interrupt_buffer = 0;
     halt_mode = false;
-    write_file.open("roms/Logs.txt");
+    // write_file.open("roms/Logs.txt");
     keys_pressed.assign(8, false);
     counter = 0;
     current_instruction = {};
@@ -154,7 +154,7 @@ void CPU::set_pc(word address, bool flush) {
     set(DReg::pc, address);
 }
 
-void CPU::set_flags(vector<FlagStatus> &new_flags) {
+void CPU::set_flags(vector <FlagStatus> &new_flags) {
     byte F = get(Reg::f);
     for (auto flag_c: new_flags) {
         Flag bit = flag_c.bit;
@@ -233,13 +233,14 @@ void CPU::set_interrupt_master_flag() {
 }
 
 void CPU::handle_interrupts() {
-    const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
+    const vector <word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
     for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
         if ((interrupt_data & (1 << bit_pos)) == 0)
             continue;
 
-        if (start_logging)
+        /*if (start_logging)
             write_file << std::dec << counter++ << " INT RAISED: " << (interrupt_data) << "\n";
+        */
 
         IME = false;
         interrupt_data -= (1 << bit_pos);
