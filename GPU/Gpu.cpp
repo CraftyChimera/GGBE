@@ -148,7 +148,7 @@ void GPU::advance_scanline() {
 
     if (fetcher_y == 0) {
         draw_screen();
-        SDL_Delay(12);
+        SDL_Delay(10);
     }
     change_stat_state();
     change_stat_lyc();

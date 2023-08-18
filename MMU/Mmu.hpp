@@ -65,6 +65,10 @@ public:
     byte read(word address);
 
 private:
+    void load_cartridge_data(vector<byte> &data);
+
+    void init_memory_controller(vector<byte> &data);
+
     void dma_transfer(byte high_address);
 };
 

@@ -16,10 +16,10 @@ MMU::MMU(vector<byte> &data)
     tima_write = false;
     tac_write = false;
     tma_write = false;
-    memory_controller = new MBC1();
-    memory_controller->init_data(data);
     dma_started = false;
-};
+
+    load_cartridge_data(data);
+}
 
 MMU::~MMU() {
     delete memory_controller;
@@ -137,4 +137,44 @@ void MMU::dma_transfer(byte high_address) {
     word dma_high = high_address << 8;
     for (size_t i = 0; i < 160; i++)
         oam_segment.at(i) = read(dma_high + i);
+}
+
+void MMU::load_cartridge_data(vector<byte> &data) {
+    init_memory_controller(data);
+    memory_controller->init_data(data);
+}
+
+void MMU::init_memory_controller(vector<byte> &data) {
+    auto arg = data.at(0x147);
+
+    switch (arg) {
+        case 0x08:
+        case 0x09:
+        case 0x00:
+            memory_controller = new MBC0();
+            return;
+
+        case 0x03:
+        case 0x02:
+        case 0x01:
+            memory_controller = new MBC1();
+            return;
+
+        case 0x06:
+        case 0x05:
+            memory_controller = new MBC2();
+            return;
+
+        case 0x10:
+        case 0x0F:
+        case 0x13:
+        case 0x12:
+        case 0x11:
+            memory_controller = new MBC3();
+            return;
+
+        default:
+            return;
+    }
+
 }
