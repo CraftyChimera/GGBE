@@ -7,6 +7,7 @@
 #include "MBC1.hpp"
 #include "MBC2.hpp"
 #include "MBC3.hpp"
+#include "MBC5.hpp"
 
 MMU::MMU(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
@@ -173,8 +174,16 @@ void MMU::init_memory_controller(vector<byte> &data) {
             memory_controller = new MBC3();
             return;
 
-        default:
+        case 0x19:
+        case 0x1A:
+        case 0x1B:
+        case 0x1C:
+        case 0x1D:
+        case 0x1E:
+            memory_controller = new MBC5();
             return;
-    }
 
+        default:
+            throw std::runtime_error("unsupported cartridge type");
+    }
 }
