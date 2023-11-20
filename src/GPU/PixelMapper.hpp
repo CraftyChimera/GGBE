@@ -39,6 +39,8 @@ public:
 
     State advance_scan_line();
 
+    void reset();
+
 private:
     byte window_line_counter;
 

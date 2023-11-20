@@ -19,6 +19,7 @@ public:
     SDL_Renderer *renderer;
 
 private:
+    bool lcd_on;
     std::array<std::array<hex_codes, screen_width>, screen_height> pixels;
     char *formatted_pixels;
 
@@ -26,7 +27,6 @@ private:
     State current_ppu_state;
     PixelMapper mapper;
 
-    int cycle_delay;
     int cycles_accumulated;
 
 public:
@@ -37,6 +37,7 @@ public:
     ~GPU();
 
 private:
+    void check_and_get_registers();
 
     void init_screen();
 

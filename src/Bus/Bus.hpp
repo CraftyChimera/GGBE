@@ -44,6 +44,8 @@ class Bus {
 public:
     ~Bus();
 
+    bool dma_started;
+    
     bool lyc_written;
 
     bool div_write;
@@ -54,7 +56,7 @@ public:
 
     bool tac_write;
 
-    bool dma_started;
+    bool lcdc_write;
 
     explicit Bus(vector<byte> &data);
 

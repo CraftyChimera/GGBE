@@ -12,6 +12,7 @@
 Bus::Bus(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
+    lcdc_write = false;
     lyc_written = false;
     div_write = false;
     tima_write = false;
@@ -65,6 +66,9 @@ void Bus::write(word address, byte value, bool is_cpu) {
             io_regs.at(address - 0xFF00) = value;
             return;
         }
+
+        if (address == lcd_control_address)
+            lcdc_write = true;
 
         if (address == div_address)
             div_write = true;

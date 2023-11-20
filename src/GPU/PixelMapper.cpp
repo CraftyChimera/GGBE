@@ -309,3 +309,23 @@ void PixelMapper::check_and_transition_into_window() {
         get_current_background_pixels();
     }
 }
+
+void PixelMapper::reset() {
+    windows_enabled = false;
+    window_encountered = false;
+    is_in_window = false;
+
+    background_x = 0x00;
+    fetcher_x = 0x00;
+    fetcher_y = 0x00;
+
+    window_x = 0x00;
+    window_line_counter = -1;
+    mem_ptr->write(ly_address, fetcher_y);
+    lcd_reg = 0;
+    scroll_offset = 0;
+
+    current_scanline = {};
+    sprite_position_map = {};
+    sprites_loaded = {};
+}

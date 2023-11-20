@@ -66,33 +66,44 @@ void GPU::init_screen() {
 }
 
 GPU::GPU(Bus *mmu)
-        : texture{}, window{}, renderer{}, pixels{}, formatted_pixels{}, mapper(mmu) {
+        : texture{}, window{}, renderer{}, lcd_on(false), pixels{}, formatted_pixels{}, mapper(mmu) {
     cycles_accumulated = 0;
     ptr_to_bus = mmu;
     init_screen();
 
     current_ppu_state = State::V_BLANK;
-    cycle_delay = 0;
 }
 
-void GPU::tick(int cycles) {
+void GPU::check_and_get_registers() {
+    if (ptr_to_bus->lcdc_write) {
+        bool new_lcd_on = ptr_to_bus->read(lcd_control_address) & (1 << 7);
+        if (!new_lcd_on && lcd_on) {
+            cycles_accumulated = 0;
+            mapper.reset();
+            pixels = {};
+        }
+        lcd_on = new_lcd_on;
+        ptr_to_bus->lcdc_write = false;
+    }
+
+    if (!lcd_on)
+        return;
+
     if (ptr_to_bus->lyc_written) {
         change_stat_lyc();
         check_and_raise_stat_interrupts();
         ptr_to_bus->lyc_written = false;
     }
-    cycles *= 4;
-    cycles_accumulated += cycles;
+}
 
-    if (cycle_delay > 0) {
-        auto time_delayed = std::min(cycle_delay, cycles);
-        cycles -= time_delayed;
-        cycle_delay -= time_delayed;
-    }
+void GPU::tick(int cycles) {
+    check_and_get_registers();
 
-    if (cycles == 0)
+    if (!lcd_on)
         return;
 
+    cycles *= 4;
+    cycles_accumulated += cycles;
     state_dispatch(cycles);
 
     if (cycles_accumulated < line_duration_in_t_cycles)
@@ -108,12 +119,8 @@ void GPU::state_dispatch(int cycles) {
 
             if (cycles_accumulated >= oam_duration_in_t_cycles) {
                 scan_sprites();
-
                 current_ppu_state = State::DRAW_PIXELS;
                 change_stat_state();
-                cycle_delay = 12;// + oam_duration_in_t_cycles - cycles_accumulated;
-                //if (cycle_delay < 0)
-                //   mapper(-cycle_delay);
             }
             return;
         }
