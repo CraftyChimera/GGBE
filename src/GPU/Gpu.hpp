@@ -9,7 +9,7 @@
 #include "SDL.h"
 #include <fstream>
 
-class MMU;
+class Bus;
 
 class GPU {
 
@@ -22,7 +22,7 @@ private:
     std::array<std::array<hex_codes, screen_width>, screen_height> pixels;
     char *formatted_pixels;
 
-    MMU *mem_ptr;
+    Bus *ptr_to_bus;
     State current_ppu_state;
     PixelMapper mapper;
 
@@ -30,7 +30,7 @@ private:
     int cycles_accumulated;
 
 public:
-    explicit GPU(MMU *mmu);
+    explicit GPU(Bus *mmu);
 
     void tick(int cycles);
 

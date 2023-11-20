@@ -5,9 +5,9 @@
 #include <cassert>
 #include <algorithm>
 #include "PixelMapper.hpp"
-#include "../MMU/Mmu.hpp"
+#include "../Bus/Bus.hpp"
 
-PixelMapper::PixelMapper(MMU *mem) : current_scanline{}, mem_ptr(mem) {
+PixelMapper::PixelMapper(Bus *mem) : current_scanline{}, mem_ptr(mem) {
     windows_enabled = false;
     window_encountered = false;
     is_in_window = false;

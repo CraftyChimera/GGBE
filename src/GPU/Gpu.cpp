@@ -7,34 +7,34 @@
 #include <set>
 
 void GPU::raise_interrupts() {
-    byte interrupt_flags = mem_ptr->read(if_address);
+    byte interrupt_flags = ptr_to_bus->read(if_address);
     interrupt_flags = interrupt_flags | (1 << 1);
-    mem_ptr->write(if_address, interrupt_flags);
+    ptr_to_bus->write(if_address, interrupt_flags);
 }
 
 
 void GPU::change_stat_state() {
-    byte stat_reg = mem_ptr->read(lcd_stat_address);
+    byte stat_reg = ptr_to_bus->read(lcd_stat_address);
     stat_reg >>= 2;
     stat_reg <<= 2;
     stat_reg += current_ppu_state;
-    mem_ptr->write(lcd_stat_address, stat_reg);
+    ptr_to_bus->write(lcd_stat_address, stat_reg);
 }
 
 void GPU::change_stat_lyc() {
-    auto lyc = mem_ptr->read(lyc_address);
-    auto ly = mem_ptr->read(ly_address);
+    auto lyc = ptr_to_bus->read(lyc_address);
+    auto ly = ptr_to_bus->read(ly_address);
 
-    auto stat_reg = mem_ptr->read(lcd_stat_address);
+    auto stat_reg = ptr_to_bus->read(lcd_stat_address);
     int bitmask = 0xFF - (1 << 2);
     stat_reg &= bitmask;
     stat_reg |= ((lyc == ly) << 2);
 
-    mem_ptr->write(lcd_stat_address, stat_reg);
+    ptr_to_bus->write(lcd_stat_address, stat_reg);
 }
 
 void GPU::check_and_raise_stat_interrupts() {
-    byte lcd_reg = mem_ptr->read(lcd_stat_address);
+    byte lcd_reg = ptr_to_bus->read(lcd_stat_address);
 
     static bool old_stat = false;
     bool lyc_eq = lcd_reg & (1 << 2);
@@ -65,10 +65,10 @@ void GPU::init_screen() {
     memset(formatted_pixels, 0x00, size);
 }
 
-GPU::GPU(MMU *mmu)
+GPU::GPU(Bus *mmu)
         : texture{}, window{}, renderer{}, pixels{}, formatted_pixels{}, mapper(mmu) {
     cycles_accumulated = 0;
-    mem_ptr = mmu;
+    ptr_to_bus = mmu;
     init_screen();
 
     current_ppu_state = State::V_BLANK;
@@ -76,10 +76,10 @@ GPU::GPU(MMU *mmu)
 }
 
 void GPU::tick(int cycles) {
-    if (mem_ptr->lyc_written) {
+    if (ptr_to_bus->lyc_written) {
         change_stat_lyc();
         check_and_raise_stat_interrupts();
-        mem_ptr->lyc_written = false;
+        ptr_to_bus->lyc_written = false;
     }
     cycles *= 4;
     cycles_accumulated += cycles;
@@ -177,7 +177,7 @@ void GPU::draw_screen() {
 }
 
 void GPU::scan_sprites() {
-    byte lcd_control_reg = mem_ptr->read(lcd_control_address);
+    byte lcd_control_reg = ptr_to_bus->read(lcd_control_address);
     bool object_size_bit = lcd_control_reg & (1 << 2);
     int object_size = object_size_bit ? 16 : 8;
 
@@ -194,13 +194,13 @@ void GPU::scan_sprites() {
          sprite_id < sprite_count && sprites_loaded_ref.size() < max_sprites_per_scan_line; sprite_id++) {
         word sprite_data_start_address = oam_start + 4 * sprite_id;
 
-        byte flags = mem_ptr->read(sprite_data_start_address + 3);
+        byte flags = ptr_to_bus->read(sprite_data_start_address + 3);
 
-        byte tile_id = mem_ptr->read(sprite_data_start_address + 2);
+        byte tile_id = ptr_to_bus->read(sprite_data_start_address + 2);
         if (object_size_bit) { tile_id = tile_id & 0xFE; }
 
-        byte sprite_x = mem_ptr->read(sprite_data_start_address + 1);
-        byte sprite_y = mem_ptr->read(sprite_data_start_address + 0);
+        byte sprite_x = ptr_to_bus->read(sprite_data_start_address + 1);
+        byte sprite_y = ptr_to_bus->read(sprite_data_start_address + 0);
 
         if (sprite_y <= line_y + 16 && line_y + 16 < sprite_y + object_size) {
             if (line_y + 16 >= sprite_y + 8)
@@ -208,7 +208,7 @@ void GPU::scan_sprites() {
             sprites_loaded_ref.push_back({tile_id, PpuFlags(flags)});
 
             sprite_position_map_ref.emplace_back(
-                    std::make_pair(SpriteData{sprite_x, sprite_y}, index_in_loaded_sprites));
+                    SpriteData{sprite_x, sprite_y}, index_in_loaded_sprites);
 
             index_in_loaded_sprites++;
         }

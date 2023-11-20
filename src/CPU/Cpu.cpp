@@ -7,7 +7,7 @@
 #include "Cpu.hpp"
 #include "Instructions.hpp"
 
-CPU::CPU(Console *base) : reg_mapper{}, console(base), mem_ptr(&console->mmu), timer(mem_ptr) {
+CPU::CPU(Console *base) : reg_mapper{}, console(base), ptr_to_bus(&console->bus), timer(ptr_to_bus) {
     SP = 0x0000;
     PC = 0x0000;
     fetched = {};
@@ -70,12 +70,12 @@ byte CPU::read(word address, bool tick) {
         tick_components();
 
     if (address >= 0x0100)
-        return mem_ptr->read(address);
+        return ptr_to_bus->read(address);
 
     if (is_boot)
         return boot_data.at(address);
     else
-        return mem_ptr->read(address);
+        return ptr_to_bus->read(address);
 }
 
 void CPU::write(word address, byte value, bool tick) {
@@ -104,7 +104,7 @@ void CPU::write(word address, byte value, bool tick) {
         value |= key_data;
     }
 
-    mem_ptr->write(address, value);
+    ptr_to_bus->write(address, value);
 }
 
 byte CPU::get(Reg reg_index) {
@@ -154,7 +154,7 @@ void CPU::set_pc(word address, bool flush) {
     set(DReg::pc, address);
 }
 
-void CPU::set_flags(vector <FlagStatus> &new_flags) {
+void CPU::set_flags(vector<FlagStatus> &new_flags) {
     byte F = get(Reg::f);
     for (auto flag_c: new_flags) {
         Flag bit = flag_c.bit;
@@ -233,7 +233,7 @@ void CPU::set_interrupt_master_flag() {
 }
 
 void CPU::handle_interrupts() {
-    const vector <word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
+    const vector<word> interrupt_vectors = {0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
     for (auto bit_pos = 0; bit_pos < 5; bit_pos++) {
         if ((interrupt_data & (1 << bit_pos)) == 0)
             continue;
@@ -265,7 +265,7 @@ void CPU::tick_components() {
     console->tick();
 
     if (dma_cycles > 0 && --dma_cycles == 0)
-        mem_ptr->dma_started = false;
+        ptr_to_bus->dma_started = false;
 }
 
 std::string byte_to_string(byte x) {

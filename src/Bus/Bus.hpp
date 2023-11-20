@@ -2,8 +2,8 @@
 // Created by drake on 15/12/22.
 //
 
-#ifndef GGBE_MMU_HPP
-#define GGBE_MMU_HPP
+#ifndef GGBE_BUS_HPP
+#define GGBE_BUS_HPP
 
 #include "../Base/Constants.hpp"
 #include "MBC.hpp"
@@ -32,7 +32,7 @@ using OAM = array<byte, oam_size>;
 using IO_array = array<byte, io_array_size>;
 using High_RAM = array<byte, high_ram_size>;
 
-class MMU {
+class Bus {
     MBC *memory_controller;
     VRAM vram_segment;
     array<ram_block, 2> work_ram_segment;
@@ -41,10 +41,8 @@ class MMU {
     High_RAM high_ram_segment;
     byte interrupt_enable;
 
-    friend class Timer;
-
 public:
-    ~MMU();
+    ~Bus();
 
     bool lyc_written;
 
@@ -58,9 +56,9 @@ public:
 
     bool dma_started;
 
-    explicit MMU(vector<byte> &data);
+    explicit Bus(vector<byte> &data);
 
-    void write(word address, byte value);
+    void write(word address, byte value, bool is_cpu = true);
 
     byte read(word address);
 
@@ -72,4 +70,4 @@ private:
     void dma_transfer(byte high_address);
 };
 
-#endif //GGBE_MMU_HPP
+#endif //GGBE_BUS_HPP

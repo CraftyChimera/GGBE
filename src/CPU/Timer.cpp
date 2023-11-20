@@ -4,7 +4,7 @@
 
 #include "Timer.hpp"
 
-Timer::Timer(MMU *mem_ptr) : mem_ptr(mem_ptr) {
+Timer::Timer(Bus *mem_ptr) : ptr_to_bus(mem_ptr) {
     tima_reg = 0;
     tma_reg = 0;
     tac_reg = 0;
@@ -64,58 +64,58 @@ void Timer::detect_edge_and_increment_timer() {
 }
 
 void Timer::set_registers() {
-    mem_ptr->tac_write = false;
-    mem_ptr->div_write = false;
-    mem_ptr->tma_write = false;
-    mem_ptr->tima_write = false;
+    ptr_to_bus->tac_write = false;
+    ptr_to_bus->div_write = false;
+    ptr_to_bus->tma_write = false;
+    ptr_to_bus->tima_write = false;
 
     timer_write(div_address, system_clock >> 8);
     timer_write(tima_address, tima_reg);
 }
 
 void Timer::check_and_get_registers() {
-    if (mem_ptr->div_write) {
+    if (ptr_to_bus->div_write) {
         system_clock = 0;
         detect_edge_and_increment_timer();
     }
 
-    if (mem_ptr->tima_write) {
+    if (ptr_to_bus->tima_write) {
         if (cycles_to_irq != 1) {
             tima_reg = timer_read(tima_address);
             cycles_to_irq = 0;
         }
     }
 
-    if (mem_ptr->tma_write) {
+    if (ptr_to_bus->tma_write) {
         tma_reg = timer_read(tma_address);
         if (cycles_to_irq == 1)
             tima_reg = tma_reg;
     }
-    if (mem_ptr->tac_write) {
+    if (ptr_to_bus->tac_write) {
         tac_reg = timer_read(tac_address);
         detect_edge_and_increment_timer();
     }
 }
 
 byte Timer::timer_read(word address) {
-    return mem_ptr->read(address);
+    return ptr_to_bus->read(address);
 }
 
 void Timer::timer_write(word address, byte value) {
-    mem_ptr->io_regs.at(address - 0xFF00) = value;
+    ptr_to_bus->write(address, value, false);
 }
 
 void Timer::check_and_handle_irq() {
     if (cycles_to_irq == 0)
         return;
-    
+
     if (cycles_to_irq == 1) {
         tima_reg = tma_reg;
         raise_interrupt();
     }
 
     if (cycles_to_irq == 2) {
-        if (mem_ptr->tac_write || mem_ptr->div_write) {
+        if (ptr_to_bus->tac_write || ptr_to_bus->div_write) {
             tima_reg = tma_reg;
             raise_interrupt();
             cycles_to_irq = 0;

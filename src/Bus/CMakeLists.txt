@@ -1,7 +1,7 @@
-project(MMU)
+project(Bus)
 
 add_library(${PROJECT_NAME}
-        Mmu.cpp
+        Bus.cpp
         MBC.cpp
         MBC0.cpp
         MBC1.cpp

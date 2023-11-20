@@ -4,8 +4,8 @@
 
 #include "Console.hpp"
 
-Console::Console(vector <byte> &data) : cpu(this), gpu(&mmu), open(true), mmu(data),
-                                        cycles_left_till_end_of_frame(0) {
+Console::Console(vector<byte> &data) : cpu(this), gpu(&bus), open(true), bus(data),
+                                       cycles_left_till_end_of_frame(0) {
     init_sdl();
 
     keys_pressed_map[SDLK_RIGHT] = 0;

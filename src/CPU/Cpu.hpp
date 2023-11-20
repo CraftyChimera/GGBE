@@ -11,7 +11,7 @@
 #include <fstream>
 #include <sstream>
 
-class MMU;
+class Bus;
 
 class Console;
 
@@ -31,7 +31,7 @@ private:
     vector<byte> fetched;
 
     Console *console;
-    MMU *mem_ptr;
+    Bus *ptr_to_bus;
     std::ofstream write_file;
     vector<byte> boot_data;
 

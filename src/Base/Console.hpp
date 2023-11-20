@@ -9,7 +9,7 @@
 #include "SDL.h"
 #include "../CPU/Cpu.hpp"
 #include "../GPU/Gpu.hpp"
-#include "../MMU/Mmu.hpp"
+#include "../Bus/Bus.hpp"
 
 class Console {
     CPU cpu;
@@ -19,7 +19,7 @@ class Console {
     bool open;
 
 public:
-    MMU mmu;
+    Bus bus;
 
     int cycles_left_till_end_of_frame;
 

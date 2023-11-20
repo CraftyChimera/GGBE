@@ -2,14 +2,14 @@
 // Created by drake on 15/12/22.
 //
 
-#include "Mmu.hpp"
+#include "Bus.hpp"
 #include "MBC0.hpp"
 #include "MBC1.hpp"
 #include "MBC2.hpp"
 #include "MBC3.hpp"
 #include "MBC5.hpp"
 
-MMU::MMU(vector<byte> &data)
+Bus::Bus(vector<byte> &data)
         : memory_controller{}, vram_segment{}, work_ram_segment{},
           oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
     lyc_written = false;
@@ -22,11 +22,11 @@ MMU::MMU(vector<byte> &data)
     load_cartridge_data(data);
 }
 
-MMU::~MMU() {
+Bus::~Bus() {
     delete memory_controller;
 }
 
-void MMU::write(word address, byte value) {
+void Bus::write(word address, byte value, bool is_cpu) {
     if (address < 0x8000) {
         memory_controller->write_to_rom(address, value);
         return;
@@ -61,6 +61,10 @@ void MMU::write(word address, byte value) {
     if (address < 0xFF00) return;
 
     if (address < 0xFF80) {
+        if (!is_cpu) {
+            io_regs.at(address - 0xFF00) = value;
+            return;
+        }
 
         if (address == div_address)
             div_write = true;
@@ -99,7 +103,7 @@ void MMU::write(word address, byte value) {
     interrupt_enable = value;
 }
 
-byte MMU::read(word address) {
+byte Bus::read(word address) {
 
     if (address < 0x8000)
         return memory_controller->read_from_rom(address);
@@ -134,18 +138,18 @@ byte MMU::read(word address) {
     return interrupt_enable;
 }
 
-void MMU::dma_transfer(byte high_address) {
+void Bus::dma_transfer(byte high_address) {
     word dma_high = high_address << 8;
     for (size_t i = 0; i < 160; i++)
         oam_segment.at(i) = read(dma_high + i);
 }
 
-void MMU::load_cartridge_data(vector<byte> &data) {
+void Bus::load_cartridge_data(vector<byte> &data) {
     init_memory_controller(data);
     memory_controller->init_data(data);
 }
 
-void MMU::init_memory_controller(vector<byte> &data) {
+void Bus::init_memory_controller(vector<byte> &data) {
     auto arg = data.at(0x147);
 
     switch (arg) {

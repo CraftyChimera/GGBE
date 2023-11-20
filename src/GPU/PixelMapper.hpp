@@ -7,7 +7,7 @@
 
 #include "GpuUtility.hpp"
 
-class MMU;
+class Bus;
 
 // TODO : (CGB)sprite priority
 struct PixelInfo {
@@ -25,7 +25,7 @@ struct SpriteData {
 class PixelMapper {
 
 public:
-    explicit PixelMapper(MMU *mmu);
+    explicit PixelMapper(Bus *mmu);
 
     std::array<hex_codes, screen_width> current_scanline;
 
@@ -51,7 +51,7 @@ private:
     bool window_encountered;
     bool is_in_window;
 
-    MMU *mem_ptr;
+    Bus *mem_ptr;
     std::deque<PixelInfo> background_pixel_queue;
     std::deque<PixelInfo> sprite_pixel_queue;
 

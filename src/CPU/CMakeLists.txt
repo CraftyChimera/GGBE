@@ -12,6 +12,6 @@ add_library(${PROJECT_NAME}
         Instructions.cpp
         Timer.cpp
         Cpu.cpp
-        )
+)
 
-target_include_directories(${PROJECT_NAME} PUBLIC "../Base" "../MMU")
+target_include_directories(${PROJECT_NAME} PUBLIC "../Base" "../Bus")

@@ -5,7 +5,7 @@
 #ifndef GGBE_TIMER_HPP
 #define GGBE_TIMER_HPP
 
-#include "../MMU/Mmu.hpp"
+#include "../Bus/Bus.hpp"
 #include "../Base/Constants.hpp"
 
 using bit = bool;
@@ -14,7 +14,7 @@ class Timer {
     byte tma_reg;
     byte tac_reg;
     bit old_bit;
-    MMU *mem_ptr;
+    Bus *ptr_to_bus;
 
 public:
     int cycles_to_irq;
@@ -23,7 +23,7 @@ public:
 
     byte tima_reg;
 
-    explicit Timer(MMU *mem_ptr);
+    explicit Timer(Bus *mem_ptr);
 
     void tick();
 
