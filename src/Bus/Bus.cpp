@@ -10,8 +10,8 @@
 #include "MBC5.hpp"
 
 Bus::Bus(vector<byte> &data)
-        : memory_controller{}, vram_segment{}, work_ram_segment{},
-          oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
+        : memory_controller{}, oam_segment{}, io_regs{}, high_ram_segment{}, interrupt_enable{} {
+    is_cgb = false;
     lcdc_write = false;
     lyc_written = false;
     div_write = false;
@@ -19,8 +19,20 @@ Bus::Bus(vector<byte> &data)
     tac_write = false;
     tma_write = false;
     dma_started = false;
+    background_palette_written = false;
+    obj_palette_written = false;
+    vram_bank_number = 0;
+    wram_bank_number = 1;
 
     load_cartridge_data(data);
+
+    if (!is_cgb) {
+        vram_segment.resize(1, VRAM());
+        work_ram_segment.resize(2, RAM());
+    } else {
+        vram_segment.resize(2, VRAM());
+        work_ram_segment.resize(8, RAM());
+    }
 }
 
 Bus::~Bus() {
@@ -34,7 +46,7 @@ void Bus::write(word address, byte value, bool is_cpu) {
     }
 
     if (address < 0xA000) {
-        vram_segment.at(address - 0x8000) = value;
+        vram_segment.at(vram_bank_number).at(address - 0x8000) = value;
         return;
     }
     if (address < 0xC000) {
@@ -48,7 +60,7 @@ void Bus::write(word address, byte value, bool is_cpu) {
     }
 
     if (address < 0xE000) {
-        work_ram_segment.at(1).at(address - 0xD000) = value;
+        work_ram_segment.at(wram_bank_number).at(address - 0xD000) = value;
         return;
     }
 
@@ -67,6 +79,15 @@ void Bus::write(word address, byte value, bool is_cpu) {
             return;
         }
 
+        if (address == vbk_address)
+            value |= 0xFE, vram_bank_number = value & 0x1;
+
+        if (address == svbk_address) {
+            wram_bank_number = value & 0x7;
+            if (wram_bank_number == 0)
+                wram_bank_number = 1;
+        }
+
         if (address == lcd_control_address)
             lcdc_write = true;
 
@@ -81,6 +102,12 @@ void Bus::write(word address, byte value, bool is_cpu) {
 
         if (address == tac_address)
             tac_write = true;
+
+        if (address == bcpd_address)
+            background_palette_written = true;
+
+        if (address == ocpd_address)
+            obj_palette_written = true;
 
         if (address == if_address || address == ie_address) {
             value |= 0xE0;
@@ -107,13 +134,13 @@ void Bus::write(word address, byte value, bool is_cpu) {
     interrupt_enable = value;
 }
 
-byte Bus::read(word address) {
+byte Bus::read_current_vram_bank(word address) {
 
     if (address < 0x8000)
         return memory_controller->read_from_rom(address);
 
     if (address < 0xA000)
-        return vram_segment.at(address - 0x8000);
+        return vram_segment.at(0).at(address - 0x8000);
 
     if (address < 0xC000)
         return memory_controller->read_from_ram(address);
@@ -145,10 +172,15 @@ byte Bus::read(word address) {
 void Bus::dma_transfer(byte high_address) {
     word dma_high = high_address << 8;
     for (size_t i = 0; i < 160; i++)
-        oam_segment.at(i) = read(dma_high + i);
+        oam_segment.at(i) = read_current_vram_bank(dma_high + i);
 }
 
 void Bus::load_cartridge_data(vector<byte> &data) {
+    byte cgb_data = data.at(0x143);
+    std::cout << std::hex << "CGB \t" << (int) data.at(0x143) << "\n";
+    if (cgb_data == 0x80 || cgb_data == 0xC0)
+        is_cgb = true;
+
     init_memory_controller(data);
     memory_controller->init_data(data);
 }
@@ -194,4 +226,12 @@ void Bus::init_memory_controller(vector<byte> &data) {
         default:
             throw std::runtime_error("unsupported cartridge type");
     }
+}
+
+byte Bus::read_other_vram_bank(word address) {
+    return vram_segment.at(1 - vram_bank_number).at(address - 0x8000);
+}
+
+byte Bus::read_vram_bank(word address, int bank_no) {
+    return vram_segment.at(bank_no).at(address - 0x8000);
 }

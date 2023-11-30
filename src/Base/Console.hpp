@@ -12,6 +12,13 @@
 #include "../Bus/Bus.hpp"
 
 class Console {
+
+public:
+    Bus bus;
+
+    int cycles_left_till_end_of_frame;
+
+private:
     CPU cpu;
 
     GPU gpu;
@@ -19,9 +26,6 @@ class Console {
     bool open;
 
 public:
-    Bus bus;
-
-    int cycles_left_till_end_of_frame;
 
     explicit Console(vector<byte> &data);
 

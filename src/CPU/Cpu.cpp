@@ -70,12 +70,12 @@ byte CPU::read(word address, bool tick) {
         tick_components();
 
     if (address >= 0x0100)
-        return ptr_to_bus->read(address);
+        return ptr_to_bus->read_current_vram_bank(address);
 
     if (is_boot)
         return boot_data.at(address);
     else
-        return ptr_to_bus->read(address);
+        return ptr_to_bus->read_current_vram_bank(address);
 }
 
 void CPU::write(word address, byte value, bool tick) {

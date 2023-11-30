@@ -16,8 +16,6 @@ static constexpr auto screen_height_with_pseudo_scan_lines = 154;
 static constexpr auto oam_duration_in_t_cycles = 80;
 static constexpr auto line_duration_in_t_cycles = 456;
 
-inline constexpr std::array<hex_codes, 4> color_map{0xe0f8d0, 0x88c070, 0x346856, 0x081820};
-
 enum State {
     H_BLANK = 0,
     V_BLANK = 1,
@@ -31,7 +29,11 @@ struct PpuFlags {
     bit bg_window_over_obj;
     bit y_flip;
     bit x_flip;
-    bit palette_number;
+    bit dmg_palette_number;
+    bit vram_bank;
+    byte cgb_palette_number;
+
+    PpuFlags();
 
     explicit PpuFlags(byte);
 };

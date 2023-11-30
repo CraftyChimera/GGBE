@@ -26,26 +26,40 @@ inline constexpr auto oam_size = 0x00A0;
 inline constexpr auto io_array_size = 0x0080;
 inline constexpr auto high_ram_size = 0x007F;
 
-using ram_block = array<byte, ram_block_size>;
+using RAM = array<byte, ram_block_size>;
 using VRAM = array<byte, vram_size>;
 using OAM = array<byte, oam_size>;
 using IO_array = array<byte, io_array_size>;
 using High_RAM = array<byte, high_ram_size>;
 
 class Bus {
+
+private:
     MBC *memory_controller;
-    VRAM vram_segment;
-    array<ram_block, 2> work_ram_segment;
+
+    int vram_bank_number;
+
+    int wram_bank_number;
+
+    vector<VRAM> vram_segment;
+
+    vector<RAM> work_ram_segment;
+
     OAM oam_segment;
+
     IO_array io_regs;
+
     High_RAM high_ram_segment;
+
     byte interrupt_enable;
 
+
 public:
-    ~Bus();
+
+    bool is_cgb;
 
     bool dma_started;
-    
+
     bool lyc_written;
 
     bool div_write;
@@ -58,11 +72,9 @@ public:
 
     bool lcdc_write;
 
-    explicit Bus(vector<byte> &data);
+    bool background_palette_written;
 
-    void write(word address, byte value, bool is_cpu = true);
-
-    byte read(word address);
+    bool obj_palette_written;
 
 private:
     void load_cartridge_data(vector<byte> &data);
@@ -70,6 +82,20 @@ private:
     void init_memory_controller(vector<byte> &data);
 
     void dma_transfer(byte high_address);
+
+public:
+
+    ~Bus();
+
+    explicit Bus(vector<byte> &data);
+
+    void write(word address, byte value, bool is_cpu = true);
+
+    byte read_current_vram_bank(word address);
+
+    byte read_other_vram_bank(word address);
+
+    byte read_vram_bank(word address, int bank_no);
 };
 
 #endif //GGBE_BUS_HPP

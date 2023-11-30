@@ -17,6 +17,10 @@ struct PixelInfo {
     bool background_priority;
 };
 
+struct SpritePixelInfo : public PixelInfo {
+    int index_in_oam;
+};
+
 struct SpriteData {
     byte sprite_x;
     byte sprite_y;
@@ -34,6 +38,9 @@ public:
 
     std::deque<std::pair<SpriteData, byte>> sprite_position_map;
     std::vector<Sprite> sprites_loaded;
+
+    std::array<hex_codes, 64> background_palette_to_color_map;
+    std::array<hex_codes, 64> obj_palette_to_color_map;
 
     void operator()(int cycles);
 
@@ -55,20 +62,19 @@ private:
 
     Bus *mem_ptr;
     std::deque<PixelInfo> background_pixel_queue;
-    std::deque<PixelInfo> sprite_pixel_queue;
-
+    std::deque<SpritePixelInfo> sprite_pixel_queue;
     byte scroll_offset;
 
     void get_current_background_pixels();
 
-    std::deque<PixelInfo> load_new_sprite_pixels();
+    std::deque<SpritePixelInfo> load_new_sprite_pixels();
 
-    void load_pixels_into_sprite_queue(std::deque<PixelInfo> sprite_data);
+    void load_pixels_into_sprite_queue(std::deque<SpritePixelInfo> sprite_data);
 
     PixelInfo get_mixed_pixel();
 
     hex_codes get_hex_from_pixel(PixelInfo pixel_data);
-
+    
     void check_if_window_enabled();
 
     void check_and_load_pixels();

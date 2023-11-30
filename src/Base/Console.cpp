@@ -4,8 +4,7 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : cpu(this), gpu(&bus), open(true), bus(data),
-                                       cycles_left_till_end_of_frame(0) {
+Console::Console(vector<byte> &data) : bus(data), cycles_left_till_end_of_frame(0), cpu(this), gpu(&bus), open(true) {
     init_sdl();
 
     keys_pressed_map[SDLK_RIGHT] = 0;
@@ -36,8 +35,10 @@ void Console::handle_event() {
                 }
                 if (key_code == SDLK_q)
                     exit(0);
+
                 if (keys_pressed_map.count(key_code))
                     cpu.keys_pressed[keys_pressed_map[key_code]] = true;
+
                 break;
             }
             case SDL_KEYUP: {

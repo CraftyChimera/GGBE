@@ -7,14 +7,14 @@
 #include <set>
 
 void GPU::raise_interrupts() {
-    byte interrupt_flags = ptr_to_bus->read(if_address);
+    byte interrupt_flags = ptr_to_bus->read_current_vram_bank(if_address);
     interrupt_flags = interrupt_flags | (1 << 1);
     ptr_to_bus->write(if_address, interrupt_flags);
 }
 
 
 void GPU::change_stat_state() {
-    byte stat_reg = ptr_to_bus->read(lcd_stat_address);
+    byte stat_reg = ptr_to_bus->read_current_vram_bank(lcd_stat_address);
     stat_reg >>= 2;
     stat_reg <<= 2;
     stat_reg += current_ppu_state;
@@ -22,10 +22,10 @@ void GPU::change_stat_state() {
 }
 
 void GPU::change_stat_lyc() {
-    auto lyc = ptr_to_bus->read(lyc_address);
-    auto ly = ptr_to_bus->read(ly_address);
+    auto lyc = ptr_to_bus->read_current_vram_bank(lyc_address);
+    auto ly = ptr_to_bus->read_current_vram_bank(ly_address);
 
-    auto stat_reg = ptr_to_bus->read(lcd_stat_address);
+    auto stat_reg = ptr_to_bus->read_current_vram_bank(lcd_stat_address);
     int bitmask = 0xFF - (1 << 2);
     stat_reg &= bitmask;
     stat_reg |= ((lyc == ly) << 2);
@@ -34,7 +34,7 @@ void GPU::change_stat_lyc() {
 }
 
 void GPU::check_and_raise_stat_interrupts() {
-    byte lcd_reg = ptr_to_bus->read(lcd_stat_address);
+    byte lcd_reg = ptr_to_bus->read_current_vram_bank(lcd_stat_address);
 
     static bool old_stat = false;
     bool lyc_eq = lcd_reg & (1 << 2);
@@ -75,19 +75,38 @@ GPU::GPU(Bus *mmu)
 }
 
 void GPU::check_and_get_registers() {
+    if (ptr_to_bus->background_palette_written) {
+        byte bcps_reg = ptr_to_bus->read_current_vram_bank(bcps_address);
+        auto address = bcps_reg & 0x3F;
+        mapper.background_palette_to_color_map.at(address) = ptr_to_bus->read_current_vram_bank(bcpd_address);
+        if (bcps_reg & (1 << 7)) {
+            address++;
+            ptr_to_bus->write(bcps_address, (1 << 7) | (address & 0x3F));
+        }
+        ptr_to_bus->background_palette_written = false;
+    }
+
+    if (ptr_to_bus->obj_palette_written) {
+        byte ocps_reg = ptr_to_bus->read_current_vram_bank(ocps_address);
+        auto address = ocps_reg & 0x3F;
+        mapper.obj_palette_to_color_map.at(address) = ptr_to_bus->read_current_vram_bank(ocpd_address);
+        if (ocps_reg & (1 << 7)) {
+            address++;
+            ptr_to_bus->write(ocps_address, (1 << 7) | (address & 0x3F));
+        }
+
+        ptr_to_bus->obj_palette_written = false;
+    }
+
     if (ptr_to_bus->lcdc_write) {
-        bool new_lcd_on = ptr_to_bus->read(lcd_control_address) & (1 << 7);
+        bool new_lcd_on = ptr_to_bus->read_current_vram_bank(lcd_control_address) & (1 << 7);
         if (!new_lcd_on && lcd_on) {
             cycles_accumulated = 0;
             mapper.reset();
-            pixels = {};
         }
         lcd_on = new_lcd_on;
         ptr_to_bus->lcdc_write = false;
     }
-
-    if (!lcd_on)
-        return;
 
     if (ptr_to_bus->lyc_written) {
         change_stat_lyc();
@@ -167,7 +186,6 @@ void GPU::draw_screen() {
         for (auto x_co_ordinate = 0; x_co_ordinate < screen_width; x_co_ordinate++) {
             auto current_index = (screen_width * y_co_ordinate + x_co_ordinate) * 3;
             auto color = pixels.at(y_co_ordinate).at(x_co_ordinate);
-
             formatted_pixels[current_index + 2] = static_cast<char>( color & 0xFF );
             color >>= 8;
             formatted_pixels[current_index + 1] = static_cast<char>( color & 0xFF );
@@ -184,7 +202,7 @@ void GPU::draw_screen() {
 }
 
 void GPU::scan_sprites() {
-    byte lcd_control_reg = ptr_to_bus->read(lcd_control_address);
+    byte lcd_control_reg = ptr_to_bus->read_current_vram_bank(lcd_control_address);
     bool object_size_bit = lcd_control_reg & (1 << 2);
     int object_size = object_size_bit ? 16 : 8;
 
@@ -201,13 +219,13 @@ void GPU::scan_sprites() {
          sprite_id < sprite_count && sprites_loaded_ref.size() < max_sprites_per_scan_line; sprite_id++) {
         word sprite_data_start_address = oam_start + 4 * sprite_id;
 
-        byte flags = ptr_to_bus->read(sprite_data_start_address + 3);
+        byte flags = ptr_to_bus->read_current_vram_bank(sprite_data_start_address + 3);
 
-        byte tile_id = ptr_to_bus->read(sprite_data_start_address + 2);
+        byte tile_id = ptr_to_bus->read_current_vram_bank(sprite_data_start_address + 2);
         if (object_size_bit) { tile_id = tile_id & 0xFE; }
 
-        byte sprite_x = ptr_to_bus->read(sprite_data_start_address + 1);
-        byte sprite_y = ptr_to_bus->read(sprite_data_start_address + 0);
+        byte sprite_x = ptr_to_bus->read_current_vram_bank(sprite_data_start_address + 1);
+        byte sprite_y = ptr_to_bus->read_current_vram_bank(sprite_data_start_address + 0);
 
         if (sprite_y <= line_y + 16 && line_y + 16 < sprite_y + object_size) {
             if (line_y + 16 >= sprite_y + 8)
@@ -223,7 +241,7 @@ void GPU::scan_sprites() {
 
     std::sort(sprite_position_map_ref.begin(), sprite_position_map_ref.end(), [&](
             std::pair<SpriteData, byte> &a, std::pair<SpriteData, byte> &b) {
-        return a.first.sprite_x < b.first.sprite_x;
+        return a.first.sprite_x < b.first.sprite_x || (a.first.sprite_x == b.first.sprite_x && a.second < b.second);
     });
 }
 
