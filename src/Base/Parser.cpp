@@ -4,13 +4,15 @@
 #include "Parser.hpp"
 #include <iterator>
 
-vector<byte> read_file(const std::string &path) {
+vector<byte> read_file(const std::string &path, bool is_boot) {
     constexpr auto read_size = std::size_t(4096);
     auto stream = std::ifstream(path, std::ios::binary | std::ios::ate);
 
     stream.seekg(std::ios::beg);
     stream.exceptions(std::ios_base::badbit);
     if (!stream.good()) {
+        if (is_boot)
+            return {};
         std::cout << "Error while loading rom\n Check if rom exists\n";
         exit(-1);
     }

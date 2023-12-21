@@ -4,9 +4,8 @@
 
 #include "Console.hpp"
 
-Console::Console(vector<byte> &data) : bus(data), cycles_left_till_end_of_frame(0), cpu(this), gpu(&bus), open(true) {
+Console::Console(vector<byte> &data) : bus(data), cycles_left_till_end_of_frame(0), gpu(&bus), cpu(this), open(true) {
     init_sdl();
-
     keys_pressed_map[SDLK_RIGHT] = 0;
     keys_pressed_map[SDLK_LEFT] = 1;
     keys_pressed_map[SDLK_UP] = 2;
@@ -53,12 +52,8 @@ void Console::handle_event() {
 void Console::run() {
     while (open) {
         cycles_left_till_end_of_frame = 456 * 154;
-        while (cycles_left_till_end_of_frame > 0) {
-            if (cpu.is_boot)
-                cpu.run_boot_rom();
-            else
-                cpu.run_instruction_cycle();
-        }
+        while (cycles_left_till_end_of_frame > 0)
+            cpu.run_instruction_cycle();
         handle_event();
     }
 }
@@ -92,4 +87,8 @@ void Console::init_sdl() {
                                     SDL_PIXELFORMAT_RGB24,
                                     SDL_TEXTUREACCESS_STREAMING,
                                     screen_width, screen_height);
+}
+
+Console::~Console() {
+    SDL_Quit();
 }

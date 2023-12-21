@@ -98,7 +98,7 @@ void Timer::check_and_get_registers() {
 }
 
 byte Timer::timer_read(word address) {
-    return ptr_to_bus->read_current_vram_bank(address);
+    return ptr_to_bus->read(address);
 }
 
 void Timer::timer_write(word address, byte value) {

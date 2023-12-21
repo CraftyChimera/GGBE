@@ -9,6 +9,6 @@
 #include <string>
 #include <fstream>
 
-vector<byte> read_file(const std::string &path);
+vector<byte> read_file(const std::string &path, bool is_boot = false);
 
 #endif //GGBE_PARSER_HPP

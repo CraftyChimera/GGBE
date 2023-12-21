@@ -12,12 +12,19 @@ CPU::CPU(Console *base) : reg_mapper{}, console(base), ptr_to_bus(&console->bus)
     PC = 0x0000;
     fetched = {};
     is_boot = true;
-    boot_data = read_file("roms/boot.gb");
+
+    if (!ptr_to_bus->is_cgb)
+        boot_data = read_file("BootRoms/boot.gb");
+    else {
+        boot_data = read_file("BootRoms/boot.gbc", is_boot = true);
+        if (boot_data.empty())
+            set_boot_values();
+    }
+
     IME = false;
     interrupt_data = 0;
     interrupt_buffer = 0;
     halt_mode = false;
-    // write_file.open("roms/Logs.txt");
     keys_pressed.assign(8, false);
     counter = 0;
     current_instruction = {};
@@ -26,10 +33,49 @@ CPU::CPU(Console *base) : reg_mapper{}, console(base), ptr_to_bus(&console->bus)
     dma_cycles = 0;
 }
 
-void CPU::run_boot_rom() {
-    run_instruction_cycle();
-    if (PC >= 0x0100)
-        is_boot = false;
+void CPU::set_boot_values() {
+    is_boot = false;
+    PC = 0x0100;
+    SP = 0xFFFE;
+    set(Reg::a, 0x11);
+    set(Reg::f, 0x80);
+    set(Reg::b, 0x00);
+    set(Reg::c, 0x00);
+    set(Reg::d, 0xFF);
+    set(Reg::e, 0x56);
+    set(Reg::h, 0x00);
+    set(Reg::l, 0x0D);
+    write(tac_address, 0xF8);
+    write(if_address, 0xE1);
+    write(lcd_control_address, 0x91);
+    write(vbk_address, 0xFF);
+    write(svbk_address, 0xFF);
+}
+
+std::string byte_to_string(byte x) {
+    std::stringstream stream;
+    stream << std::hex << static_cast<int>(x);
+    std::string result(stream.str());
+    result = std::string(2 - result.size(), '0') + result;
+
+    for (auto &y: result)
+        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
+            y -= 32;
+
+    return result;
+}
+
+std::string word_to_string(word x) {
+    std::stringstream stream;
+    stream << std::hex << static_cast<int>(x);
+    std::string result(stream.str());
+    result = std::string(4 - result.size(), '0') + result;
+
+    for (auto &y: result)
+        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
+            y -= 32;
+
+    return result;
 }
 
 void CPU::run_instruction_cycle() {
@@ -69,18 +115,27 @@ byte CPU::read(word address, bool tick) {
     if (tick)
         tick_components();
 
+    if (is_boot && ptr_to_bus->is_cgb)
+        if (address >= 0x0200 && address < 0x0900)
+            return boot_data.at(address);
+
     if (address >= 0x0100)
-        return ptr_to_bus->read_current_vram_bank(address);
+        return ptr_to_bus->read(address);
 
     if (is_boot)
         return boot_data.at(address);
     else
-        return ptr_to_bus->read_current_vram_bank(address);
+        return ptr_to_bus->read(address);
 }
 
 void CPU::write(word address, byte value, bool tick) {
     if (tick)
         tick_components();
+
+    if (address == 0xFF50) {
+        if (value != 0)
+            is_boot = false;
+    }
 
     if (address == 0xFF44) //Read-Only register for CPU
         return;
@@ -170,6 +225,8 @@ void CPU::set_flags(vector<FlagStatus> &new_flags) {
 }
 
 void CPU::fetch() {
+    //if (start_logging)
+    //    debug();
     auto bytes_to_fetch = current_instruction.bytes_to_fetch;
     fetched = {};
 
@@ -265,33 +322,7 @@ void CPU::tick_components() {
     console->tick();
 
     if (dma_cycles > 0 && --dma_cycles == 0)
-        ptr_to_bus->dma_started = false;
-}
-
-std::string byte_to_string(byte x) {
-    std::stringstream stream;
-    stream << std::hex << static_cast<int>(x);
-    std::string result(stream.str());
-    result = std::string(2 - result.size(), '0') + result;
-
-    for (auto &y: result)
-        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
-            y -= 32;
-
-    return result;
-}
-
-std::string word_to_string(word x) {
-    std::stringstream stream;
-    stream << std::hex << static_cast<int>(x);
-    std::string result(stream.str());
-    result = std::string(4 - result.size(), '0') + result;
-
-    for (auto &y: result)
-        if (y - 'a' >= 0 && y - 'a' <= 'z' - 'a')
-            y -= 32;
-
-    return result;
+        ptr_to_bus->oam_dma_active = false;
 }
 
 std::string CPU::get_string_to_write() {

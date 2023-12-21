@@ -18,14 +18,12 @@ class Console;
 class CPU {
 
 public:
-
-    bool is_boot;
-
     bool start_logging;
 
     std::vector<bool> keys_pressed;
 
 private:
+    bool is_boot;
     word SP, PC;
     std::array<byte, 9> reg_mapper;
     vector<byte> fetched;
@@ -53,12 +51,12 @@ private:
 public:
     explicit CPU(Console *console);
 
-    void run_boot_rom();
-
     void run_instruction_cycle();
 
 private:
     [[maybe_unused]] void debug();
+
+    void set_boot_values();
 
     void set_interrupt_master_flag();
 

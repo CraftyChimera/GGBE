@@ -46,7 +46,7 @@ State PixelMapper::advance_scan_line() {
     }
 
     if (fetcher_y == screen_height) {
-        byte interrupt_flags = mem_ptr->read_current_vram_bank(if_address);
+        byte interrupt_flags = mem_ptr->read(if_address);
         interrupt_flags = interrupt_flags | (1 << 0);
         mem_ptr->write(if_address, interrupt_flags);
 
@@ -63,7 +63,7 @@ State PixelMapper::advance_scan_line() {
 void PixelMapper::operator()(int cycles) {
 
     if (fetcher_x == 0) {
-        scroll_offset = mem_ptr->read_current_vram_bank(scx_address) % 8;
+        scroll_offset = mem_ptr->read(scx_address) % 8;
         background_x = scroll_offset;
         window_x = scroll_offset;
     }
@@ -92,7 +92,7 @@ void PixelMapper::operator()(int cycles) {
         else
             background_x++;
     }
-    lcd_reg = mem_ptr->read_current_vram_bank(lcd_control_address);
+    lcd_reg = mem_ptr->read(lcd_control_address);
 }
 
 hex_codes PixelMapper::get_hex_from_pixel(PixelInfo pixel_data) {
@@ -104,14 +104,14 @@ hex_codes PixelMapper::get_hex_from_pixel(PixelInfo pixel_data) {
         if (pixel_data.is_sprite) {
             switch (pixel_data.palette) {
                 case 0:
-                    color_data_used = mem_ptr->read_current_vram_bank(obp0_palette_address);
+                    color_data_used = mem_ptr->read(obp0_palette_address);
                     break;
                 case 1:
-                    color_data_used = mem_ptr->read_current_vram_bank(obp1_palette_address);
+                    color_data_used = mem_ptr->read(obp1_palette_address);
                     break;
             }
         } else {
-            color_data_used = mem_ptr->read_current_vram_bank(bgp_palette_address);
+            color_data_used = mem_ptr->read(bgp_palette_address);
 
             if ((lcd_reg & (1 << 0)) == 0)
                 return color_map.at(0);
@@ -148,7 +148,7 @@ hex_codes PixelMapper::get_hex_from_pixel(PixelInfo pixel_data) {
 void PixelMapper::check_if_window_enabled() {
     bool windows_enable_bit = lcd_reg & (1 << 5);
 
-    byte wy = mem_ptr->read_current_vram_bank(wy_address);
+    byte wy = mem_ptr->read(wy_address);
 
     window_encountered = window_encountered || (wy == fetcher_y);
     windows_enabled = window_encountered && windows_enable_bit;
@@ -168,8 +168,8 @@ void PixelMapper::get_current_background_pixels() {
 
     word tile_data_start_address = (tile_data_area_bit) ? 0x8000 : 0x8800;
 
-    byte scx = mem_ptr->read_current_vram_bank(scx_address);
-    byte scy = mem_ptr->read_current_vram_bank(scy_address);
+    byte scx = mem_ptr->read(scx_address);
+    byte scy = mem_ptr->read(scy_address);
 
     byte tile_x = (scx / 8 + background_x / 8) & 0x1F;
     byte tile_y = ((scy + fetcher_y) & 0xFF) / 8;
@@ -180,9 +180,9 @@ void PixelMapper::get_current_background_pixels() {
     }
 
     word current_tile_base_addr = tile_map_base_addr + tile_x + 32 * tile_y;
-    auto tile_num = mem_ptr->read_current_vram_bank(current_tile_base_addr);
+    auto tile_num = mem_ptr->read_vram_bank(current_tile_base_addr, 0);
     if (mem_ptr->is_cgb)
-        flag_data = PpuFlags(mem_ptr->read_other_vram_bank(current_tile_base_addr));
+        flag_data = PpuFlags(mem_ptr->read_vram_bank(current_tile_base_addr, 1));
 
     auto block_id = tile_num / 128;
     auto block_offset = tile_num % 128;
@@ -368,7 +368,7 @@ void PixelMapper::check_and_load_pixels() {
 }
 
 void PixelMapper::check_and_transition_into_window() {
-    auto wx = mem_ptr->read_current_vram_bank(wx_address);
+    auto wx = mem_ptr->read(wx_address);
 
     bool should_be_in_window = windows_enabled && (fetcher_x + 7 >= wx);
 

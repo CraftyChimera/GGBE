@@ -4,14 +4,14 @@ Generic Game Boy Emulator, abbreviated as GGBE, is a cycle accurate Game Boy emu
 code quality and readability for the sake of performance. This is a hobby project written as a learning opportunity to
 balance readability and performance.
 
-In its current state, the emulator can run DMG games,i.e. it functions as a DMG emulator at the moment.
+In its current state, the emulator can run DMG games and some CGB games,i.e. it functions as a DMG emulator and a partial CGB emulator at the moment.
 
 # Working Games #
 
-[![Alt text](Images/Adventure_Island.png)] ![Alt text](Images/Aladdin.png) ![Alt text](Images/Bubble_Ghost.png) ![Alt text](Images/Castlevania2.png) ![Alt text](Images/Donkey_Kong_Land.png) ![Alt text](Images/Dr_Mario.png)
+[![Alt text](Images/Adventure_Island.png)] ![Alt text](Images/reg.png) ![Alt text](Images/Bubble_Ghost.png) ![Alt text](Images/Castlevania2.png) ![Alt text](Images/Donkey_Kong_Land.png) ![Alt text](Images/Dr_Mario.png)
 ![Alt text](Images/Final_Fantasy_Adventure.png)  ![Alt text](Images/Kirby_Dream_Land.png) ![Alt text](Images/Link_Awakening.png)
 ![Alt text](Images/Mega_Man2.png) ![Alt text](Images/Metroid2.png) ![Alt text](Images/pokemon.png)
-![Alt text](Images/PrehistorikMan.png) ![Alt text](Images/R-Type2.png) ![Alt text](Images/Super_Mario_Land.png) ![Alt text](Images/Tetris.png) ![Alt text](Images/TMNT.png) ![Alt text](Images/Mega_Man3.png)
+![Alt text](Images/PrehistorikMan.png) ![Alt text](Images/R-Type2.png) ![Alt text](Images/smb_deluxe.png) ![Alt text](Images/street_fighter.png)
 
 ## Running GGBE ##
 

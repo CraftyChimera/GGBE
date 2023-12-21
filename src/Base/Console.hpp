@@ -19,9 +19,9 @@ public:
     int cycles_left_till_end_of_frame;
 
 private:
-    CPU cpu;
-
     GPU gpu;
+
+    CPU cpu;
 
     bool open;
 
@@ -32,6 +32,8 @@ public:
     void run();
 
     void tick();
+
+    ~Console();
 
 private:
     void init_sdl();

@@ -53,12 +53,19 @@ private:
 
     byte interrupt_enable;
 
+    word cgb_dma_source_address;
+
+    word cgb_dma_dest_address;
+
+    word cgb_dma_length;
+
+    bool hdma_active;
 
 public:
 
     bool is_cgb;
 
-    bool dma_started;
+    bool oam_dma_active;
 
     bool lyc_written;
 
@@ -75,13 +82,15 @@ public:
     bool background_palette_written;
 
     bool obj_palette_written;
-
+    
 private:
     void load_cartridge_data(vector<byte> &data);
 
     void init_memory_controller(vector<byte> &data);
 
-    void dma_transfer(byte high_address);
+    void start_oam_dma(byte high_address);
+
+    void start_cgb_dma(byte hdma5_reg);
 
 public:
 
@@ -91,11 +100,13 @@ public:
 
     void write(word address, byte value, bool is_cpu = true);
 
-    byte read_current_vram_bank(word address);
-
-    byte read_other_vram_bank(word address);
+    byte read(word address);
 
     byte read_vram_bank(word address, int bank_no);
+
+    void run_hdma_iteration();
+
+    void run_gdma();
 };
 
 #endif //GGBE_BUS_HPP
